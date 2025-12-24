@@ -8,40 +8,38 @@
 
 ## 👥 PHÂN CÔNG TEAM
 
-### 👨‍💻 Member 1: Backend Lead
-**Vai trò**: Phát triển Backend API (Spring Boot)
-- REST API development
-- Database design & implementation
-- Security & Authentication
-- Third-party integration (PayOS, Cloudinary)
+### 👨‍💻 Backend Team
+**Lead**: Đặng Thành Đình Phát  
+**Members**: Lê Duy Mạnh, Huỳnh Cao Đức
 
-### 👨‍💻 Member 2: Frontend Web Lead
-**Vai trò**: Phát triển Web Portal (ReactJS + TypeScript)
-- Web application development
-- UI/UX implementation
-- State management
-- API integration
+**Vai trò**:
+- Phát triển REST API (Spring Boot)
+- Thiết kế và triển khai Database
+- Xây dựng hệ thống Security & Authentication
+- Tích hợp bên thứ ba (PayOS, Cloudinary)
+- Viết Unit Tests & Integration Tests
 
-### 👨‍💻 Member 3: Mobile Lead
-**Vai trò**: Phát triển Mobile App (Flutter)
-- Mobile app development
-- Cross-platform implementation
-- Mobile UI/UX
-- API integration
+### 👨‍💻 Frontend Web Team
+**Lead**: Lê Duy Mạnh  
+**Members**: Nguyễn Thành Nhân, Trương Công Văn
 
-### 👨‍💻 Member 4: Full-stack Developer
-**Vai trò**: Hỗ trợ Backend & Frontend
-- Backend support
-- Frontend support
-- Integration testing
-- Bug fixing
+**Vai trò**:
+- Phát triển Web Portal (ReactJS + TypeScript)
+- Triển khai UI/UX design
+- Quản lý State (Redux/Context API)
+- Tích hợp API
+- Tối ưu hóa hiệu suất web
 
-### 👨‍💻 Member 5: DevOps & Documentation Lead
-**Vai trò**: Documentation, Testing & Deployment
-- UML diagrams & documentation
-- Testing coordination
-- DevOps & deployment
-- Quality assurance
+### 👨‍💻 Mobile Team
+**Lead**: Đặng Thành Đình Phát  
+**Member**: Lê Duy Mạnh
+
+**Vai trò**:
+- Phát triển Mobile App (Flutter)
+- Triển khai cross-platform (iOS & Android)
+- Thiết kế Mobile UI/UX
+- Tích hợp API
+- Testing trên nhiều thiết bị
 
 ---
 
@@ -53,7 +51,7 @@
 - Thiết kế database
 - Setup môi trường phát triển
 
-### Member 1 (Backend Lead)
+### Backend Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh, Huỳnh Cao Đức)
 - [ ] **Ngày 1-2**: Phân tích yêu cầu backend
   - Xác định các API endpoints cần thiết
   - Liệt kê business rules
@@ -68,8 +66,9 @@
   - Cấu hình dependencies (pom.xml)
   - Setup JWT authentication structure
   - Tạo base entities & repositories
+  - Viết tài liệu URD & SRS (phần backend)
 
-### Member 2 (Frontend Web Lead)
+### Frontend Web Team (Lê Duy Mạnh - Lead, Nguyễn Thành Nhân, Trương Công Văn)
 - [ ] **Ngày 1-2**: UI/UX Research & Design
   - Nghiên cứu UI/UX best practices
   - Xác định component structure
@@ -83,8 +82,9 @@
   - Setup routing structure
   - Cấu hình Redux Toolkit
   - Tạo folder structure & base components
+  - Vẽ Use Case Diagrams tổng quan
 
-### Member 3 (Mobile Lead)
+### Mobile Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh)
 - [ ] **Ngày 1-2**: Mobile App Analysis
   - Phân tích yêu cầu mobile
   - Xác định screens cần thiết
@@ -98,43 +98,33 @@
   - Setup folder structure
   - Cấu hình routing
   - Tạo base widgets & theme
+  - Hỗ trợ thiết lập Docker containers
 
-### Member 4 (Full-stack Developer)
-- [ ] **Ngày 1-3**: Phân tích tích hợp hệ thống
+### Toàn Team (Công việc chung)
+- [ ] **Ngày 1-3**: Nghiên cứu & Lập kế hoạch tích hợp
   - Nghiên cứu PayOS API
   - Nghiên cứu Cloudinary API
   - Xác định integration points
-- [ ] **Ngày 4-5**: API Documentation Planning
+  - Viết tài liệu URD (User Requirements Document)
+  - Mô tả actors và roles
+- [ ] **Ngày 4-5**: Tài liệu & API Planning
   - Thiết kế API contract
   - Định nghĩa request/response format
-  - Tạo API documentation template
-- [ ] **Ngày 6-7**: Hỗ trợ setup môi trường
-  - Setup development environment
-  - Chuẩn bị Docker containers
-  - Test database connections
-
-### Member 5 (DevOps & Documentation Lead)
-- [ ] **Ngày 1-3**: Tài liệu URD (User Requirements Document)
-  - Viết giới thiệu hệ thống
-  - Mô tả actors và roles
-  - Liệt kê functional requirements
-  - Viết non-functional requirements
-- [ ] **Ngày 4-5**: Tài liệu SRS (Software Requirements Specification)
+  - Viết tài liệu SRS (Software Requirements Specification)
   - Chi tiết hóa requirements
-  - Viết use case specifications
-  - Định nghĩa business rules
-- [ ] **Ngày 6-7**: UML Diagrams - Phase 1
-  - Vẽ Use Case Diagram tổng quan
-  - Vẽ Use Case Diagrams chi tiết cho từng actor
-  - Tạo Activity Diagram cho main flows
+- [ ] **Ngày 6-7**: Setup môi trường & UML
+  - Setup development environment cho tất cả
+  - Test database connections
+  - Vẽ Activity Diagram cho main flows
 
 **📊 Deliverables tuần 1:**
 - ✅ URD & SRS documents
 - ✅ Database schema & ER Diagram
-- ✅ Use Case Diagrams
+- ✅ Use Case Diagrams & Activity Diagrams
 - ✅ UI/UX Wireframes & Mockups
 - ✅ Project structure đã setup
 - ✅ Development environment ready
+- ✅ API contract documentation
 
 ---
 
@@ -146,7 +136,7 @@
 - User management
 - Project management foundation
 
-### Member 1 (Backend Lead)
+### Backend Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh, Huỳnh Cao Đức)
 - [ ] **Ngày 8-9**: Authentication System
   - Implement JWT authentication
   - Create login/register endpoints
@@ -162,8 +152,9 @@
   - Project proposal submission
   - Project validation workflow
   - Project status management
+  - Viết SAD (Software Architecture Document)
 
-### Member 2 (Frontend Web Lead)
+### Frontend Web Team (Lê Duy Mạnh - Lead, Nguyễn Thành Nhân, Trương Công Văn)
 - [ ] **Ngày 8-9**: Authentication Pages
   - Login page
   - Register page (multi-role)
@@ -175,13 +166,15 @@
   - Footer component
   - Button, Input, Card components
   - Loading & Error components
-- [ ] **Ngày 12-14**: Dashboard Layouts
+- [ ] **Ngày 12-14**: Dashboard Layouts & API Integration
   - Enterprise dashboard layout
   - Talent dashboard layout
   - Mentor dashboard layout
   - Admin dashboard layout
+  - Tạo Axios/HTTP client
+  - Setup API interceptors
 
-### Member 3 (Mobile Lead)
+### Mobile Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh)
 - [ ] **Ngày 8-10**: Authentication Screens
   - Login screen
   - Register screen
@@ -192,52 +185,33 @@
   - Card widgets
   - List items
   - Bottom navigation
-- [ ] **Ngày 13-14**: Dashboard Screens - Base
+- [ ] **Ngày 13-14**: Dashboard Screens - Base & Testing
   - Enterprise home screen
   - Talent home screen
   - Mentor home screen
   - Navigation structure
+  - Test authentication flow
 
-### Member 4 (Full-stack Developer)
-- [ ] **Ngày 8-10**: API Integration Layer
-  - Create Axios/HTTP client
-  - Setup API interceptors
-  - Error handling middleware
-  - API service classes
-- [ ] **Ngày 11-12**: Backend Support
-  - Hỗ trợ viết unit tests cho backend
-  - Code review backend APIs
-  - Fix bugs & optimize queries
-- [ ] **Ngày 13-14**: Testing Authentication Flow
-  - Test login/register flow
-  - Test JWT token handling
-  - Test role-based access
-  - Integration testing
-
-### Member 5 (DevOps & Documentation Lead)
-- [ ] **Ngày 8-9**: SAD (Software Architecture Document)
-  - Viết architectural overview
-  - Vẽ Component Diagram
-  - Vẽ Deployment Diagram
-  - Mô tả technology stack
+### Toàn Team (Công việc chung)
 - [ ] **Ngày 10-11**: UML Diagrams - Phase 2
   - Class Diagram cho User module
   - Sequence Diagram cho Authentication
   - Sequence Diagram cho User Management
-- [ ] **Ngày 12-14**: Docker Setup
+- [ ] **Ngày 12-14**: Docker Setup & Testing
   - Tạo Dockerfile cho backend
   - Tạo Dockerfile cho frontend
   - Viết docker-compose.yml
   - Test local deployment
+  - Hỗ trợ viết unit tests
 
 **📊 Deliverables tuần 2:**
 - ✅ Authentication system hoàn chỉnh
 - ✅ User management APIs
 - ✅ Project management APIs (partial)
 - ✅ Authentication UI (Web + Mobile)
-- ✅ SAD document
-- ✅ Class & Sequence Diagrams
+- ✅ SAD document & Class/Sequence Diagrams
 - ✅ Docker configuration
+- ✅ API integration layer
 
 ---
 
@@ -249,7 +223,7 @@
 - Fund distribution system
 - Task management
 
-### Member 1 (Backend Lead)
+### Backend Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh, Huỳnh Cao Đức)
 - [ ] **Ngày 15-16**: Project Management APIs - Part 2
   - Project approval/rejection
   - Project assignment to mentors
@@ -260,13 +234,14 @@
   - Payment creation endpoints
   - Payment callback handling
   - Payment status tracking
-- [ ] **Ngày 19-21**: Fund Distribution System
+- [ ] **Ngày 19-21**: Fund Distribution System & Task Management
   - 70/20/10 allocation logic
   - Fund distribution APIs
   - Payment history tracking
   - Hybrid fund support (Lab advance)
+  - Task CRUD APIs & Excel template management
 
-### Member 2 (Frontend Web Lead)
+### Frontend Web Team (Lê Duy Mạnh - Lead, Nguyễn Thành Nhân, Trương Công Văn)
 - [ ] **Ngày 15-16**: Enterprise Module - Projects
   - Submit project proposal page
   - View project list
@@ -277,13 +252,15 @@
   - Payment history page
   - Invoice page
   - Request cancellation/change
-- [ ] **Ngày 19-21**: Talent Module - Projects
+- [ ] **Ngày 19-21**: Talent Module - Projects & State Management
   - Browse projects page
   - Project detail & join
   - My projects page
   - View tasks page
+  - Hỗ trợ state management
+  - Code review frontend
 
-### Member 3 (Mobile Lead)
+### Mobile Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh)
 - [ ] **Ngày 15-17**: Enterprise Screens - Projects
   - Submit project screen
   - Project list screen
@@ -293,45 +270,29 @@
   - Payment screen (PayOS)
   - Payment history screen
   - Transaction details
-- [ ] **Ngày 20-21**: Talent Screens - Projects
+- [ ] **Ngày 20-21**: Talent Screens - Projects & Testing
   - Browse projects screen
   - Project detail screen
   - Join project screen
   - My projects screen
-
-### Member 4 (Full-stack Developer)
-- [ ] **Ngày 15-16**: Task Management Backend
-  - Task CRUD APIs
-  - Task assignment logic
-  - Task status tracking
-  - Excel template management
-- [ ] **Ngày 17-19**: API Integration Support
-  - Integrate PayOS in frontend
-  - Integrate PayOS in mobile
   - Test payment flows
-  - Handle payment callbacks
-- [ ] **Ngày 20-21**: Frontend Support
-  - Hỗ trợ state management
-  - Code review frontend
-  - Fix integration issues
-  - Performance optimization
 
-### Member 5 (DevOps & Documentation Lead)
+### Toàn Team (Công việc chung)
 - [ ] **Ngày 15-16**: DDD (Detailed Design Document) - Part 1
   - Class Diagram cho Project module
   - Class Diagram cho Payment module
   - Sequence Diagram cho Project workflow
   - Sequence Diagram cho Payment flow
-- [ ] **Ngày 17-18**: Database Documentation
+- [ ] **Ngày 17-19**: Tích hợp PayOS
+  - Integrate PayOS in frontend
+  - Integrate PayOS in mobile
+  - Handle payment callbacks
+  - Fix integration issues
+- [ ] **Ngày 19-21**: Database & Testing Documentation
   - Viết chi tiết database schema
   - Tạo data dictionary
-  - Mô tả indexes & constraints
-  - Viết migration guide
-- [ ] **Ngày 19-21**: Testing Documentation - Part 1
   - Viết test plan
-  - Tạo test cases cho Authentication
-  - Tạo test cases cho User Management
-  - Tạo test cases cho Project Management
+  - Tạo test cases cho Authentication, User, Project Management
 
 **📊 Deliverables tuần 3:**
 - ✅ Project management hoàn chỉnh
@@ -341,6 +302,7 @@
 - ✅ Enterprise & Talent UI (Web + Mobile)
 - ✅ DDD document (Part 1)
 - ✅ Test plan & test cases
+- ✅ Database documentation
 
 ---
 
@@ -352,49 +314,57 @@
 - Report & evaluation system
 - Cloudinary integration
 
-### Member 1 (Backend Lead)
-- [ ] **Ngày 22-23**: Mentor Management APIs
+### Backend Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh, Huỳnh Cao Đức)
+- [ ] **Ngày 22-23**: Mentor Management APIs & Cloudinary
   - Mentor assignment to projects
   - Task breakdown APIs
   - Mentor evaluation endpoints
   - Report submission APIs
-- [ ] **Ngày 24-25**: Admin APIs - Lab Admin
+  - Image/file upload service (Cloudinary)
+- [ ] **Ngày 24-25**: Admin APIs - Lab Admin & Report System
   - Validate enterprise/project APIs
   - Fund allocation endpoints
   - Transparency report APIs
   - Approve/reject change requests
-- [ ] **Ngày 26-28**: Admin APIs - System Admin
+  - Report generation logic & APIs
+- [ ] **Ngày 26-28**: System Admin & Search Features
   - System configuration APIs
   - Role & permission management
   - User management (admin level)
   - Template management APIs
+  - Elasticsearch integration
+  - Search functionality
 
-### Member 2 (Frontend Web Lead)
+### Frontend Web Team (Lê Duy Mạnh - Lead, Nguyễn Thành Nhân, Trương Công Văn)
 - [ ] **Ngày 22-23**: Mentor Module
   - Mentor dashboard
   - Task management page (Excel upload)
   - Talent evaluation page
   - Report submission page
   - Fund redistribution page
+  - Image upload component
 - [ ] **Ngày 24-25**: Lab Admin Module
   - Enterprise validation page
   - Project validation page
   - Fund allocation page
   - Transparency reports page
   - Request approval page
-- [ ] **Ngày 26-28**: System Admin Module
+- [ ] **Ngày 26-28**: System Admin & Search Features
   - System settings page
   - Role management page
   - User management page
   - Template management page
+  - Search & filter features
+  - Pagination implementation
 
-### Member 3 (Mobile Lead)
+### Mobile Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh)
 - [ ] **Ngày 22-24**: Mentor Screens
   - Mentor dashboard
   - Project list screen
   - Task management screen
   - Evaluation screen
   - Report screen
+  - File upload component
 - [ ] **Ngày 25-26**: Talent Screens - Advanced
   - Task detail screen
   - Performance screen
@@ -406,34 +376,18 @@
   - Settings screen
   - Notifications screen
 
-### Member 4 (Full-stack Developer)
-- [ ] **Ngày 22-23**: Cloudinary Integration
-  - Image upload service (backend)
-  - File upload service (backend)
-  - Image upload component (frontend)
-  - File upload component (mobile)
-- [ ] **Ngày 24-25**: Report & Evaluation System
-  - Report generation logic
-  - Report APIs
-  - Evaluation APIs
-  - Notification system
-- [ ] **Ngày 26-28**: Search & Filter Features
-  - Elasticsearch integration
-  - Search functionality (projects, users)
-  - Filter & sort features
-  - Pagination implementation
-
-### Member 5 (DevOps & Documentation Lead)
+### Toàn Team (Công việc chung)
 - [ ] **Ngày 22-23**: DDD (Detailed Design Document) - Part 2
   - Class Diagram cho Mentor module
   - Class Diagram cho Admin modules
   - Sequence Diagram cho Report system
   - Sequence Diagram cho Evaluation flow
-- [ ] **Ngày 24-25**: Testing Documentation - Part 2
+- [ ] **Ngày 24-25**: Testing Documentation & Evaluation
   - Test cases cho Payment system
   - Test cases cho Mentor module
   - Test cases cho Admin modules
   - Integration test cases
+  - Evaluation APIs & Notification system
 - [ ] **Ngày 26-28**: API Documentation
   - Swagger/OpenAPI setup
   - Document all API endpoints
@@ -459,40 +413,46 @@
 - Deployment setup
 - Documentation finalization
 
-### Member 1 (Backend Lead)
-- [ ] **Ngày 29-30**: Unit Testing Backend
+### Backend Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh, Huỳnh Cao Đức)
+- [ ] **Ngày 29-30**: Unit Testing Backend & AWS Setup
   - Viết unit tests cho tất cả services
   - Test coverage > 80%
   - Fix bugs phát hiện từ tests
+  - Setup AWS infrastructure
+  - Configure CI/CD pipeline
 - [ ] **Ngày 31-32**: Performance Optimization
   - Database query optimization
   - Caching implementation (Redis)
   - API response time optimization
   - Load testing
+  - Setup monitoring (CloudWatch) & logging (ELK)
 - [ ] **Ngày 33-35**: Bug Fixing & Code Review
   - Fix critical bugs
   - Code review toàn bộ backend
   - Security audit
   - Documentation review
 
-### Member 2 (Frontend Web Lead)
-- [ ] **Ngày 29-30**: UI/UX Polish
+### Frontend Web Team (Lê Duy Mạnh - Lead, Nguyễn Thành Nhân, Trương Công Văn)
+- [ ] **Ngày 29-30**: UI/UX Polish & Integration Testing
   - Responsive design testing
   - Cross-browser testing
   - Accessibility improvements
   - Loading states & error handling
+  - End-to-end testing
 - [ ] **Ngày 31-32**: Integration Testing Web
   - Test all user flows
   - Test API integration
   - Test form validations
   - Fix UI bugs
-- [ ] **Ngày 33-35**: Web Optimization
+  - Cross-platform testing
+- [ ] **Ngày 33-35**: Web Optimization & Final Testing
   - Code splitting & lazy loading
   - Performance optimization
   - SEO optimization
   - PWA configuration
+  - Smoke testing
 
-### Member 3 (Mobile Lead)
+### Mobile Team (Đặng Thành Đình Phát - Lead, Lê Duy Mạnh)
 - [ ] **Ngày 29-30**: Mobile UI Polish
   - Test on multiple devices
   - Test iOS & Android
@@ -503,46 +463,27 @@
   - Test all flows
   - Performance testing
   - Battery & memory optimization
+  - Fix critical bugs (P0, P1)
 - [ ] **Ngày 33-35**: Mobile Build & Submission
   - Build release APK/AAB
   - Build iOS release
   - Prepare app store assets
   - Final testing
 
-### Member 4 (Full-stack Developer)
-- [ ] **Ngày 29-30**: Integration Testing
-  - End-to-end testing
-  - Cross-platform testing
-  - Payment flow testing
-  - File upload testing
-- [ ] **Ngày 31-32**: Bug Fixing Sprint
-  - Fix critical bugs (P0, P1)
-  - Fix medium priority bugs (P2)
-  - Code review & refactoring
-  - Performance fixes
-- [ ] **Ngày 33-35**: Final Integration
-  - Integration testing với production-like environment
-  - Test deployment scripts
-  - Smoke testing
-  - UAT support
-
-### Member 5 (DevOps & Documentation Lead)
-- [ ] **Ngày 29-30**: Deployment Setup
-  - Setup AWS infrastructure
-  - Configure CI/CD pipeline
-  - Setup monitoring (CloudWatch)
-  - Setup logging (ELK)
-- [ ] **Ngày 31-32**: Deployment Documentation
+### Toàn Team (Công việc chung)
+- [ ] **Ngày 29-32**: Deployment Documentation
   - Installation guide
   - Deployment guide
   - Configuration guide
   - Troubleshooting guide
-- [ ] **Ngày 33-35**: Final Documentation
+- [ ] **Ngày 33-35**: Final Documentation & UAT
   - Implementation documentation
   - Source code documentation
   - Deployment package documentation
   - User manual
   - Final document review
+  - UAT support
+  - Test deployment scripts
 
 **📊 Deliverables tuần 5:**
 - ✅ All modules tested & bug-free
@@ -557,7 +498,7 @@
 
 ## 📊 SUMMARY - PHÂN BỔ CÔNG VIỆC
 
-### Backend Development (Member 1 + Member 4 support)
+### Backend Development (Backend Team: Đặng Thành Đình Phát - Lead, Lê Duy Mạnh, Huỳnh Cao Đức)
 - Authentication & Authorization ✅
 - User Management ✅
 - Project Management ✅
@@ -567,22 +508,25 @@
 - Mentor Management ✅
 - Admin Management ✅
 - Report & Evaluation ✅
+- Cloudinary Integration ✅
+- Elasticsearch Integration ✅
 
-### Frontend Web Development (Member 2 + Member 4 support)
+### Frontend Web Development (Frontend Team: Lê Duy Mạnh - Lead, Nguyễn Thành Nhân, Trương Công Văn)
 - Authentication Pages ✅
 - Enterprise Module (5 pages) ✅
 - Talent Module (6 pages) ✅
 - Mentor Module (5 pages) ✅
 - Lab Admin Module (5 pages) ✅
 - System Admin Module (4 pages) ✅
+- Search & Filter Features ✅
 
-### Mobile Development (Member 3)
+### Mobile Development (Mobile Team: Đặng Thành Đình Phát - Lead, Lê Duy Mạnh)
 - Authentication Screens ✅
 - Enterprise Screens (6 screens) ✅
 - Talent Screens (8 screens) ✅
 - Mentor Screens (5 screens) ✅
 
-### DevOps & Documentation (Member 5)
+### Documentation & DevOps (Toàn Team)
 - URD Document ✅
 - SRS Document ✅
 - SAD Document ✅
@@ -591,10 +535,12 @@
 - Testing Documentation ✅
 - Deployment Documentation ✅
 - API Documentation ✅
+- Docker & CI/CD Setup ✅
+- AWS Infrastructure ✅
 
-### Integration & Testing (Member 4 + All)
+### Integration & Testing (Toàn Team)
 - API Integration ✅
-- Third-party Integration ✅
+- Third-party Integration (PayOS, Cloudinary) ✅
 - Testing (Unit, Integration, E2E) ✅
 - Bug Fixing ✅
 
@@ -606,21 +552,25 @@
 - ✅ Requirements Analysis Complete
 - ✅ System Design Complete
 - ✅ Development Environment Setup
+- ✅ URD, SRS & UML Diagrams Phase 1
 
 ### Milestone 2 (End of Week 2)
 - ✅ Authentication System Working
 - ✅ Basic UI/UX Complete
 - ✅ Database Implemented
+- ✅ Docker Configuration Ready
 
 ### Milestone 3 (End of Week 3)
 - ✅ Core Features Complete (50%)
 - ✅ Payment Integration Working
 - ✅ Main Modules Functional
+- ✅ DDD & Test Documentation
 
 ### Milestone 4 (End of Week 4)
 - ✅ All Features Complete (90%)
 - ✅ Admin Modules Complete
 - ✅ Integration Complete
+- ✅ API Documentation Complete
 
 ### Milestone 5 (End of Week 5)
 - ✅ Testing Complete
