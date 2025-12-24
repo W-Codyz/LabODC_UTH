@@ -4,28 +4,28 @@
 
 ```
 labodc-web-portal/
-├── public/                    # Static assets
+├── public/                    # Tài sản tĩnh
 ├── src/
-│   ├── assets/               # Images, fonts, icons
-│   ├── components/           # Reusable components
-│   │   ├── common/          # Common components (Button, Input, etc.)
-│   │   ├── forms/           # Form components
+│   ├── assets/               # Hình ảnh, fonts, icons
+│   ├── components/           # Các component tái sử dụng
+│   │   ├── common/          # Components chung (Button, Input, v.v.)
+│   │   ├── forms/           # Các form components
 │   │   └── layout/          # Layout components (Header, Footer, Sidebar)
 │   ├── hooks/               # Custom React hooks
-│   ├── pages/               # Page components
-│   │   ├── admin/          # Lab Admin pages
-│   │   ├── auth/           # Login, Register pages
-│   │   ├── enterprise/     # Enterprise dashboard pages
-│   │   ├── mentor/         # Mentor dashboard pages
-│   │   ├── system-admin/   # System Admin pages
-│   │   └── talent/         # Talent portal pages
-│   ├── services/            # API services
-│   ├── store/               # State management (Redux/Context)
-│   ├── styles/              # Global styles, themes
-│   ├── types/               # TypeScript types & interfaces
-│   ├── utils/               # Utility functions
-│   ├── App.tsx              # Main App component
-│   └── index.tsx            # Entry point
+│   ├── pages/               # Các trang components
+│   │   ├── admin/          # Trang Lab Admin
+│   │   ├── auth/           # Trang đăng nhập, đăng ký
+│   │   ├── enterprise/     # Trang dashboard doanh nghiệp
+│   │   ├── mentor/         # Trang dashboard mentor
+│   │   ├── system-admin/   # Trang System Admin
+│   │   └── talent/         # Trang cổng người tài năng
+│   ├── services/            # Các dịch vụ API
+│   ├── store/               # Quản lý state (Redux/Context)
+│   ├── styles/              # Styles toàn cục, themes
+│   ├── types/               # TypeScript types và interfaces
+│   ├── utils/               # Hàm tiện ích
+│   ├── App.tsx              # Component App chính
+│   └── index.tsx            # Điểm vào
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -33,75 +33,75 @@ labodc-web-portal/
 
 ## 🎨 Các trang chính
 
-### Authentication
-- Login
-- Register (Enterprise, Talent, Mentor)
-- Forgot Password
-- Profile Setup
+### Xác thực
+- Đăng nhập
+- Đăng ký (Doanh nghiệp, Người tài năng, Mentor)
+- Quên mật khẩu
+- Thiết lập hồ sơ
 
-### Enterprise Dashboard
-- Dashboard Overview
-- Submit Project Proposal
-- Manage Projects
-- Make Payments
-- View Reports & Evaluations
-- Request Changes/Cancellations
+### Dashboard doanh nghiệp
+- Tổng quan Dashboard
+- Nộp đề xuất dự án
+- Quản lý dự án
+- Thanh toán
+- Xem báo cáo và đánh giá
+- Yêu cầu thay đổi/hủy
 
-### Talent Portal
+### Cổng thông tin người tài năng
 - Dashboard
-- Browse Available Projects
-- My Projects
-- View Tasks & Assignments
-- Performance Reports
-- Profile & Skills Management
+- Duyệt dự án có sẵn
+- Dự án của tôi
+- Xem nhiệm vụ và phân công
+- Báo cáo hiệu suất
+- Quản lý hồ sơ và kỹ năng
 
-### Mentor Dashboard
-- Dashboard Overview
-- Accept Project Invitations
-- Task Management (Excel templates)
-- Talent Evaluation
-- Submit Reports
-- Team Lead Appointment
+### Dashboard Mentor
+- Tổng quan Dashboard
+- Chấp nhận lời mời dự án
+- Quản lý nhiệm vụ (Excel templates)
+- Đánh giá người tài năng
+- Nộp báo cáo
+- Chỉ định Trưởng nhóm
 
-### Lab Admin Dashboard
-- Manage Enterprises
-- Validate Projects
-- Manage Mentors & Talents
-- Fund Allocation (70/20/10)
-- Transparency Reports
-- Approve/Reject Changes
+### Dashboard Lab Admin
+- Quản lý doanh nghiệp
+- Xác thực dự án
+- Quản lý Mentors và người tài năng
+- Phân bổ quỹ (70/20/10)
+- Báo cáo minh bạch
+- Phê duyệt/Từ chối thay đổi
 
-### System Admin Dashboard
-- System Configuration
-- Role & Permission Management
-- User Management
-- Excel Template Management
+### Dashboard System Admin
+- Cấu hình hệ thống
+- Quản lý vai trò và quyền
+- Quản lý người dùng
+- Quản lý Excel Template
 
-## 🚀 Getting Started
+## 🚀 Bắt đầu
 
-### Prerequisites
+### Yêu cầu
 - Node.js 18+
-- npm or yarn
+- npm hoặc yarn
 
-### Installation
+### Cài đặt
 
 ```bash
 cd labodc-web-portal
 
-# Install dependencies
+# Cài đặt dependencies
 npm install
-# or
+# hoặc
 yarn install
 
-# Run development server
+# Chạy development server
 npm run dev
-# or
+# hoặc
 yarn dev
 ```
 
-### Environment Variables
+### Biến môi trường
 
-Create `.env.local`:
+Tạo file `.env.local`:
 
 ```env
 REACT_APP_API_BASE_URL=http://localhost:8080/api
@@ -109,35 +109,35 @@ REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloud_name
 REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_preset
 ```
 
-## 📦 Tech Stack
+## 📦 Ngăn xếp công nghệ
 
-- **React 18**: UI library
-- **TypeScript**: Type safety
-- **React Router v6**: Routing
-- **Redux Toolkit**: State management
+- **React 18**: Thư viện UI
+- **TypeScript**: An toàn kiểu
+- **React Router v6**: Điều hướng
+- **Redux Toolkit**: Quản lý state
 - **Axios**: HTTP client
-- **Ant Design / Material-UI**: UI components
-- **React Hook Form**: Form handling
-- **Chart.js / Recharts**: Data visualization
-- **TailwindCSS**: Utility-first CSS
+- **Ant Design / Material-UI**: Các thành phần UI
+- **React Hook Form**: Xử lý form
+- **Chart.js / Recharts**: Trực quan hóa dữ liệu
+- **TailwindCSS**: CSS tiện ích
 
-## 🧪 Testing
+## 🧪 Kiểm thử
 
 ```bash
-# Run tests
+# Chạy tests
 npm test
 
-# Run tests with coverage
+# Chạy tests với coverage
 npm run test:coverage
 ```
 
 ## 🏗️ Build
 
 ```bash
-# Build for production
+# Build cho production
 npm run build
 
-# Preview production build
+# Xem trước production build
 npm run preview
 ```
 

@@ -58,7 +58,7 @@ services:
       timeout: 10s
       retries: 5
 
-  # Backend Service
+  # Dịch vụ Backend
   backend:
     build:
       context: ../labodc-backend
@@ -85,7 +85,7 @@ services:
       - labodc-network
     restart: unless-stopped
 
-  # Frontend Web Portal
+  # Cổng thông tin Web Frontend
   frontend:
     build:
       context: ../labodc-web-portal

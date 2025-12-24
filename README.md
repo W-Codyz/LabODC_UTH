@@ -16,7 +16,7 @@ LabOdc là hệ thống Lab-based ODC (Offshore Development Center) phi lợi nh
 ## 🏗️ Cấu trúc dự án
 
 ```
-nhom6/
+LabODC_UTH/
 ├── labodc-backend/          # Backend API (Spring Boot)
 ├── labodc-web-portal/       # Web Portal (ReactJS + TypeScript)
 ├── labodc-mobile/           # Mobile App (Flutter)

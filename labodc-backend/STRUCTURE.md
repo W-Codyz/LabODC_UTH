@@ -1,38 +1,38 @@
 # Cấu trúc chi tiết thư mục Backend
 
-## Controller Layer
+## Tầng Controller
 
 ### admin/
-- `LabAdminController.java` - Quản lý Lab Admin functions
+- `LabAdminController.java` - Quản lý các chức năng Lab Admin
 - `EnterpriseManagementController.java` - Quản lý doanh nghiệp
 - `ProjectValidationController.java` - Xác thực dự án
 - `FundAllocationController.java` - Phân bổ quỹ
 - `ReportController.java` - Báo cáo minh bạch
 
 ### enterprise/
-- `EnterpriseController.java` - Dashboard & profile
+- `EnterpriseController.java` - Dashboard và hồ sơ
 - `ProjectProposalController.java` - Đề xuất dự án
 - `PaymentController.java` - Thanh toán
 - `ProjectRequestController.java` - Yêu cầu thay đổi/hủy
 
 ### mentor/
-- `MentorController.java` - Dashboard & profile
-- `TaskManagementController.java` - Quản lý task
-- `TalentEvaluationController.java` - Đánh giá talent
+- `MentorController.java` - Dashboard và hồ sơ
+- `TaskManagementController.java` - Quản lý nhiệm vụ
+- `TalentEvaluationController.java` - Đánh giá người tài năng
 - `ReportSubmissionController.java` - Nộp báo cáo
 
 ### talent/
-- `TalentController.java` - Dashboard & profile
+- `TalentController.java` - Dashboard và hồ sơ
 - `ProjectParticipationController.java` - Tham gia dự án
-- `TaskViewController.java` - Xem task
+- `TaskViewController.java` - Xem nhiệm vụ
 - `PerformanceController.java` - Xem đánh giá
 
-## Model Layer
+## Tầng Model
 
 ### entity/
-- `User.java` - Base user entity
+- `User.java` - Entity người dùng cơ bản
 - `Enterprise.java` - Doanh nghiệp
-- `Talent.java` - Sinh viên
+- `Talent.java` - Người tài năng (sinh viên)
 - `Mentor.java` - Mentor
 - `Project.java` - Dự án
 - `ProjectProposal.java` - Đề xuất dự án
@@ -48,13 +48,13 @@
 - `PaymentStatus.java` - PENDING, PAID, DELAYED, REFUNDED
 - `TaskStatus.java` - TODO, IN_PROGRESS, COMPLETED
 
-## Service Layer
+## Tầng Service
 
 ### impl/
-- `AuthServiceImpl.java`
-- `ProjectServiceImpl.java`
-- `PaymentServiceImpl.java`
-- `FundServiceImpl.java`
-- `ReportServiceImpl.java`
-- `StorageServiceImpl.java`
-- `NotificationServiceImpl.java`
+- `AuthServiceImpl.java` - Triển khai dịch vụ xác thực
+- `ProjectServiceImpl.java` - Triển khai dịch vụ dự án
+- `PaymentServiceImpl.java` - Triển khai dịch vụ thanh toán
+- `FundServiceImpl.java` - Triển khai dịch vụ quỹ
+- `ReportServiceImpl.java` - Triển khai dịch vụ báo cáo
+- `StorageServiceImpl.java` - Triển khai dịch vụ lưu trữ
+- `NotificationServiceImpl.java` - Triển khai dịch vụ thông báo

@@ -1,33 +1,33 @@
-# Project Structure Overview
+# Tổng quan cấu trúc dự án
 
 ```
-nhom6/
+LabODC_UTH/
 │
 ├── labodc-backend/                 # Spring Boot Backend API
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/uth/labodc/
-│   │   │   │   ├── config/              # Spring configurations
+│   │   │   │   ├── config/              # Cấu hình Spring
 │   │   │   │   ├── controller/
-│   │   │   │   │   ├── admin/          # Lab Admin APIs
-│   │   │   │   │   ├── enterprise/     # Enterprise APIs
-│   │   │   │   │   ├── mentor/         # Mentor APIs
-│   │   │   │   │   └── talent/         # Talent APIs
+│   │   │   │   │   ├── admin/          # APIs Lab Admin
+│   │   │   │   │   ├── enterprise/     # APIs doanh nghiệp
+│   │   │   │   │   ├── mentor/         # APIs mentor
+│   │   │   │   │   └── talent/         # APIs người tài năng
 │   │   │   │   ├── dto/                # Data Transfer Objects
-│   │   │   │   ├── exception/          # Custom exceptions
+│   │   │   │   ├── exception/          # Exceptions tùy chỉnh
 │   │   │   │   ├── model/
 │   │   │   │   │   ├── entity/        # JPA entities
 │   │   │   │   │   └── enums/         # Enumerations
 │   │   │   │   ├── repository/         # Spring Data repositories
-│   │   │   │   ├── security/           # JWT, Auth configs
+│   │   │   │   ├── security/           # JWT, cấu hình Auth
 │   │   │   │   ├── service/
-│   │   │   │   │   └── impl/          # Service implementations
-│   │   │   │   └── util/               # Utility classes
+│   │   │   │   │   └── impl/          # Triển khai services
+│   │   │   │   └── util/               # Các lớp tiện ích
 │   │   │   └── resources/
 │   │   │       ├── application.yml
 │   │   │       ├── db/migration/       # Flyway scripts
 │   │   │       └── templates/          # Excel templates
-│   │   └── test/                       # Unit & Integration tests
+│   │   └── test/                       # Unit và Integration tests
 │   ├── pom.xml
 │   ├── Dockerfile
 │   ├── README.md
@@ -36,24 +36,24 @@ nhom6/
 ├── labodc-web-portal/             # ReactJS + TypeScript Frontend
 │   ├── public/
 │   ├── src/
-│   │   ├── assets/                     # Images, fonts, icons
+│   │   ├── assets/                     # Hình ảnh, fonts, icons
 │   │   ├── components/
-│   │   │   ├── common/                # Reusable components
+│   │   │   ├── common/                # Components tái sử dụng
 │   │   │   ├── forms/                 # Form components
 │   │   │   └── layout/                # Header, Footer, Sidebar
 │   │   ├── hooks/                      # Custom React hooks
 │   │   ├── pages/
-│   │   │   ├── admin/                 # Lab Admin pages
-│   │   │   ├── auth/                  # Login, Register
-│   │   │   ├── enterprise/            # Enterprise dashboard
-│   │   │   ├── mentor/                # Mentor dashboard
-│   │   │   ├── system-admin/          # System Admin panel
-│   │   │   └── talent/                # Talent portal
-│   │   ├── services/                   # API services
+│   │   │   ├── admin/                 # Trang Lab Admin
+│   │   │   ├── auth/                  # Đăng nhập, Đăng ký
+│   │   │   ├── enterprise/            # Dashboard doanh nghiệp
+│   │   │   ├── mentor/                # Dashboard mentor
+│   │   │   ├── system-admin/          # Trang System Admin
+│   │   │   └── talent/                # Cổng người tài năng
+│   │   ├── services/                   # Dịch vụ API
 │   │   ├── store/                      # Redux/Context state
-│   │   ├── styles/                     # Global styles
+│   │   ├── styles/                     # Styles toàn cục
 │   │   ├── types/                      # TypeScript types
-│   │   ├── utils/                      # Utility functions
+│   │   ├── utils/                      # Hàm tiện ích
 │   │   ├── App.tsx
 │   │   └── index.tsx
 │   ├── package.json
@@ -62,8 +62,8 @@ nhom6/
 │   └── README.md
 │
 ├── labodc-mobile/                 # Flutter Mobile App
-│   ├── android/                        # Android project
-│   ├── ios/                            # iOS project
+│   ├── android/                        # Dự án Android
+│   ├── ios/                            # Dự án iOS
 │   ├── lib/
 │   │   ├── core/
 │   │   │   ├── constants/
@@ -71,15 +71,15 @@ nhom6/
 │   │   │   ├── routes/
 │   │   │   └── theme/
 │   │   ├── models/                     # Data models
-│   │   ├── providers/                  # State management
+│   │   ├── providers/                  # Quản lý state
 │   │   ├── screens/
 │   │   │   ├── auth/
 │   │   │   ├── enterprise/
 │   │   │   ├── mentor/
 │   │   │   └── talent/
-│   │   ├── services/                   # API services
-│   │   ├── utils/                      # Utilities
-│   │   ├── widgets/                    # Reusable widgets
+│   │   ├── services/                   # Dịch vụ API
+│   │   ├── utils/                      # Tiện ích
+│   │   ├── widgets/                    # Widgets tái sử dụng
 │   │   └── main.dart
 │   ├── assets/
 │   │   ├── fonts/
@@ -88,17 +88,17 @@ nhom6/
 │   ├── pubspec.yaml
 │   └── README.md
 │
-├── docs/                          # Project Documentation
+├── docs/                          # Tài liệu dự án
 │   ├── URD/                            # User Requirements Document
 │   ├── SRS/                            # Software Requirements Specification
 │   ├── SAD/                            # Software Architecture Document
 │   ├── DDD/                            # Detailed Design Document
-│   ├── implementation/                 # Implementation docs
-│   ├── testing/                        # Test documentation
-│   ├── installation/                   # Installation guides
-│   ├── source-code/                    # Code documentation
-│   ├── deployment-package/             # Deployment docs
-│   ├── uml-diagrams/                   # UML 2.0 diagrams
+│   ├── implementation/                 # Tài liệu triển khai
+│   ├── testing/                        # Tài liệu kiểm thử
+│   ├── installation/                   # Hướng dẫn cài đặt
+│   ├── source-code/                    # Tài liệu code
+│   ├── deployment-package/             # Tài liệu gói triển khai
+│   ├── uml-diagrams/                   # Sơ đồ UML 2.0
 │   └── README.md
 │
 ├── deployment/                    # Deployment Configurations
@@ -128,73 +128,73 @@ nhom6/
 └── README.md
 ```
 
-## 📊 Tech Stack Summary
+## 📊 Tổng kết ngăn xếp công nghệ
 
 ### Backend
 - **Framework**: Spring Boot 3.x
-- **Language**: Java 17
+- **Ngôn ngữ**: Java 17
 - **Database**: PostgreSQL 14+
 - **Cache**: Redis
-- **Search**: Elasticsearch
+- **Tìm kiếm**: Elasticsearch
 - **Build**: Maven
 
 ### Frontend Web
 - **Framework**: ReactJS 18
-- **Language**: TypeScript
+- **Ngôn ngữ**: TypeScript
 - **State**: Redux Toolkit
 - **UI**: Ant Design / Material-UI
 - **Build**: Vite / Webpack
 
 ### Mobile
 - **Framework**: Flutter 3.x
-- **Language**: Dart 3.x
+- **Ngôn ngữ**: Dart 3.x
 - **State**: Provider / Riverpod
-- **Platform**: iOS & Android
+- **Nền tảng**: iOS và Android
 
 ### DevOps
 - **Container**: Docker
-- **Orchestration**: Kubernetes
-- **Cloud**: AWS (EC2, RDS, S3, CloudFront)
+- **Điều phối**: Kubernetes
+- **Đám mây**: AWS (EC2, RDS, S3, CloudFront)
 - **CI/CD**: GitLab CI / GitHub Actions
-- **Monitoring**: CloudWatch, ELK Stack
+- **Giám sát**: CloudWatch, ELK Stack
 
-### Third-party
-- **Payment**: PayOS
-- **Storage**: Cloudinary
-- **Auth**: JWT
+### Bên thứ ba
+- **Thanh toán**: PayOS
+- **Lưu trữ**: Cloudinary
+- **Xác thực**: JWT
 
-## 🎯 Key Features by Module
+## 🎯 Tính năng chính theo module
 
-### Enterprise Module
-✅ Register & manage profile
-✅ Submit project proposals
-✅ Make payments (PayOS)
-✅ View reports & evaluations
-✅ Request changes/cancellations
+### Module doanh nghiệp
+✅ Đăng ký và quản lý hồ sơ
+✅ Nộp đề xuất dự án
+✅ Thanh toán (PayOS)
+✅ Xem báo cáo và đánh giá
+✅ Yêu cầu thay đổi/hủy
 
-### Talent Module
-✅ Manage profile & skills
-✅ Browse & join projects
-✅ View assigned tasks
-✅ Receive mentor feedback
-✅ Performance tracking
+### Module người tài năng
+✅ Quản lý hồ sơ và kỹ năng
+✅ Duyệt và tham gia dự án
+✅ Xem nhiệm vụ được giao
+✅ Nhận phản hồi từ mentor
+✅ Theo dõi hiệu suất
 
-### Mentor Module
-✅ Accept project invitations
-✅ Break down tasks (Excel templates)
-✅ Evaluate talents
-✅ Submit reports
-✅ Confirm fund redistribution
+### Module Mentor
+✅ Chấp nhận lời mời dự án
+✅ Phân tích nhiệm vụ (Excel templates)
+✅ Đánh giá người tài năng
+✅ Nộp báo cáo
+✅ Xác nhận phân phối lại quỹ
 
-### Lab Admin Module
-✅ Validate enterprises & projects
-✅ Manage mentors & talents
-✅ Allocate funds (70/20/10)
-✅ Publish transparency reports
-✅ Approve/reject changes
+### Module Lab Admin
+✅ Xác thực doanh nghiệp và dự án
+✅ Quản lý mentors và người tài năng
+✅ Phân bổ quỹ (70/20/10)
+✅ Công bố báo cáo minh bạch
+✅ Phê duyệt/từ chối thay đổi
 
-### System Admin Module
-✅ System configuration
-✅ Role & permission management
-✅ User management
-✅ Template maintenance
+### Module System Admin
+✅ Cấu hình hệ thống
+✅ Quản lý vai trò và quyền
+✅ Quản lý người dùng
+✅ Bảo trì template

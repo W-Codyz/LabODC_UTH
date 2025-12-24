@@ -1,57 +1,57 @@
-# Deployment Configuration
+# Cấu hình triển khai
 
 ## 📁 Cấu trúc thư mục
 
 ```
 deployment/
-├── docker/                 # Docker configurations
-│   ├── backend/           # Backend Dockerfile
-│   ├── frontend/          # Frontend Dockerfile
-│   └── docker-compose.yml # Docker Compose setup
+├── docker/                 # Cấu hình Docker
+│   ├── backend/           # Dockerfile Backend
+│   ├── frontend/          # Dockerfile Frontend
+│   └── docker-compose.yml # Thiết lập Docker Compose
 ├── kubernetes/            # Kubernetes manifests
-│   ├── backend/          # Backend K8s resources
-│   ├── frontend/         # Frontend K8s resources
-│   ├── database/         # Database resources
-│   └── ingress/          # Ingress configurations
-├── aws/                  # AWS deployment
+│   ├── backend/          # Tài nguyên K8s Backend
+│   ├── frontend/         # Tài nguyên K8s Frontend
+│   ├── database/         # Tài nguyên Database
+│   └── ingress/          # Cấu hình Ingress
+├── aws/                  # Triển khai AWS
 │   ├── terraform/        # Infrastructure as Code
 │   ├── cloudformation/   # CloudFormation templates
-│   └── scripts/          # AWS CLI scripts
-├── nginx/                # Nginx configurations
-│   ├── nginx.conf       # Main config
-│   └── sites/           # Virtual host configs
-└── scripts/              # Deployment scripts
-    ├── deploy.sh        # Main deployment script
-    ├── rollback.sh      # Rollback script
-    └── health-check.sh  # Health check script
+│   └── scripts/          # Scripts AWS CLI
+├── nginx/                # Cấu hình Nginx
+│   ├── nginx.conf       # Cấu hình chính
+│   └── sites/           # Cấu hình virtual host
+└── scripts/              # Scripts triển khai
+    ├── deploy.sh        # Script triển khai chính
+    ├── rollback.sh      # Script rollback
+    └── health-check.sh  # Script kiểm tra sức khỏe
 ```
 
-## 🐳 Docker Deployment
+## 🐳 Triển khai Docker
 
-### Development
+### Môi trường development
 
 ```bash
 cd deployment/docker
 docker-compose up -d
 ```
 
-### Production
+### Môi trường production
 
 ```bash
 # Build images
 docker-compose -f docker-compose.prod.yml build
 
-# Deploy
+# Triển khai
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## ☸️ Kubernetes Deployment
+## ☸️ Triển khai Kubernetes
 
 ```bash
-# Apply configurations
+# Áp dụng cấu hình
 kubectl apply -f kubernetes/
 
-# Check status
+# Kiểm tra trạng thái
 kubectl get pods
 kubectl get services
 
@@ -59,9 +59,9 @@ kubectl get services
 kubectl scale deployment labodc-backend --replicas=3
 ```
 
-## ☁️ AWS Deployment
+## ☁️ Triển khai AWS
 
-### Using Terraform
+### Sử dụng Terraform
 
 ```bash
 cd aws/terraform
@@ -70,15 +70,15 @@ terraform plan
 terraform apply
 ```
 
-### Services Used
-- **EC2**: Application servers
+### Các dịch vụ sử dụng
+- **EC2**: Máy chủ ứng dụng
 - **RDS**: PostgreSQL database
 - **ElastiCache**: Redis cache
-- **S3**: Static assets & backups
+- **S3**: Tài sản tĩnh và backups
 - **CloudFront**: CDN
-- **Route53**: DNS management
-- **ELB**: Load balancing
-- **ECS/EKS**: Container orchestration
+- **Route53**: Quản lý DNS
+- **ELB**: Cân bằng tải
+- **ECS/EKS**: Điều phối container
 
 ## 🔄 CI/CD Pipeline
 
@@ -110,32 +110,32 @@ deploy:
     - main
 ```
 
-## 🔒 Security
+## 🔒 Bảo mật
 
-- SSL/TLS certificates (Let's Encrypt)
-- JWT authentication
-- API rate limiting
-- Database encryption
-- Environment variables management
-- Secrets management (AWS Secrets Manager)
+- Chứng chỉ SSL/TLS (Let's Encrypt)
+- Xác thực JWT
+- Giới hạn tốc độ API
+- Mã hóa database
+- Quản lý biến môi trường
+- Quản lý secrets (AWS Secrets Manager)
 
-## 📊 Monitoring
+## 📊 Giám sát
 
-- **Application**: Spring Boot Actuator
-- **Infrastructure**: AWS CloudWatch
+- **Ứng dụng**: Spring Boot Actuator
+- **Hạ tầng**: AWS CloudWatch
 - **Logs**: ELK Stack (Elasticsearch, Logstash, Kibana)
 - **APM**: New Relic / Datadog
 - **Uptime**: Pingdom / UptimeRobot
 
-## 🚨 Backup & Recovery
+## 🚨 Sao lưu và khôi phục
 
-- Database backups: Daily automated
-- Application backups: Weekly
-- Retention period: 30 days
-- Recovery time objective (RTO): < 1 hour
-- Recovery point objective (RPO): < 15 minutes
+- Sao lưu database: Tự động hàng ngày
+- Sao lưu ứng dụng: Hàng tuần
+- Thời gian lưu trữ: 30 ngày
+- Mục tiêu thời gian khôi phục (RTO): < 1 giờ
+- Mục tiêu điểm khôi phục (RPO): < 15 phút
 
-## 📝 Health Checks
+## 📝 Kiểm tra sức khỏe
 
 ```bash
 # Backend health

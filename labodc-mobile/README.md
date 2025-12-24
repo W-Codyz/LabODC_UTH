@@ -4,80 +4,80 @@
 
 ```
 labodc-mobile/
-├── android/                 # Android platform files
-├── ios/                    # iOS platform files
+├── android/                 # Tập tin nền tảng Android
+├── ios/                    # Tập tin nền tảng iOS
 ├── lib/
-│   ├── core/              # Core functionality
-│   │   ├── constants/    # App constants
+│   ├── core/              # Chức năng cốt lõi
+│   │   ├── constants/    # Hằng số ứng dụng
 │   │   ├── network/      # API client, interceptors
-│   │   ├── theme/        # App theme & colors
-│   │   └── routes/       # Route definitions
-│   ├── models/           # Data models
-│   ├── providers/        # State management (Provider/Riverpod)
-│   ├── screens/          # UI screens
-│   │   ├── auth/        # Authentication screens
-│   │   ├── enterprise/  # Enterprise screens
-│   │   ├── mentor/      # Mentor screens
-│   │   └── talent/      # Talent screens
-│   ├── services/         # API services
-│   ├── utils/            # Utility functions
-│   ├── widgets/          # Reusable widgets
-│   └── main.dart         # Entry point
+│   │   ├── theme/        # Theme và màu sắc ứng dụng
+│   │   └── routes/       # Định nghĩa routes
+│   ├── models/           # Các data models
+│   ├── providers/        # Quản lý state (Provider/Riverpod)
+│   ├── screens/          # Các màn hình UI
+│   │   ├── auth/        # Màn hình xác thực
+│   │   ├── enterprise/  # Màn hình doanh nghiệp
+│   │   ├── mentor/      # Màn hình mentor
+│   │   └── talent/      # Màn hình người tài năng
+│   ├── services/         # Các dịch vụ API
+│   ├── utils/            # Hàm tiện ích
+│   ├── widgets/          # Các widgets tái sử dụng
+│   └── main.dart         # Điểm vào
 ├── assets/
-│   ├── fonts/           # Custom fonts
-│   └── images/          # Images & icons
-├── test/                # Unit & widget tests
+│   ├── fonts/           # Fonts tùy chỉnh
+│   └── images/          # Hình ảnh và icons
+├── test/                # Unit và widget tests
 ├── pubspec.yaml         # Dependencies
 └── README.md
 ```
 
 ## 📱 Tính năng chính
 
-### For Talents
-- 📋 Browse available projects
-- ✅ Join projects
-- 📊 View tasks & progress
-- 💬 Chat with mentor
-- 📈 Performance reports
-- 👤 Profile management
+### Dành cho người tài năng
+- 📋 Duyệt các dự án có sẵn
+- ✅ Tham gia dự án
+- 📊 Xem nhiệm vụ và tiến độ
+- 💬 Trò chuyện với mentor
+- 📈 Báo cáo hiệu suất
+- 👤 Quản lý hồ sơ
 
-### For Enterprises
-- 🏢 Submit project proposals
-- 💰 Make payments
-- 📑 View project reports
-- ⭐ Evaluate team performance
-- 🔔 Notifications
+### Dành cho doanh nghiệp
+- 🏢 Nộp đề xuất dự án
+- 💰 Thanh toán
+- 📑 Xem báo cáo dự án
+- ⭐ Đánh giá hiệu suất nhóm
+- 🔔 Thông báo
 
-### For Mentors
-- 👥 Manage team
-- ✏️ Assign tasks
-- 📝 Submit reports
-- 💯 Evaluate talents
-- 📊 Track progress
+### Dành cho Mentor
+- 👥 Quản lý nhóm
+- ✏️ Phân công nhiệm vụ
+- 📝 Nộp báo cáo
+- 💯 Đánh giá người tài năng
+- 📊 Theo dõi tiến độ
 
-## 🚀 Getting Started
+## 🚀 Bắt đầu
 
-### Prerequisites
+### Yêu cầu
 - Flutter SDK 3.0+
 - Dart 3.0+
 - Android Studio / Xcode
-- VS Code with Flutter extension
+- VS Code với Flutter extension
 
-### Installation
+### Cài đặt
 
 ```bash
 cd labodc-mobile
 
-# Get dependencies
+# Lấy dependencies
 flutter pub get
 
-# Run app
+# Chạy ứng dụng
 flutter run
 ```
 
-### Environment Variables
+### Biến môi trường
 
-Create `lib/core/config/env.dart`:
+Tạo file `lib/core/config/env.dart`:
 
 ```dart
 class Environment {
@@ -89,34 +89,34 @@ class Environment {
 
 ## 📦 Dependencies
 
-Key packages:
-- **http / dio**: API calls
-- **provider / riverpod**: State management
-- **shared_preferences**: Local storage
-- **flutter_secure_storage**: Secure storage
-- **image_picker**: Image selection
-- **cached_network_image**: Image caching
+Các packages chính:
+- **http / dio**: Gọi API
+- **provider / riverpod**: Quản lý state
+- **shared_preferences**: Lưu trữ local
+- **flutter_secure_storage**: Lưu trữ bảo mật
+- **image_picker**: Chọn hình ảnh
+- **cached_network_image**: Cache hình ảnh
 - **flutter_local_notifications**: Push notifications
-- **charts_flutter**: Charts & graphs
-- **intl**: Internationalization
+- **charts_flutter**: Biểu đồ và đồ thị
+- **intl**: Đa ngôn ngữ
 
-## 🎨 Design
+## 🎨 Thiết kế
 
 - Material Design 3
-- Custom theme colors
-- Dark/Light mode support
-- Responsive layout
+- Màu sắc tùy chỉnh
+- Hỗ trợ chế độ tối/sáng
+- Bố cục responsive
 
-## 🧪 Testing
+## 🧪 Kiểm thử
 
 ```bash
-# Run all tests
+# Chạy tất cả tests
 flutter test
 
-# Run specific test
+# Chạy test cụ thể
 flutter test test/widget_test.dart
 
-# Run with coverage
+# Chạy với coverage
 flutter test --coverage
 ```
 
@@ -133,13 +133,13 @@ flutter build appbundle --release
 flutter build ios --release
 ```
 
-## 📱 Supported Platforms
+## 📱 Nền tảng hỗ trợ
 
 - Android 6.0+ (API 23+)
 - iOS 12.0+
 
-## 🌐 Localization
+## 🌐 Đa ngôn ngữ
 
-App hỗ trợ:
+Ứng dụng hỗ trợ:
 - Tiếng Việt (vi)
 - English (en)

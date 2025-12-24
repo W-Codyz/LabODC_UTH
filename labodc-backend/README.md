@@ -35,13 +35,13 @@ labodc-backend/
 ## 🔑 Các module chính
 
 ### Controllers
-- **Admin**: Quản lý dự án, doanh nghiệp, mentor, talents
+- **Admin**: Quản lý dự án, doanh nghiệp, mentor, người tài năng
 - **Enterprise**: Đăng ký, đề xuất dự án, thanh toán
-- **Mentor**: Quản lý task, đánh giá, báo cáo
-- **Talent**: Tham gia dự án, xem task, nhận feedback
+- **Mentor**: Quản lý nhiệm vụ, đánh giá, báo cáo
+- **Talent**: Tham gia dự án, xem nhiệm vụ, nhận phản hồi
 
 ### Services
-- **AuthService**: Xác thực & phân quyền
+- **AuthService**: Xác thực và phân quyền
 - **ProjectService**: Quản lý dự án
 - **PaymentService**: Xử lý thanh toán (PayOS)
 - **FundService**: Phân phối quỹ 70/20/10
@@ -54,30 +54,30 @@ labodc-backend/
 - **Redis**: Cache & session
 - **Elasticsearch**: Full-text search
 
-## 🚀 Getting Started
+## 🚀 Bắt đầu
 
-### Prerequisites
-- JDK 17 or higher
+### Yêu cầu
+- JDK 17 trở lên
 - Maven 3.8+
 - PostgreSQL 14+
 - Redis
 
-### Installation
+### Cài đặt
 
 ```bash
-# Clone repository
+# Di chuyển vào thư mục backend
 cd labodc-backend
 
-# Install dependencies
+# Cài đặt dependencies
 mvn clean install
 
-# Run application
+# Chạy ứng dụng
 mvn spring-boot:run
 ```
 
-### Environment Variables
+### Biến môi trường
 
-Create `application-local.yml` or set environment variables:
+Tạo file `application-local.yml` hoặc cấu hình biến môi trường:
 
 ```yaml
 spring:
@@ -104,16 +104,16 @@ cloudinary:
   api-secret: your_cloudinary_secret
 ```
 
-## 📝 API Documentation
+## 📝 Tài liệu API
 
-API documentation sẽ có tại: `http://localhost:8080/swagger-ui.html`
+Tài liệu API có sẵn tại: `http://localhost:8080/swagger-ui.html`
 
-## 🧪 Testing
+## 🧪 Kiểm thử
 
 ```bash
-# Run all tests
+# Chạy tất cả tests
 mvn test
 
-# Run specific test
+# Chạy test cụ thể
 mvn test -Dtest=YourTestClass
 ```
