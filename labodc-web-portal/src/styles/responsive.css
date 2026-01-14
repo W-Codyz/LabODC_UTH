@@ -1,0 +1,105 @@
+/* Responsive Breakpoints */
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .page-title {
+    font-size: var(--font-xl);
+  }
+
+  .section-title {
+    font-size: var(--font-lg);
+  }
+
+  /* Hide sidebar on mobile */
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    transition: left var(--transition-normal);
+    z-index: var(--z-fixed);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* Adjust header for mobile */
+  .header {
+    padding: 0 var(--spacing-md);
+  }
+
+  /* Stack cards vertically */
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Full width forms */
+  .form-container {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Tablet (768px - 1366px) */
+@media (min-width: 768px) and (max-width: 1366px) {
+  .container {
+    max-width: 960px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Laptop (1366px - 1920px) */
+@media (min-width: 1366px) and (max-width: 1920px) {
+  .container {
+    max-width: 1200px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Desktop (min-width: 1920px) */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1600px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Utility classes for responsive design */
+.mobile-only {
+  display: block;
+}
+
+.tablet-up {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+
+  .tablet-up {
+    display: block;
+  }
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 1366px) {
+  .desktop-only {
+    display: block;
+  }
+}
