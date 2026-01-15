@@ -1,0 +1,86 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-hero);
+  padding: var(--spacing-lg);
+}
+
+.loginBox {
+  width: 100%;
+  max-width: 450px;
+}
+
+.logoSection {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.logo {
+  height: 50px;
+  margin-bottom: var(--spacing-md);
+  background-color: white;
+  margin: 0 auto;
+}
+
+.title {
+  color: var(--text-white);
+  font-size: var(--font-xxl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-xs);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-md);
+}
+
+.card {
+  box-shadow: var(--shadow-xl);
+  border-radius: var(--radius-lg);
+}
+
+.cardTitle {
+  text-align: center;
+  font-size: var(--font-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.forgotLink {
+  color: var(--text-link);
+  font-size: var(--font-sm);
+}
+
+.registerLink {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  margin-top: var(--spacing-md);
+}
+
+.registerLink a {
+  color: var(--text-link);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  .logo {
+    height: 60px;
+  }
+
+  .title {
+    font-size: var(--font-xl);
+  }
+}
