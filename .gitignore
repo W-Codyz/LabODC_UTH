@@ -54,15 +54,9 @@ labodc-mobile/android/captures/
 labodc-mobile/*.iml
 
 # Environment Variables
-.env
-.env.local
-.env.*.local
-*.env
+
 
 # Database
-*.sql
-*.db
-*.sqlite
 
 # Logs
 logs/
