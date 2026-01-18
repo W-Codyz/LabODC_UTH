@@ -3,6 +3,32 @@
 -- =====================================================
 
 -- =====================================================
+-- DATABASE ENUMS FOR NOTIFICATIONS & SYSTEM
+-- =====================================================
+
+-- Notification related enums
+CREATE TYPE notification_type_enum AS ENUM (
+    'INFO', 'SUCCESS', 'WARNING', 'ERROR', 
+    'PROJECT_UPDATE', 'TASK_ASSIGNED', 'PAYMENT_RECEIVED', 
+    'REPORT_DUE', 'EVALUATION_RECEIVED', 'MENTOR_INVITATION', 'SYSTEM_ALERT'
+);
+CREATE TYPE notification_priority_enum AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT');
+CREATE TYPE notification_entity_enum AS ENUM ('PROJECT', 'TASK', 'PAYMENT', 'REPORT', 'EVALUATION', 'USER', 'ENTERPRISE', 'OTHER');
+CREATE TYPE digest_frequency_enum AS ENUM ('IMMEDIATE', 'DAILY', 'WEEKLY');
+
+-- Email & Queue related enums
+CREATE TYPE email_status_enum AS ENUM ('QUEUED', 'SENDING', 'SENT', 'FAILED', 'CANCELLED');
+
+-- System related enums
+CREATE TYPE data_type_enum AS ENUM ('STRING', 'INTEGER', 'BOOLEAN', 'DECIMAL', 'JSON');
+CREATE TYPE template_type_enum AS ENUM ('TASK_BREAKDOWN', 'FUND_DISTRIBUTION', 'REPORT', 'EVALUATION', 'OTHER');
+CREATE TYPE audit_action_enum AS ENUM (
+    'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 
+    'APPROVE', 'REJECT', 'VALIDATE', 'DISBURSE', 'DOWNLOAD', 'UPLOAD'
+);
+CREATE TYPE audit_status_enum AS ENUM ('SUCCESS', 'FAILED', 'ERROR');
+
+-- =====================================================
 -- 9. NOTIFICATION MODULE
 -- =====================================================
 
@@ -14,12 +40,12 @@ CREATE TABLE notifications (
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     
     -- Notification Info
-    type VARCHAR(50) NOT NULL,
+    type notification_type_enum NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     
     -- Related Entity
-    entity_type VARCHAR(50), -- PROJECT, TASK, PAYMENT, REPORT, EVALUATION
+    entity_type notification_entity_enum,
     entity_id BIGINT,
     
     -- Action Link
@@ -27,7 +53,7 @@ CREATE TABLE notifications (
     action_text VARCHAR(100),
     
     -- Priority
-    priority VARCHAR(20) DEFAULT 'NORMAL',
+    priority notification_priority_enum DEFAULT 'NORMAL',
     
     -- Status
     is_read BOOLEAN DEFAULT FALSE,
@@ -43,14 +69,7 @@ CREATE TABLE notifications (
     metadata JSONB,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
-    
-    CONSTRAINT check_type CHECK (type IN ('INFO', 'SUCCESS', 'WARNING', 'ERROR', 'PROJECT_UPDATE', 
-                                          'TASK_ASSIGNED', 'PAYMENT_RECEIVED', 'REPORT_DUE', 
-                                          'EVALUATION_RECEIVED', 'MENTOR_INVITATION', 'SYSTEM_ALERT')),
-    CONSTRAINT check_priority CHECK (priority IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')),
-    CONSTRAINT check_entity_type CHECK (entity_type IN ('PROJECT', 'TASK', 'PAYMENT', 'REPORT', 
-                                                         'EVALUATION', 'USER', 'ENTERPRISE', 'OTHER'))
+    expires_at TIMESTAMP
 );
 
 CREATE INDEX idx_notifications_user ON notifications(user_id);
@@ -80,7 +99,7 @@ CREATE TABLE notification_preferences (
     system_alerts BOOLEAN DEFAULT TRUE,
     
     -- Frequency
-    digest_frequency VARCHAR(20) DEFAULT 'IMMEDIATE', -- IMMEDIATE, DAILY, WEEKLY
+    digest_frequency digest_frequency_enum DEFAULT 'IMMEDIATE',
     
     -- Quiet Hours
     quiet_hours_enabled BOOLEAN DEFAULT FALSE,
@@ -91,9 +110,7 @@ CREATE TABLE notification_preferences (
     timezone VARCHAR(50) DEFAULT 'Asia/Ho_Chi_Minh',
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_digest_frequency CHECK (digest_frequency IN ('IMMEDIATE', 'DAILY', 'WEEKLY'))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_notification_preferences_user ON notification_preferences(user_id);
@@ -128,7 +145,7 @@ CREATE TABLE email_queue (
     priority INTEGER DEFAULT 0,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'QUEUED',
+    status email_status_enum DEFAULT 'QUEUED',
     
     -- Sending
     attempts INTEGER DEFAULT 0,
@@ -138,9 +155,7 @@ CREATE TABLE email_queue (
     sent_at TIMESTAMP,
     error_message TEXT,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_status CHECK (status IN ('QUEUED', 'SENDING', 'SENT', 'FAILED', 'CANCELLED'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_email_queue_status ON email_queue(status);
@@ -158,7 +173,7 @@ CREATE TABLE system_configs (
     id BIGSERIAL PRIMARY KEY,
     config_key VARCHAR(100) UNIQUE NOT NULL,
     config_value TEXT NOT NULL,
-    data_type VARCHAR(20) NOT NULL, -- STRING, INTEGER, BOOLEAN, DECIMAL, JSON
+    data_type data_type_enum NOT NULL,
     description TEXT,
     
     -- Settings
@@ -169,11 +184,9 @@ CREATE TABLE system_configs (
     validation_rules JSONB, -- {min: 0, max: 100, pattern: "^[0-9]+$"}
     
     -- Audit
-    updated_by BIGINT REFERENCES users(id),
+    updated_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_data_type CHECK (data_type IN ('STRING', 'INTEGER', 'BOOLEAN', 'DECIMAL', 'JSON'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_system_configs_key ON system_configs(config_key);
@@ -188,7 +201,7 @@ CREATE TABLE config_change_history (
     old_value TEXT,
     new_value TEXT,
     reason TEXT,
-    changed_by BIGINT NOT NULL REFERENCES users(id),
+    changed_by BIGINT NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -203,12 +216,11 @@ CREATE TABLE excel_templates (
     
     -- Template Info
     template_name VARCHAR(100) UNIQUE NOT NULL,
-    template_type VARCHAR(50) NOT NULL, -- TASK_BREAKDOWN, FUND_DISTRIBUTION, REPORT
+    template_type template_type_enum NOT NULL,
     description TEXT,
     
-    -- File
-    file_url VARCHAR(500) NOT NULL,
-    file_size BIGINT,
+    -- File (centralized)
+    file_id BIGINT, -- References files table
     version VARCHAR(20) NOT NULL,
     
     -- Schema Definition (for parsing)
@@ -219,12 +231,9 @@ CREATE TABLE excel_templates (
     is_active BOOLEAN DEFAULT TRUE,
     
     -- Audit
-    created_by BIGINT REFERENCES users(id),
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_template_type CHECK (template_type IN ('TASK_BREAKDOWN', 'FUND_DISTRIBUTION', 
-                                                             'REPORT', 'EVALUATION', 'OTHER'))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_excel_templates_name ON excel_templates(template_name);
@@ -243,7 +252,7 @@ CREATE TABLE audit_logs (
     user_role VARCHAR(50),
     
     -- Action
-    action VARCHAR(100) NOT NULL, -- CREATE, UPDATE, DELETE, LOGIN, LOGOUT, APPROVE, REJECT
+    action audit_action_enum NOT NULL,
     entity_type VARCHAR(50) NOT NULL, -- USER, PROJECT, PAYMENT, TASK, REPORT
     entity_id BIGINT,
     
@@ -261,14 +270,10 @@ CREATE TABLE audit_logs (
     request_path VARCHAR(500),
     
     -- Result
-    status VARCHAR(20), -- SUCCESS, FAILED, ERROR
+    status audit_status_enum,
     error_message TEXT,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_action CHECK (action IN ('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 
-                                              'APPROVE', 'REJECT', 'VALIDATE', 'DISBURSE', 'DOWNLOAD', 'UPLOAD')),
-    CONSTRAINT check_status CHECK (status IN ('SUCCESS', 'FAILED', 'ERROR'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
@@ -622,3 +627,18 @@ INSERT INTO system_configs (config_key, config_value, data_type, description, ed
 -- =====================================================
 
 COMMENT ON DATABASE labodc IS 'LabOdc - Hệ thống quản lý kết nối doanh nghiệp với sinh viên UTH';
+
+-- =====================================================
+-- FOREIGN KEY CONSTRAINTS FOR CENTRALIZED FILE MANAGEMENT
+-- (To be added after files table is created in V1_3 migration)
+-- =====================================================
+
+-- Note: These constraints will be added in V1_3__Centralized_File_Management.sql
+-- after the files table is created:
+--
+-- ALTER TABLE excel_templates ADD CONSTRAINT fk_excel_templates_file 
+--     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE SET NULL;
+
+-- =====================================================
+-- END OF NOTIFICATIONS & SYSTEM CONFIG MODULE
+-- =====================================================

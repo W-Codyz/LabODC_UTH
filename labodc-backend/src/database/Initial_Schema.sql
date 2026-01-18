@@ -5,6 +5,33 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm"; -- For text search optimization
 CREATE EXTENSION IF NOT EXISTS "btree_gin"; -- For multi-column indexes
 
 -- =====================================================
+-- DATABASE ENUMS (Type Safety)
+-- =====================================================
+
+-- User related enums
+CREATE TYPE user_role_enum AS ENUM ('SYSTEM_ADMIN', 'LAB_ADMIN', 'ENTERPRISE', 'TALENT', 'MENTOR');
+CREATE TYPE user_status_enum AS ENUM ('PENDING', 'ACTIVE', 'INACTIVE', 'LOCKED', 'SUSPENDED');
+
+-- Enterprise related enums
+CREATE TYPE document_type_enum AS ENUM ('BUSINESS_LICENSE', 'TAX_REGISTRATION', 'COMPANY_PROFILE', 'OTHER');
+CREATE TYPE verification_action_enum AS ENUM ('APPROVED', 'REJECTED', 'REQUEST_INFO', 'REVOKED');
+
+-- Talent related enums
+CREATE TYPE proficiency_level_enum AS ENUM ('BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT');
+CREATE TYPE employment_type_enum AS ENUM ('FULL_TIME', 'PART_TIME', 'INTERNSHIP', 'FREELANCE', 'CONTRACT');
+
+-- Mentor related enums
+CREATE TYPE invitation_status_enum AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED');
+
+-- Project related enums
+CREATE TYPE project_status_enum AS ENUM ('DRAFT', 'PENDING_VALIDATION', 'VALIDATED', 'REJECTED', 'RECRUITING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED', 'ARCHIVED');
+CREATE TYPE project_member_role_enum AS ENUM ('MEMBER', 'LEADER');
+CREATE TYPE project_member_status_enum AS ENUM ('ACTIVE', 'LEFT', 'REMOVED');
+CREATE TYPE milestone_status_enum AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'DELAYED');
+CREATE TYPE change_request_type_enum AS ENUM ('SCOPE_CHANGE', 'TIMELINE_CHANGE', 'BUDGET_CHANGE', 'CANCELLATION');
+CREATE TYPE change_request_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
+
+-- =====================================================
 -- 1. AUTHENTICATION & AUTHORIZATION MODULE
 -- =====================================================
 
@@ -13,8 +40,8 @@ CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    role user_role_enum NOT NULL,
+    status user_status_enum NOT NULL DEFAULT 'PENDING',
     email_verified BOOLEAN DEFAULT FALSE,
     email_verified_at TIMESTAMP,
     verification_token VARCHAR(255),
@@ -24,16 +51,17 @@ CREATE TABLE users (
     locked_until TIMESTAMP,
     last_login_at TIMESTAMP,
     last_login_ip VARCHAR(45),
-    avatar_url VARCHAR(500),
+    
+    -- Avatar (centralized file management)
+    avatar_file_id BIGINT, -- References files table (added later)
+    
     phone VARCHAR(20),
     timezone VARCHAR(50) DEFAULT 'Asia/Ho_Chi_Minh',
     language VARCHAR(10) DEFAULT 'vi',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
-    CONSTRAINT check_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT check_role CHECK (role IN ('SYSTEM_ADMIN', 'LAB_ADMIN', 'ENTERPRISE', 'TALENT', 'MENTOR')),
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'ACTIVE', 'INACTIVE', 'LOCKED', 'SUSPENDED'))
+    CONSTRAINT check_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
 CREATE INDEX idx_users_email ON users(email);
@@ -145,7 +173,7 @@ CREATE INDEX idx_login_attempts_attempted ON login_attempts(attempted_at);
 -- 2.1 Enterprises table
 CREATE TABLE enterprises (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT UNIQUE NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    user_id BIGINT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     company_name VARCHAR(255) NOT NULL,
     tax_code VARCHAR(20) UNIQUE NOT NULL,
     business_license_number VARCHAR(50),
@@ -162,11 +190,14 @@ CREATE TABLE enterprises (
     company_size VARCHAR(50),
     year_established INTEGER,
     description TEXT,
-    logo_url VARCHAR(500),
-    banner_url VARCHAR(500),
+    
+    -- Logo & Banner (centralized file management)
+    logo_file_id BIGINT, -- References files table
+    banner_file_id BIGINT, -- References files table
+    
     verified BOOLEAN DEFAULT FALSE,
     verified_at TIMESTAMP,
-    verified_by BIGINT REFERENCES users(id),
+    verified_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     verification_note TEXT,
     rating_average DECIMAL(3,2) DEFAULT 0.00,
     total_projects INTEGER DEFAULT 0,
@@ -186,18 +217,18 @@ CREATE INDEX idx_enterprises_verified ON enterprises(verified);
 CREATE TABLE enterprise_documents (
     id BIGSERIAL PRIMARY KEY,
     enterprise_id BIGINT NOT NULL REFERENCES enterprises(id) ON DELETE CASCADE,
-    document_type VARCHAR(50) NOT NULL,
+    document_type document_type_enum NOT NULL,
     document_name VARCHAR(255) NOT NULL,
-    file_url VARCHAR(500) NOT NULL,
-    file_size BIGINT,
-    file_type VARCHAR(50),
+    
+    -- File reference (centralized)
+    file_id BIGINT, -- References files table
+    
     verified BOOLEAN DEFAULT FALSE,
     verified_at TIMESTAMP,
-    verified_by BIGINT REFERENCES users(id),
+    verified_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     verification_note TEXT,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    uploaded_by BIGINT REFERENCES users(id),
-    CONSTRAINT check_document_type CHECK (document_type IN ('BUSINESS_LICENSE', 'TAX_REGISTRATION', 'COMPANY_PROFILE', 'OTHER'))
+    uploaded_by BIGINT REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_enterprise_docs_enterprise ON enterprise_documents(enterprise_id);
@@ -206,13 +237,12 @@ CREATE INDEX idx_enterprise_docs_enterprise ON enterprise_documents(enterprise_i
 CREATE TABLE enterprise_verification_history (
     id BIGSERIAL PRIMARY KEY,
     enterprise_id BIGINT NOT NULL REFERENCES enterprises(id) ON DELETE CASCADE,
-    action VARCHAR(50) NOT NULL,
-    performed_by BIGINT NOT NULL REFERENCES users(id),
+    action verification_action_enum NOT NULL,
+    performed_by BIGINT NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     note TEXT,
     previous_status VARCHAR(20),
     new_status VARCHAR(20),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_action CHECK (action IN ('APPROVED', 'REJECTED', 'REQUEST_INFO', 'REVOKED'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_enterprise_verification_enterprise ON enterprise_verification_history(enterprise_id);
@@ -224,7 +254,7 @@ CREATE INDEX idx_enterprise_verification_enterprise ON enterprise_verification_h
 -- 3.1 Talents table
 CREATE TABLE talents (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT UNIQUE NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    user_id BIGINT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     full_name VARCHAR(255) NOT NULL,
     date_of_birth DATE,
     gender VARCHAR(10),
@@ -242,7 +272,10 @@ CREATE TABLE talents (
     portfolio_url VARCHAR(500),
     github_url VARCHAR(500),
     linkedin_url VARCHAR(500),
-    cv_url VARCHAR(500),
+    
+    -- CV file (centralized)
+    cv_file_id BIGINT, -- References files table
+    
     career_goals TEXT,
     preferred_technologies JSONB,
     work_availability VARCHAR(50),
@@ -270,16 +303,15 @@ CREATE TABLE talent_skills (
     talent_id BIGINT NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
     skill_name VARCHAR(100) NOT NULL,
     skill_category VARCHAR(50),
-    proficiency_level VARCHAR(20) NOT NULL,
+    proficiency_level proficiency_level_enum NOT NULL,
     years_of_experience DECIMAL(3,1),
     last_used_date DATE,
     verified BOOLEAN DEFAULT FALSE,
-    verified_by BIGINT REFERENCES users(id),
+    verified_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     verified_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(talent_id, skill_name),
-    CONSTRAINT check_proficiency CHECK (proficiency_level IN ('BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'))
+    UNIQUE(talent_id, skill_name)
 );
 
 CREATE INDEX idx_talent_skills_talent ON talent_skills(talent_id);
@@ -295,7 +327,10 @@ CREATE TABLE talent_certifications (
     credential_url VARCHAR(500),
     issue_date DATE NOT NULL,
     expiration_date DATE,
-    certificate_file_url VARCHAR(500),
+    
+    -- Certificate file (centralized)
+    certificate_file_id BIGINT, -- References files table
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -326,7 +361,7 @@ CREATE TABLE talent_work_experiences (
     talent_id BIGINT NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
     company_name VARCHAR(255) NOT NULL,
     position VARCHAR(100) NOT NULL,
-    employment_type VARCHAR(50),
+    employment_type employment_type_enum,
     location VARCHAR(255),
     is_remote BOOLEAN DEFAULT FALSE,
     start_date DATE NOT NULL,
@@ -385,12 +420,12 @@ CREATE TABLE mentor_expertise (
     mentor_id BIGINT NOT NULL REFERENCES mentors(id) ON DELETE CASCADE,
     skill_name VARCHAR(100) NOT NULL,
     skill_category VARCHAR(50),
-    proficiency_level VARCHAR(20) NOT NULL,
+    proficiency_level proficiency_level_enum NOT NULL,
     years_of_experience DECIMAL(4,1),
     can_teach BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(mentor_id, skill_name),
-    CONSTRAINT check_proficiency CHECK (proficiency_level IN ('INTERMEDIATE', 'ADVANCED', 'EXPERT'))
+    CONSTRAINT check_mentor_proficiency CHECK (proficiency_level IN ('INTERMEDIATE', 'ADVANCED', 'EXPERT'))
 );
 
 CREATE INDEX idx_mentor_expertise_mentor ON mentor_expertise(mentor_id);
@@ -401,17 +436,16 @@ CREATE TABLE mentor_invitations (
     id BIGSERIAL PRIMARY KEY,
     project_id BIGINT NOT NULL, -- Will be created later
     mentor_id BIGINT NOT NULL REFERENCES mentors(id) ON DELETE CASCADE,
-    invited_by BIGINT NOT NULL REFERENCES users(id),
+    invited_by BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     invitation_message TEXT,
     compensation_amount DECIMAL(15,2),
     expected_effort_hours INTEGER,
-    status VARCHAR(20) DEFAULT 'PENDING',
+    status invitation_status_enum DEFAULT 'PENDING',
     response_message TEXT,
     responded_at TIMESTAMP,
     availability_info JSONB,
     expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_mentor_invitations_mentor ON mentor_invitations(mentor_id);
@@ -442,7 +476,7 @@ CREATE INDEX idx_mentor_availability_mentor ON mentor_availability(mentor_id);
 -- 5.1 Projects table
 CREATE TABLE projects (
     id BIGSERIAL PRIMARY KEY,
-    enterprise_id BIGINT NOT NULL REFERENCES enterprises(id) ON DELETE RESTRICT,
+    enterprise_id BIGINT NOT NULL REFERENCES enterprises(id) ON DELETE CASCADE,
     mentor_id BIGINT REFERENCES mentors(id) ON DELETE SET NULL,
     
     -- Project Info
@@ -467,7 +501,7 @@ CREATE TABLE projects (
     current_members_count INTEGER DEFAULT 0,
     
     -- Status
-    status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+    status project_status_enum NOT NULL DEFAULT 'DRAFT',
     progress_percentage INTEGER DEFAULT 0,
     
     -- Validation
@@ -490,10 +524,7 @@ CREATE TABLE projects (
     CONSTRAINT check_budget CHECK (budget > 0),
     CONSTRAINT check_dates CHECK (end_date > start_date),
     CONSTRAINT check_students CHECK (number_of_students BETWEEN 3 AND 10),
-    CONSTRAINT check_progress CHECK (progress_percentage BETWEEN 0 AND 100),
-    CONSTRAINT check_status CHECK (status IN ('DRAFT', 'PENDING_VALIDATION', 'VALIDATED', 'REJECTED', 
-                                               'RECRUITING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 
-                                               'CANCELLED', 'ARCHIVED'))
+    CONSTRAINT check_progress CHECK (progress_percentage BETWEEN 0 AND 100)
 );
 
 CREATE INDEX idx_projects_enterprise ON projects(enterprise_id);
@@ -524,12 +555,11 @@ CREATE TABLE project_skill_requirements (
     id BIGSERIAL PRIMARY KEY,
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     skill_name VARCHAR(100) NOT NULL,
-    proficiency_level VARCHAR(20) NOT NULL,
+    proficiency_level proficiency_level_enum NOT NULL,
     is_required BOOLEAN DEFAULT TRUE,
     priority INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(project_id, skill_name),
-    CONSTRAINT check_proficiency CHECK (proficiency_level IN ('BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'))
+    UNIQUE(project_id, skill_name)
 );
 
 CREATE INDEX idx_project_skill_reqs_project ON project_skill_requirements(project_id);
@@ -538,12 +568,12 @@ CREATE INDEX idx_project_skill_reqs_project ON project_skill_requirements(projec
 CREATE TABLE project_attachments (
     id BIGSERIAL PRIMARY KEY,
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    file_name VARCHAR(255) NOT NULL,
-    file_url VARCHAR(500) NOT NULL,
-    file_type VARCHAR(50),
-    file_size BIGINT,
+    
+    -- File reference (centralized)
+    file_id BIGINT, -- References files table
+    
     description TEXT,
-    uploaded_by BIGINT REFERENCES users(id),
+    uploaded_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -556,23 +586,21 @@ CREATE TABLE project_members (
     talent_id BIGINT NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
     
     -- Role
-    role VARCHAR(50) DEFAULT 'MEMBER', -- MEMBER, LEADER
+    role project_member_role_enum DEFAULT 'MEMBER',
     
     -- Join Info
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     left_at TIMESTAMP,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, LEFT, REMOVED
+    status project_member_status_enum DEFAULT 'ACTIVE',
     
     -- Performance
     tasks_assigned INTEGER DEFAULT 0,
     tasks_completed INTEGER DEFAULT 0,
     hours_contributed INTEGER DEFAULT 0,
     
-    UNIQUE(project_id, talent_id),
-    CONSTRAINT check_role CHECK (role IN ('MEMBER', 'LEADER')),
-    CONSTRAINT check_status CHECK (status IN ('ACTIVE', 'LEFT', 'REMOVED'))
+    UNIQUE(project_id, talent_id)
 );
 
 CREATE INDEX idx_project_members_project ON project_members(project_id);
@@ -595,15 +623,13 @@ CREATE TABLE project_milestones (
     completed_date DATE,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'PENDING',
+    status milestone_status_enum DEFAULT 'PENDING',
     
     -- Order
     display_order INTEGER,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'DELAYED'))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_project_milestones_project ON project_milestones(project_id);
@@ -615,25 +641,22 @@ CREATE TABLE project_change_requests (
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     
     -- Request Info
-    request_type VARCHAR(50) NOT NULL, -- SCOPE_CHANGE, TIMELINE_CHANGE, BUDGET_CHANGE, CANCELLATION
-    requested_by BIGINT NOT NULL REFERENCES users(id),
+    request_type change_request_type_enum NOT NULL,
+    requested_by BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     reason TEXT NOT NULL,
     
     -- Changes Detail
     changes_detail JSONB,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'PENDING',
+    status change_request_status_enum DEFAULT 'PENDING',
     
     -- Review
-    reviewed_by BIGINT REFERENCES users(id),
+    reviewed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     reviewed_at TIMESTAMP,
     review_note TEXT,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_request_type CHECK (request_type IN ('SCOPE_CHANGE', 'TIMELINE_CHANGE', 'BUDGET_CHANGE', 'CANCELLATION')),
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_project_change_requests_project ON project_change_requests(project_id);
@@ -645,3 +668,36 @@ ALTER TABLE mentor_invitations
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
 
 CREATE INDEX idx_mentor_invitations_project ON mentor_invitations(project_id);
+
+-- =====================================================
+-- FOREIGN KEY CONSTRAINTS FOR CENTRALIZED FILE MANAGEMENT
+-- (To be added after files table is created in V1_3 migration)
+-- =====================================================
+
+-- Note: These constraints will be added in V1_3__Centralized_File_Management.sql
+-- after the files table is created:
+--
+-- ALTER TABLE users ADD CONSTRAINT fk_users_avatar_file 
+--     FOREIGN KEY (avatar_file_id) REFERENCES files(id) ON DELETE SET NULL;
+--
+-- ALTER TABLE enterprises ADD CONSTRAINT fk_enterprises_logo_file 
+--     FOREIGN KEY (logo_file_id) REFERENCES files(id) ON DELETE SET NULL;
+--
+-- ALTER TABLE enterprises ADD CONSTRAINT fk_enterprises_banner_file 
+--     FOREIGN KEY (banner_file_id) REFERENCES files(id) ON DELETE SET NULL;
+--
+-- ALTER TABLE enterprise_documents ADD CONSTRAINT fk_enterprise_documents_file 
+--     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE SET NULL;
+--
+-- ALTER TABLE talents ADD CONSTRAINT fk_talents_cv_file 
+--     FOREIGN KEY (cv_file_id) REFERENCES files(id) ON DELETE SET NULL;
+--
+-- ALTER TABLE talent_certifications ADD CONSTRAINT fk_talent_certifications_file 
+--     FOREIGN KEY (certificate_file_id) REFERENCES files(id) ON DELETE SET NULL;
+--
+-- ALTER TABLE project_attachments ADD CONSTRAINT fk_project_attachments_file 
+--     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE;
+
+-- =====================================================
+-- END OF INITIAL SCHEMA
+-- =====================================================

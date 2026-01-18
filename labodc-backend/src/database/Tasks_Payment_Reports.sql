@@ -3,6 +3,33 @@
 -- =====================================================
 
 -- =====================================================
+-- DATABASE ENUMS FOR TASKS, PAYMENT, REPORTS
+-- =====================================================
+
+-- Task related enums
+CREATE TYPE task_priority_enum AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+CREATE TYPE task_status_enum AS ENUM ('TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED', 'CANCELLED');
+CREATE TYPE dependency_type_enum AS ENUM ('FINISH_TO_START', 'START_TO_START', 'FINISH_TO_FINISH', 'START_TO_FINISH');
+
+-- Payment related enums
+CREATE TYPE payment_status_enum AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED', 'EXPIRED');
+CREATE TYPE transaction_type_enum AS ENUM ('PAYMENT', 'REFUND', 'CHARGEBACK');
+CREATE TYPE transaction_status_enum AS ENUM ('SUCCESS', 'FAILED', 'PENDING');
+CREATE TYPE fund_allocation_status_enum AS ENUM ('ALLOCATED', 'DISTRIBUTED', 'COMPLETED');
+CREATE TYPE fund_distribution_status_enum AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'ON_HOLD');
+CREATE TYPE recipient_type_enum AS ENUM ('TEAM', 'MENTOR', 'LAB', 'TALENT');
+CREATE TYPE team_fund_status_enum AS ENUM ('DRAFT', 'SUBMITTED', 'APPROVED_BY_MENTOR', 'APPROVED_BY_LAB', 'REJECTED', 'DISBURSED');
+CREATE TYPE advance_reason_enum AS ENUM ('PAYMENT_DELAY', 'EMERGENCY', 'OTHER');
+CREATE TYPE repayment_status_enum AS ENUM ('OUTSTANDING', 'PARTIALLY_REPAID', 'FULLY_REPAID');
+CREATE TYPE disbursement_reference_enum AS ENUM ('FUND_DISTRIBUTION', 'HYBRID_ADVANCE', 'REFUND');
+CREATE TYPE payment_method_enum AS ENUM ('BANK_TRANSFER', 'MOMO', 'PAYPAL', 'CASH');
+
+-- Report related enums
+CREATE TYPE report_type_enum AS ENUM ('WEEKLY', 'MONTHLY', 'MILESTONE', 'FINAL', 'QUARTERLY', 'ANNUAL');
+CREATE TYPE report_status_enum AS ENUM ('DRAFT', 'SUBMITTED', 'REVIEWED', 'PUBLISHED', 'ARCHIVED');
+CREATE TYPE evaluation_grade_enum AS ENUM ('A', 'B', 'C', 'D', 'F');
+
+-- =====================================================
 -- 6. TASK MODULE
 -- =====================================================
 
@@ -18,11 +45,11 @@ CREATE TABLE tasks (
     
     -- Assignment
     assigned_to BIGINT REFERENCES talents(id) ON DELETE SET NULL,
-    created_by BIGINT NOT NULL REFERENCES mentors(id),
+    created_by BIGINT NOT NULL REFERENCES mentors(id) ON DELETE CASCADE,
     
     -- Priority & Status
-    priority VARCHAR(20) DEFAULT 'MEDIUM',
-    status VARCHAR(20) DEFAULT 'TODO',
+    priority task_priority_enum DEFAULT 'MEDIUM',
+    status task_status_enum DEFAULT 'TODO',
     
     -- Timeline
     start_date DATE,
@@ -47,8 +74,6 @@ CREATE TABLE tasks (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     UNIQUE(project_id, task_id),
-    CONSTRAINT check_priority CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
-    CONSTRAINT check_status CHECK (status IN ('TODO', 'IN_PROGRESS', 'IN_REVIEW', 'COMPLETED', 'BLOCKED', 'CANCELLED')),
     CONSTRAINT check_dates CHECK (due_date >= start_date),
     CONSTRAINT check_progress CHECK (progress_percentage BETWEEN 0 AND 100)
 );
@@ -67,10 +92,9 @@ CREATE TABLE task_dependencies (
     id BIGSERIAL PRIMARY KEY,
     task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     depends_on_task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    dependency_type VARCHAR(20) DEFAULT 'FINISH_TO_START',
+    dependency_type dependency_type_enum DEFAULT 'FINISH_TO_START',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(task_id, depends_on_task_id),
-    CONSTRAINT check_dependency_type CHECK (dependency_type IN ('FINISH_TO_START', 'START_TO_START', 'FINISH_TO_FINISH', 'START_TO_FINISH')),
     CONSTRAINT check_no_self_dependency CHECK (task_id != depends_on_task_id)
 );
 
@@ -97,11 +121,11 @@ CREATE INDEX idx_task_comments_parent ON task_comments(parent_comment_id);
 CREATE TABLE task_attachments (
     id BIGSERIAL PRIMARY KEY,
     task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    file_name VARCHAR(255) NOT NULL,
-    file_url VARCHAR(500) NOT NULL,
-    file_type VARCHAR(50),
-    file_size BIGINT,
-    uploaded_by BIGINT REFERENCES users(id),
+    
+    -- File reference (centralized)
+    file_id BIGINT, -- References files table
+    
+    uploaded_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -150,7 +174,7 @@ CREATE TABLE payments (
     payos_payment_link VARCHAR(500),
     
     -- Status
-    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    status payment_status_enum NOT NULL DEFAULT 'PENDING',
     payment_method VARCHAR(50),
     
     -- Timeline
@@ -162,8 +186,7 @@ CREATE TABLE payments (
     description TEXT,
     note TEXT,
     
-    CONSTRAINT check_amount CHECK (amount > 0),
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED', 'REFUNDED', 'EXPIRED'))
+    CONSTRAINT check_amount CHECK (amount > 0)
 );
 
 CREATE INDEX idx_payments_project ON payments(project_id);
@@ -181,20 +204,17 @@ CREATE TABLE payment_transactions (
     
     -- Transaction Info
     transaction_id VARCHAR(100) UNIQUE NOT NULL,
-    transaction_type VARCHAR(50) NOT NULL,
+    transaction_type transaction_type_enum NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     
     -- PayOS Response
     payos_response JSONB,
     
     -- Status
-    status VARCHAR(20) NOT NULL,
+    status transaction_status_enum NOT NULL,
     
     -- Audit
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_transaction_type CHECK (transaction_type IN ('PAYMENT', 'REFUND', 'CHARGEBACK')),
-    CONSTRAINT check_status CHECK (status IN ('SUCCESS', 'FAILED', 'PENDING'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_payment_transactions_payment ON payment_transactions(payment_id);
@@ -220,17 +240,16 @@ CREATE TABLE fund_allocations (
     lab_amount DECIMAL(15,2) NOT NULL,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'ALLOCATED',
+    status fund_allocation_status_enum DEFAULT 'ALLOCATED',
     
     -- Validation
-    validated_by BIGINT REFERENCES users(id),
+    validated_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     validated_at TIMESTAMP,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT check_percentages CHECK (team_percentage + mentor_percentage + lab_percentage = 100),
-    CONSTRAINT check_amounts CHECK (team_amount + mentor_amount + lab_amount = total_amount),
-    CONSTRAINT check_status CHECK (status IN ('ALLOCATED', 'DISTRIBUTED', 'COMPLETED'))
+    CONSTRAINT check_amounts CHECK (team_amount + mentor_amount + lab_amount = total_amount)
 );
 
 CREATE INDEX idx_fund_allocations_project ON fund_allocations(project_id);
@@ -244,25 +263,22 @@ CREATE TABLE fund_distributions (
     allocation_id BIGINT NOT NULL REFERENCES fund_allocations(id) ON DELETE RESTRICT,
     
     -- Recipient
-    recipient_type VARCHAR(20) NOT NULL, -- TEAM, MENTOR, LAB
+    recipient_type recipient_type_enum NOT NULL,
     recipient_id BIGINT, -- talent_id or mentor_id (NULL for LAB)
     
     -- Amount
     amount DECIMAL(15,2) NOT NULL,
     
     -- Disbursement
-    status VARCHAR(20) DEFAULT 'PENDING',
+    status fund_distribution_status_enum DEFAULT 'PENDING',
     disbursed_at TIMESTAMP,
-    disbursed_by BIGINT REFERENCES users(id),
+    disbursed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     
     -- Payment Info
     payment_method VARCHAR(50),
     transaction_reference VARCHAR(100),
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_recipient_type CHECK (recipient_type IN ('TEAM', 'MENTOR', 'LAB')),
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'ON_HOLD'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_fund_distributions_allocation ON fund_distributions(allocation_id);
@@ -282,21 +298,19 @@ CREATE TABLE team_fund_distributions (
     total_team_amount DECIMAL(15,2) NOT NULL,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'DRAFT',
+    status team_fund_status_enum DEFAULT 'DRAFT',
     
     -- Approval
-    approved_by_mentor BIGINT REFERENCES mentors(id),
+    approved_by_mentor BIGINT REFERENCES mentors(id) ON DELETE SET NULL,
     approved_by_mentor_at TIMESTAMP,
     
-    approved_by_lab BIGINT REFERENCES users(id),
+    approved_by_lab BIGINT REFERENCES users(id) ON DELETE SET NULL,
     approved_by_lab_at TIMESTAMP,
     
     rejection_reason TEXT,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'APPROVED_BY_MENTOR', 'APPROVED_BY_LAB', 'REJECTED', 'DISBURSED'))
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_team_fund_distributions_project ON team_fund_distributions(project_id);
@@ -336,7 +350,7 @@ CREATE TABLE hybrid_fund_advances (
     payment_id BIGINT NOT NULL REFERENCES payments(id) ON DELETE RESTRICT,
     
     -- Advance Info
-    advance_reason VARCHAR(50) NOT NULL, -- PAYMENT_DELAY, EMERGENCY
+    advance_reason advance_reason_enum NOT NULL,
     advance_amount DECIMAL(15,2) NOT NULL,
     
     -- Timeline
@@ -344,16 +358,13 @@ CREATE TABLE hybrid_fund_advances (
     expected_repayment_date DATE NOT NULL,
     
     -- Repayment
-    repayment_status VARCHAR(20) DEFAULT 'OUTSTANDING',
+    repayment_status repayment_status_enum DEFAULT 'OUTSTANDING',
     repaid_amount DECIMAL(15,2) DEFAULT 0,
     repaid_at TIMESTAMP,
     
     -- Approval
-    approved_by BIGINT NOT NULL REFERENCES users(id),
-    approval_note TEXT,
-    
-    CONSTRAINT check_advance_reason CHECK (advance_reason IN ('PAYMENT_DELAY', 'EMERGENCY', 'OTHER')),
-    CONSTRAINT check_repayment_status CHECK (repayment_status IN ('OUTSTANDING', 'PARTIALLY_REPAID', 'FULLY_REPAID'))
+    approved_by BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    approval_note TEXT
 );
 
 CREATE INDEX idx_hybrid_fund_advances_project ON hybrid_fund_advances(project_id);
@@ -367,11 +378,11 @@ CREATE TABLE disbursements (
     id BIGSERIAL PRIMARY KEY,
     
     -- Reference
-    reference_type VARCHAR(50) NOT NULL, -- FUND_DISTRIBUTION, HYBRID_ADVANCE
+    reference_type disbursement_reference_enum NOT NULL,
     reference_id BIGINT NOT NULL,
     
     -- Recipient
-    recipient_type VARCHAR(20) NOT NULL, -- TALENT, MENTOR, LAB
+    recipient_type recipient_type_enum NOT NULL,
     recipient_id BIGINT,
     
     -- Amount
@@ -379,7 +390,7 @@ CREATE TABLE disbursements (
     currency VARCHAR(10) DEFAULT 'VND',
     
     -- Payment Method
-    payment_method VARCHAR(50) NOT NULL, -- BANK_TRANSFER, MOMO, PAYPAL
+    payment_method payment_method_enum NOT NULL,
     
     -- Bank Details (if applicable)
     bank_name VARCHAR(100),
@@ -391,21 +402,16 @@ CREATE TABLE disbursements (
     transaction_date TIMESTAMP,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'PENDING',
+    status fund_distribution_status_enum DEFAULT 'PENDING',
     
     -- Processing
-    processed_by BIGINT REFERENCES users(id),
+    processed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     processed_at TIMESTAMP,
     
     -- Notes
     note TEXT,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_reference_type CHECK (reference_type IN ('FUND_DISTRIBUTION', 'HYBRID_ADVANCE', 'REFUND')),
-    CONSTRAINT check_recipient_type CHECK (recipient_type IN ('TALENT', 'MENTOR', 'LAB')),
-    CONSTRAINT check_payment_method CHECK (payment_method IN ('BANK_TRANSFER', 'MOMO', 'PAYPAL', 'CASH')),
-    CONSTRAINT check_status CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_disbursements_reference ON disbursements(reference_type, reference_id);
@@ -425,7 +431,7 @@ CREATE TABLE mentor_reports (
     mentor_id BIGINT NOT NULL REFERENCES mentors(id) ON DELETE CASCADE,
     
     -- Report Info
-    report_type VARCHAR(20) NOT NULL, -- WEEKLY, MONTHLY, MILESTONE, FINAL
+    report_type report_type_enum NOT NULL,
     reporting_period VARCHAR(7) NOT NULL, -- YYYY-MM
     
     -- Progress
@@ -452,15 +458,13 @@ CREATE TABLE mentor_reports (
     code_metrics JSONB,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'DRAFT',
+    status report_status_enum DEFAULT 'DRAFT',
     submitted_at TIMESTAMP,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    UNIQUE(project_id, reporting_period),
-    CONSTRAINT check_report_type CHECK (report_type IN ('WEEKLY', 'MONTHLY', 'MILESTONE', 'FINAL')),
-    CONSTRAINT check_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'REVIEWED'))
+    UNIQUE(project_id, reporting_period)
 );
 
 CREATE INDEX idx_mentor_reports_project ON mentor_reports(project_id);
@@ -473,10 +477,10 @@ COMMENT ON TABLE mentor_reports IS 'Báo cáo của Mentor';
 CREATE TABLE team_reports (
     id BIGSERIAL PRIMARY KEY,
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    submitted_by BIGINT NOT NULL REFERENCES talents(id), -- Talent Leader
+    submitted_by BIGINT NOT NULL REFERENCES talents(id) ON DELETE CASCADE, -- Talent Leader
     
     -- Report Info
-    report_type VARCHAR(20) NOT NULL,
+    report_type report_type_enum NOT NULL,
     reporting_period VARCHAR(7) NOT NULL,
     overall_progress INTEGER CHECK (overall_progress BETWEEN 0 AND 100),
     
@@ -492,20 +496,18 @@ CREATE TABLE team_reports (
     team_performance JSONB,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'DRAFT',
+    status report_status_enum DEFAULT 'DRAFT',
     submitted_at TIMESTAMP,
     
     -- Review
-    reviewed_by BIGINT REFERENCES mentors(id),
+    reviewed_by BIGINT REFERENCES mentors(id) ON DELETE SET NULL,
     reviewed_at TIMESTAMP,
     review_comment TEXT,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    UNIQUE(project_id, reporting_period),
-    CONSTRAINT check_report_type CHECK (report_type IN ('WEEKLY', 'MONTHLY', 'MILESTONE')),
-    CONSTRAINT check_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'REVIEWED'))
+    UNIQUE(project_id, reporting_period)
 );
 
 CREATE INDEX idx_team_reports_project ON team_reports(project_id);
@@ -521,11 +523,8 @@ CREATE TABLE report_attachments (
     report_type VARCHAR(20) NOT NULL, -- MENTOR_REPORT, TEAM_REPORT
     report_id BIGINT NOT NULL,
     
-    -- File
-    file_name VARCHAR(255) NOT NULL,
-    file_url VARCHAR(500) NOT NULL,
-    file_type VARCHAR(50),
-    file_size BIGINT,
+    -- File reference (centralized)
+    file_id BIGINT, -- References files table
     
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -566,12 +565,11 @@ CREATE TABLE talent_evaluations (
     hours_worked INTEGER,
     
     -- Grade
-    grade VARCHAR(1), -- A, B, C, D, F
+    grade evaluation_grade_enum,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    UNIQUE(project_id, talent_id, evaluation_period),
-    CONSTRAINT check_grade CHECK (grade IN ('A', 'B', 'C', 'D', 'F'))
+    UNIQUE(project_id, talent_id, evaluation_period)
 );
 
 CREATE INDEX idx_talent_evaluations_talent ON talent_evaluations(talent_id);
@@ -605,12 +603,10 @@ CREATE TABLE enterprise_feedback (
     would_work_again BOOLEAN,
     
     -- Status
-    status VARCHAR(20) DEFAULT 'DRAFT',
+    status report_status_enum DEFAULT 'DRAFT',
     submitted_at TIMESTAMP,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT check_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'PUBLISHED'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_enterprise_feedback_project ON enterprise_feedback(project_id);
@@ -623,7 +619,7 @@ CREATE TABLE transparency_reports (
     id BIGSERIAL PRIMARY KEY,
     
     -- Report Info
-    report_type VARCHAR(20) NOT NULL, -- MONTHLY, QUARTERLY, ANNUAL
+    report_type report_type_enum NOT NULL,
     period VARCHAR(7) NOT NULL, -- YYYY-MM
     
     -- Statistics
@@ -632,24 +628,40 @@ CREATE TABLE transparency_reports (
     
     -- Publication
     publish_note TEXT,
-    status VARCHAR(20) DEFAULT 'DRAFT',
+    status report_status_enum DEFAULT 'DRAFT',
     
     -- URLs
     public_url VARCHAR(500),
     pdf_url VARCHAR(500),
     
     -- Audit
-    created_by BIGINT REFERENCES users(id),
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     published_at TIMESTAMP,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    UNIQUE(period),
-    CONSTRAINT check_report_type CHECK (report_type IN ('MONTHLY', 'QUARTERLY', 'ANNUAL')),
-    CONSTRAINT check_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED'))
+    UNIQUE(period)
 );
 
 CREATE INDEX idx_transparency_reports_period ON transparency_reports(period);
 CREATE INDEX idx_transparency_reports_status ON transparency_reports(status);
 
 COMMENT ON TABLE transparency_reports IS 'Báo cáo minh bạch công khai';
+
+-- =====================================================
+-- FOREIGN KEY CONSTRAINTS FOR CENTRALIZED FILE MANAGEMENT
+-- (To be added after files table is created in V1_3 migration)
+-- =====================================================
+
+-- Note: These constraints will be added in V1_3__Centralized_File_Management.sql
+-- after the files table is created:
+--
+-- ALTER TABLE task_attachments ADD CONSTRAINT fk_task_attachments_file 
+--     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE;
+--
+-- ALTER TABLE report_attachments ADD CONSTRAINT fk_report_attachments_file 
+--     FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE;
+
+-- =====================================================
+-- END OF TASKS, PAYMENT, REPORTS MODULE
+-- =====================================================
