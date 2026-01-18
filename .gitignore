@@ -33,9 +33,6 @@ labodc-web-portal/.next/
 labodc-web-portal/.cache/
 labodc-web-portal/coverage/
 labodc-web-portal/*.log
-labodc-web-portal/.env
-labodc-web-portal/.env.local
-labodc-web-portal/.env.*.local
 
 # Mobile (Flutter)
 labodc-mobile/.dart_tool/
