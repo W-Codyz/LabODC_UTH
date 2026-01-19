@@ -57,13 +57,14 @@ axiosInstance.interceptors.response.use(
             { refreshToken }
           );
           
-          const { accessToken } = response.data.data;
+          // Backend returns 'token' not 'accessToken'
+          const { token } = response.data.data;
           
           // Save new access token
-          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
           
           // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${token}`;
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
