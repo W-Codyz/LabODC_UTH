@@ -1,9 +1,17 @@
 // Auth Slice
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '@/services/auth.service';
-import { IUser } from '@/types/user.types';
-import { ILoginRequest, IRegisterRequest } from '@/types/auth.types';
+import { ILoginRequest, IRegisterRequest, IAuthResponse } from '@/types/auth.types';
 import { STORAGE_KEYS } from '@/utils/constants';
+
+interface IUser {
+  userId: number;
+  email: string;
+  fullName?: string;
+  role: string;
+  status: string;
+  emailVerified?: boolean;
+}
 
 interface AuthState {
   user: IUser | null;
@@ -29,9 +37,20 @@ export const login = createAsyncThunk(
   async (credentials: ILoginRequest, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
-      return response;
+      // Transform backend response to frontend format
+      return {
+        user: {
+          userId: response.userId,
+          email: response.email,
+          role: response.role,
+          status: response.status,
+          emailVerified: response.emailVerified,
+        },
+        accessToken: response.token,
+        refreshToken: response.refreshToken || '',
+      };
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
     }
   }
 );
@@ -41,15 +60,35 @@ export const register = createAsyncThunk(
   async (data: IRegisterRequest, { rejectWithValue }) => {
     try {
       const response = await authService.register(data);
-      return response;
+      // Transform backend response to frontend format
+      return {
+        user: {
+          userId: response.userId,
+          email: response.email,
+          role: response.role,
+          status: response.status,
+          emailVerified: response.emailVerified,
+        },
+        accessToken: response.token,
+        refreshToken: response.refreshToken || '',
+      };
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message || 'Registration failed');
     }
   }
 );
 
-export const logout = createAsyncThunk('auth/logout', async () => {
-  await authService.logout();
+export const logout = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
+  try {
+    await authService.logout();
+  } catch (error: any) {
+    // Even if backend fails, we still want to clear local state
+    console.warn('Logout API failed, clearing local state anyway', error);
+  }
+  // Always clear localStorage
+  localStorage.removeItem(STORAGE_KEYS.USER_INFO);
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
 });
 
 const authSlice = createSlice({
@@ -126,15 +165,25 @@ const authSlice = createSlice({
     });
 
     // Logout
+    builder.addCase(logout.pending, (state) => {
+      state.loading = true;
+    });
     builder.addCase(logout.fulfilled, (state) => {
+      state.loading = false;
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
-
-      localStorage.removeItem(STORAGE_KEYS.USER_INFO);
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      state.error = null;
+    });
+    builder.addCase(logout.rejected, (state) => {
+      // Clear state even on error
+      state.loading = false;
+      state.user = null;
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.isAuthenticated = false;
+      state.error = null;
     });
   },
 });
