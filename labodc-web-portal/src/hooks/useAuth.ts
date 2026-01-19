@@ -2,6 +2,7 @@
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import { IUser, TUserRole } from '@/types/user.types';
 
 export const useAuth = () => {
@@ -11,8 +12,15 @@ export const useAuth = () => {
   const { user, isAuthenticated, loading, error } = useAppSelector((state) => state.auth);
 
   const handleLogout = async () => {
-    await dispatch(logout());
-    navigate('/login');
+    try {
+      await dispatch(logout()).unwrap();
+      message.success('Đăng xuất thành công!');
+      navigate('/login');
+    } catch (error) {
+      // Even if error, still navigate to login since local state is cleared
+      message.info('Đã đăng xuất');
+      navigate('/login');
+    }
   };
 
   const hasRole = (role: TUserRole): boolean => {
