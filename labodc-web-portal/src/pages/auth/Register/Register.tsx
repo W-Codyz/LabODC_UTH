@@ -45,17 +45,6 @@ const Register: React.FC = () => {
             scrollToFirstError
           >
             <Form.Item
-              name="fullName"
-              rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="Họ và tên"
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
               name="email"
               rules={[
                 { required: true, message: 'Vui lòng nhập email!' },
@@ -65,20 +54,6 @@ const Register: React.FC = () => {
               <Input
                 prefix={<MailOutlined />}
                 placeholder="Email"
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="username"
-              rules={[
-                { required: true, message: 'Vui lòng nhập tên đăng nhập!' },
-                { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự!' },
-              ]}
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="Tên đăng nhập"
                 size="large"
               />
             </Form.Item>

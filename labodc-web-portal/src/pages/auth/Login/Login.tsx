@@ -22,9 +22,15 @@ const Login: React.FC = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const onFinish = async (values: ILoginRequest) => {
+  const onFinish = async (values: any) => {
     try {
-      const result = await dispatch(login(values)).unwrap();
+      // Transform username field to email for backend
+      const loginData: ILoginRequest = {
+        email: values.username,  // Form field is 'username' but backend expects 'email'
+        password: values.password,
+      };
+      
+      const result = await dispatch(login(loginData)).unwrap();
       message.success('Đăng nhập thành công!');
       const defaultRoute = getDefaultRoute(result.user.role);
       navigate(defaultRoute);
