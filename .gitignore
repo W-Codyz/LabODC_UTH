@@ -75,3 +75,6 @@ docker-compose.override.yml
 
 # CI/CD
 .gitlab-ci-local/
+
+labodc-backend/rewrite.yml
+
