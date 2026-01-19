@@ -1,24 +1,26 @@
 // Authentication Types
 export interface ILoginRequest {
-  username: string;
+  email: string;  // Backend expects email, not username
   password: string;
 }
 
 export interface IRegisterRequest {
-  username: string;
   email: string;
   password: string;
   confirmPassword: string;
-  fullName: string;
-  role: TUserRole;
+  role: string;
 }
 
+// Backend response structure from Spring Boot
 export interface IAuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
-  user: IUser;
+  token: string;          // Backend returns 'token'
+  refreshToken?: string;  
+  tokenType: string;      // "Bearer"
+  userId: number;
+  email: string;
+  role: string;
+  status: string;
+  emailVerified?: boolean;
 }
 
 export interface IForgotPasswordRequest {
