@@ -1,0 +1,87 @@
+/* ===== Wrapper ===== */
+.dashboard {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* ===== Statistic Cards ===== */
+.statCard {
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.statIcon {
+  font-size: 20px;
+  margin-right: 6px;
+}
+
+/* ===== Section ===== */
+.section {
+  margin-top: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ===== Table ===== */
+.table {
+  margin-top: 12px;
+}
+
+/* ===== Status Badge ===== */
+.statusPending {
+  color: #d97706;
+  font-weight: 500;
+}
+
+.statusApproved {
+  color: #059669;
+  font-weight: 500;
+}
+
+.statusRejected {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+/* ===== Empty / Loading ===== */
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* ===== Chart / Analytics ===== */
+.chartCard {
+  border-radius: 10px;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
