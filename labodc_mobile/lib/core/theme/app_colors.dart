@@ -21,6 +21,7 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color background = Color(0xFFF5F5F5);
+  static const Color backgroundGrey = Color(0xFFF5F5F5); // Alias for background
   static const Color surface = Color(0xFFFFFFFF);
   static const Color divider = Color(0xFFE0E0E0);
   

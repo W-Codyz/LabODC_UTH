@@ -10,9 +10,11 @@ class AppButton extends StatelessWidget {
   final bool isOutlined;
   final Color? backgroundColor;
   final Color? textColor;
+  final Color? borderColor;
   final double? width;
   final double height;
   final IconData? icon;
+  final EdgeInsetsGeometry? padding;
   
   const AppButton({
     super.key,
@@ -22,22 +24,28 @@ class AppButton extends StatelessWidget {
     this.isOutlined = false,
     this.backgroundColor,
     this.textColor,
+    this.borderColor,
     this.width,
     this.height = 48,
     this.icon,
+    this.padding,
   });
   
   @override
   Widget build(BuildContext context) {
-    if (isOutlined) {
+    final bool needsOutlined = isOutlined || 
+        (backgroundColor == AppColors.white && borderColor != null);
+    
+    if (needsOutlined) {
       return SizedBox(
         width: width,
         height: height,
         child: OutlinedButton(
           onPressed: isLoading ? null : onPressed,
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: backgroundColor ?? AppColors.primary),
-            foregroundColor: backgroundColor ?? AppColors.primary,
+            side: BorderSide(color: borderColor ?? backgroundColor ?? AppColors.primary),
+            foregroundColor: textColor ?? borderColor ?? backgroundColor ?? AppColors.primary,
+            padding: padding,
           ),
           child: _buildChild(),
         ),
@@ -52,6 +60,7 @@ class AppButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor ?? AppColors.primary,
           foregroundColor: textColor ?? AppColors.white,
+          padding: padding,
         ),
         child: _buildChild(),
       ),
