@@ -63,6 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(
             content: Text(authProvider.error!),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Đóng',
+              textColor: Colors.white,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
           ),
         );
       }
@@ -211,11 +219,79 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Test Accounts Info (Development only)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Tài khoản test (Development)',
+                              style: AppTextStyles.caption.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Password cho tất cả: Password@123',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _buildTestAccount('Admin', 'admin@labodc.com'),
+                        _buildTestAccount('Enterprise', 'enterprise1@example.com'),
+                        _buildTestAccount('Talent', 'talent1@student.uth.edu.vn'),
+                        _buildTestAccount('Mentor', 'mentor1@uth.edu.vn'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+  
+  Widget _buildTestAccount(String role, String email) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Text(
+            '• $role: ',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              email,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textPrimary,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

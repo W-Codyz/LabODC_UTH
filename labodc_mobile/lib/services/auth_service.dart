@@ -112,13 +112,16 @@ class AuthService {
   
   /// Logout
   Future<void> logout() async {
-    try {
-      await _api.post(ApiEndpoints.logout);
-    } catch (e) {
-      // Continue with local logout even if API fails
-    } finally {
-      await _storage.clear();
-    }
+    // For JWT stateless authentication, logout only needs to clear local tokens
+    // No need to call backend API (backend doesn't have logout endpoint)
+    await _storage.clear();
+    
+    // Note: If backend implements token blacklisting in future, uncomment this:
+    // try {
+    //   await _api.post(ApiEndpoints.logout);
+    // } catch (e) {
+    //   // Ignore API error
+    // }
   }
   
   /// Check if user is logged in
