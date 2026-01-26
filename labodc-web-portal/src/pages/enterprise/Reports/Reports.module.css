@@ -1,4 +1,4 @@
-.dashboard {
+.wrapper {
   padding: 24px;
 }
 
@@ -9,15 +9,10 @@
   margin-bottom: 24px;
 }
 
-.header h1 {
-  font-size: 22px;
-  font-weight: 600;
-}
-
 .cardRow {
   margin-bottom: 24px;
 }
 
-.tableCard {
-  margin-top: 24px;
+.reportTable {
+  margin-top: 16px;
 }
