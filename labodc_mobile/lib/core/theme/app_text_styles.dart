@@ -46,6 +46,21 @@ class AppTextStyles {
     height: 1.4,
   );
   
+  // Subtitles
+  static const TextStyle subtitle1 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+    height: 1.5,
+  );
+  
+  static const TextStyle subtitle2 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+    height: 1.4,
+  );
+  
   // Body Text
   static const TextStyle body1 = TextStyle(
     fontSize: 16,

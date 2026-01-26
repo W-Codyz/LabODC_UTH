@@ -67,9 +67,9 @@ class AppRoutes {
   
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
-  static const String enterpriseManagement = '/admin/enterprise-management';
-  static const String projectValidation = '/admin/project-validation';
-  static const String fundAllocation = '/admin/fund-allocation';
+  static const String adminEnterpriseManagement = '/admin/enterprise-management';
+  static const String adminProjectValidation = '/admin/project-validation';
+  static const String adminFundAllocation = '/admin/fund-allocation';
 }
 
 /// App Router Configuration
@@ -175,15 +175,15 @@ class AppRouter {
         builder: (context, state) => const AdminDashboardScreen(),
       ),
       GoRoute(
-        path: AppRoutes.enterpriseManagement,
+        path: AppRoutes.adminEnterpriseManagement,
         builder: (context, state) => const EnterpriseManagementScreen(),
       ),
       GoRoute(
-        path: AppRoutes.projectValidation,
+        path: AppRoutes.adminProjectValidation,
         builder: (context, state) => const ProjectValidationScreen(),
       ),
       GoRoute(
-        path: AppRoutes.fundAllocation,
+        path: AppRoutes.adminFundAllocation,
         builder: (context, state) => const FundAllocationScreen(),
       ),
     ],
