@@ -1,4 +1,4 @@
-.dashboard {
+.wrapper {
   padding: 24px;
 }
 
@@ -18,6 +18,10 @@
   margin-bottom: 24px;
 }
 
+.filterBar {
+  margin-bottom: 16px;
+}
+
 .tableCard {
-  margin-top: 24px;
+  border-radius: 8px;
 }

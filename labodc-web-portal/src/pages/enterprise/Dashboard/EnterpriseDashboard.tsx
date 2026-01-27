@@ -1,6 +1,5 @@
-// Enterprise Dashboard
-import React, { useEffect } from 'react';
-import { Row, Col, Card, Statistic, Progress, Button, Table } from 'antd';
+import React from 'react';
+import { Row, Col, Card, Statistic, Progress, Button, Table, Tag } from 'antd';
 import {
   ProjectOutlined,
   DollarOutlined,
@@ -8,61 +7,32 @@ import {
   RiseOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import {
+  getEnterpriseDashboardSummary,
+  getRecentProjects,
+} from '@/services/enterprise/enterpriseDashboard.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import styles from './EnterpriseDashboard.module.css';
 
 const EnterpriseDashboard: React.FC = () => {
   const navigate = useNavigate();
 
-  // Mock data - replace with real data from API
-  const stats = {
-    totalProjects: 12,
-    activeProjects: 5,
-    completedProjects: 7,
-    totalSpent: 500000000,
-    pendingPayments: 50000000,
-  };
-
-  const recentProjects = [
-    {
-      key: '1',
-      name: 'Website E-commerce',
-      status: 'IN_PROGRESS',
-      progress: 65,
-      members: 5,
-    },
-    {
-      key: '2',
-      name: 'Mobile App iOS',
-      status: 'IN_PROGRESS',
-      progress: 40,
-      members: 4,
-    },
-    {
-      key: '3',
-      name: 'AI Chatbot',
-      status: 'COMPLETED',
-      progress: 100,
-      members: 3,
-    },
-  ];
+  const summary = getEnterpriseDashboardSummary();
+  const recentProjects = getRecentProjects();
 
   const columns = [
     {
       title: 'Tên dự án',
       dataIndex: 'name',
-      key: 'name',
     },
     {
       title: 'Tiến độ',
       dataIndex: 'progress',
-      key: 'progress',
       render: (progress: number) => <Progress percent={progress} />,
     },
     {
       title: 'Thành viên',
       dataIndex: 'members',
-      key: 'members',
       render: (members: number) => (
         <>
           <TeamOutlined /> {members}
@@ -70,10 +40,21 @@ const EnterpriseDashboard: React.FC = () => {
       ),
     },
     {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'COMPLETED' ? 'green' : 'blue'}>
+          {status}
+        </Tag>
+      ),
+    },
+    {
       title: 'Hành động',
-      key: 'action',
-      render: (_, record) => (
-        <Button type="link" onClick={() => navigate(`/enterprise/projects/${record.key}`)}>
+      render: (_: any, record: any) => (
+        <Button
+          type="link"
+          onClick={() => navigate(`/enterprise/projects/${record.key}`)}
+        >
           Xem chi tiết
         </Button>
       ),
@@ -82,64 +63,79 @@ const EnterpriseDashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboard}>
+      {/* HEADER */}
       <div className={styles.header}>
-        <h1 className="page-title">Dashboard Doanh nghiệp</h1>
-        <Button type="primary" onClick={() => navigate('/enterprise/projects/new')}>
+        <h1>Dashboard Doanh nghiệp</h1>
+        <Button
+          type="primary"
+          onClick={() => navigate('/enterprise/projects/new')}
+        >
           Đề xuất dự án mới
         </Button>
       </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
+      {/* SUMMARY CARDS */}
+      <Row gutter={16} className={styles.cardRow}>
+        <Col span={6}>
           <Card>
             <Statistic
               title="Tổng dự án"
-              value={stats.totalProjects}
+              value={summary.totalProjects}
               prefix={<ProjectOutlined />}
-              valueStyle={{ color: '#17a2b8' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+
+        <Col span={6}>
           <Card>
             <Statistic
               title="Đang thực hiện"
-              value={stats.activeProjects}
+              value={summary.activeProjects}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#FFC107' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+
+        <Col span={6}>
           <Card>
             <Statistic
               title="Đã hoàn thành"
-              value={stats.completedProjects}
+              value={summary.completedProjects}
               prefix={<ProjectOutlined />}
-              valueStyle={{ color: '#4CAF50' }}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+
+        <Col span={6}>
           <Card>
             <Statistic
               title="Tổng chi phí"
-              value={stats.totalSpent}
+              value={summary.totalSpent}
               prefix={<DollarOutlined />}
-              formatter={(value) => formatCurrencyVND(Number(value))}
-              valueStyle={{ color: '#17a2b8' }}
+              formatter={(v) => formatCurrencyVND(Number(v))}
             />
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24}>
-          <Card title="Dự án gần đây" extra={<Button type="link">Xem tất cả</Button>}>
-            <Table columns={columns} dataSource={recentProjects} pagination={false} />
-          </Card>
-        </Col>
-      </Row>
+      {/* RECENT PROJECTS */}
+      <Card
+        title="Dự án gần đây"
+        extra={
+          <Button type="link" onClick={() => navigate('/enterprise/projects')}>
+            Xem tất cả
+          </Button>
+        }
+        className={styles.tableCard}
+      >
+        <Table
+          columns={columns}
+          dataSource={recentProjects}
+          pagination={false}
+        />
+      </Card>
     </div>
   );
 };

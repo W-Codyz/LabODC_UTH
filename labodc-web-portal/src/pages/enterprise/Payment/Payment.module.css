@@ -1,0 +1,26 @@
+.wrapper {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.summaryRow {
+  margin-bottom: 24px;
+}
+
+.amountPositive {
+  color: #52c41a;
+}
+
+.amountWarning {
+  color: #faad14;
+}
+
+.amountDanger {
+  color: #ff4d4f;
+}
