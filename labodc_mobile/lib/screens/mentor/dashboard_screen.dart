@@ -67,9 +67,9 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
         title: const Text('Mentor Dashboard'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.logout),
             onPressed: () {
-              // TODO: Navigate to notifications
+              context.go('/login');
             },
           ),
         ],
