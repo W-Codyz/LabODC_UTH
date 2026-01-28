@@ -361,6 +361,7 @@ CREATE OR REPLACE FUNCTION mark_orphaned_files()
 RETURNS INTEGER AS $$
 DECLARE
     orphan_count INTEGER := 0;
+    v_rows_affected INTEGER := 0;
 BEGIN
     -- Mark USER files as orphaned if user doesn't exist
     UPDATE files f
@@ -373,7 +374,8 @@ BEGIN
         SELECT 1 FROM users u WHERE u.id = f.entity_id AND u.deleted_at IS NULL
     );
     
-    GET DIAGNOSTICS orphan_count = ROW_COUNT;
+    GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+    orphan_count := orphan_count + v_rows_affected;
     
     -- Mark ENTERPRISE files
     UPDATE files f
@@ -386,7 +388,8 @@ BEGIN
         SELECT 1 FROM enterprises e WHERE e.id = f.entity_id AND e.deleted_at IS NULL
     );
     
-    GET DIAGNOSTICS orphan_count = orphan_count + ROW_COUNT;
+    GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+    orphan_count := orphan_count + v_rows_affected;
     
     -- Mark PROJECT files
     UPDATE files f
@@ -399,7 +402,8 @@ BEGIN
         SELECT 1 FROM projects p WHERE p.id = f.entity_id AND p.deleted_at IS NULL
     );
     
-    GET DIAGNOSTICS orphan_count = orphan_count + ROW_COUNT;
+    GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+    orphan_count := orphan_count + v_rows_affected;
     
     -- Mark TASK files
     UPDATE files f
@@ -412,7 +416,8 @@ BEGIN
         SELECT 1 FROM tasks t WHERE t.id = f.entity_id
     );
     
-    GET DIAGNOSTICS orphan_count = orphan_count + ROW_COUNT;
+    GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+    orphan_count := orphan_count + v_rows_affected;
     
     RETURN orphan_count;
 END;
@@ -857,25 +862,46 @@ ALTER TABLE project_attachments
 CREATE INDEX idx_project_attachments_file ON project_attachments(file_id);
 
 -- Link task_attachments.file_id to files table
-ALTER TABLE task_attachments 
-    ADD CONSTRAINT fk_task_attachments_file 
-    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF to_regclass('public.task_attachments') IS NOT NULL THEN
+        BEGIN
+            EXECUTE 'ALTER TABLE task_attachments ADD CONSTRAINT fk_task_attachments_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE';
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+        END;
 
-CREATE INDEX idx_task_attachments_file ON task_attachments(file_id);
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_task_attachments_file ON task_attachments(file_id)';
+    END IF;
+END $$;
 
 -- Link report_attachments.file_id to files table
-ALTER TABLE report_attachments 
-    ADD CONSTRAINT fk_report_attachments_file 
-    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF to_regclass('public.report_attachments') IS NOT NULL THEN
+        BEGIN
+            EXECUTE 'ALTER TABLE report_attachments ADD CONSTRAINT fk_report_attachments_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE';
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+        END;
 
-CREATE INDEX idx_report_attachments_file ON report_attachments(file_id);
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_attachments_file ON report_attachments(file_id)';
+    END IF;
+END $$;
 
 -- Link excel_templates.file_id to files table
-ALTER TABLE excel_templates 
-    ADD CONSTRAINT fk_excel_templates_file 
-    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF to_regclass('public.excel_templates') IS NOT NULL THEN
+        BEGIN
+            EXECUTE 'ALTER TABLE excel_templates ADD CONSTRAINT fk_excel_templates_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE SET NULL';
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+        END;
 
-CREATE INDEX idx_excel_templates_file ON excel_templates(file_id);
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_excel_templates_file ON excel_templates(file_id)';
+    END IF;
+END $$;
 
 COMMENT ON CONSTRAINT fk_users_avatar_file ON users IS 'Link user avatar to centralized files table';
 COMMENT ON CONSTRAINT fk_enterprises_logo_file ON enterprises IS 'Link enterprise logo to centralized files table';
