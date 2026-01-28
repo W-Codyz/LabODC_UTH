@@ -32,10 +32,16 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token
-          final token = await _storage.getAccessToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Skip adding token for auth endpoints (login, register)
+          final isAuthEndpoint = options.path.contains('/auth/login') ||
+              options.path.contains('/auth/register');
+          
+          if (!isAuthEndpoint) {
+            // Add auth token for protected endpoints
+            final token = await _storage.getAccessToken();
+            if (token != null) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
           
           _logger.d('Request: ${options.method} ${options.path}');
