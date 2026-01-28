@@ -1,17 +1,21 @@
 // Header Component
 import React from 'react';
-import { Layout, Avatar, Dropdown, Badge, MenuProps } from 'antd';
-import { BellOutlined, UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { Layout, Avatar, Dropdown, Badge, MenuProps, Button } from 'antd';
+import { BellOutlined, UserOutlined, LogoutOutlined, SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { formatRoleLabel } from '@/utils/formatters';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toggleSidebar } from '@/store/slices/uiSlice';
 import styles from './Header.module.css';
 
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { user, logout } = useAuth();
+  const sidebarCollapsed = useAppSelector((state) => state.ui.sidebarCollapsed);
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -40,9 +44,17 @@ const Header: React.FC = () => {
 
   return (
     <AntHeader className={styles.header}>
-      <div className={styles.logo}>
-        <img src="/src/images/logo_uth.png" alt="LabOdc" className={styles.logoImg} />
-        {/* <span className={styles.logoText}>LabOdc</span> */}
+      <div className={styles.leftSection}>
+        <Button
+          type="text"
+          icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={() => dispatch(toggleSidebar())}
+          className={styles.toggleButton}
+        />
+        <div className={styles.logo}>
+          <img src="/src/images/logo_uth.png" alt="LabOdc" className={styles.logoImg} />
+          {/* <span className={styles.logoText}>LabOdc</span> */}
+        </div>
       </div>
 
       <div className={styles.nav}>

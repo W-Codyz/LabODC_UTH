@@ -11,6 +11,27 @@
   z-index: var(--z-sticky);
 }
 
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.toggleButton {
+  color: var(--text-white);
+  font-size: 20px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+}
+
+.toggleButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .logo {
   display: flex;
   align-items: center;

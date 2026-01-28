@@ -30,12 +30,31 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const getMenuItems = (): MenuProps['items'] => {
     if (!user) return [];
 
+    // Dashboard item with correct routing based on role
+    const getDashboardRoute = () => {
+      switch (user.role) {
+        case 'LAB_ADMIN':
+          return '/admin/dashboard';
+        case 'SYSTEM_ADMIN':
+          return '/system/dashboard';
+        case 'ENTERPRISE':
+          return '/enterprise/dashboard';
+        case 'TALENT':
+        case 'TALENT_LEADER':
+          return '/talent/dashboard';
+        case 'MENTOR':
+          return '/mentor/dashboard';
+        default:
+          return '/';
+      }
+    };
+
     const baseItems: MenuProps['items'] = [
       {
         key: 'dashboard',
         icon: <DashboardOutlined />,
         label: 'Dashboard',
-        onClick: () => navigate(`/${user.role.toLowerCase()}/dashboard`),
+        onClick: () => navigate(getDashboardRoute()),
       },
     ];
 
@@ -181,17 +200,42 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   // Get selected key from current location
   const getSelectedKey = (): string => {
     const path = location.pathname;
-    if (path.includes('/projects/new')) return 'projects-new';
-    if (path.includes('/projects')) return 'projects-list';
-    if (path.includes('/payment')) return 'payment';
-    if (path.includes('/reports')) return 'reports';
-    if (path.includes('/tasks')) return 'tasks';
+    
+    // Dashboard
     if (path.includes('/dashboard')) return 'dashboard';
+    
+    // Enterprise routes
+    if (path.includes('/projects/new')) return 'projects-new';
+    if (path.includes('/projects') && !path.includes('/validate')) return 'projects-list';
+    if (path.includes('/payment')) return 'payment';
+    
+    // Talent routes
+    if (path.includes('/projects/browse')) return 'browse-projects';
+    if (path.includes('/my-projects')) return 'my-projects';
+    if (path.includes('/tasks')) return 'tasks';
+    
+    // Mentor routes
+    if (path.includes('/invitations')) return 'invitations';
+    
+    // Lab Admin routes
+    if (path.includes('/enterprises')) return 'enterprises';
+    if (path.includes('/projects/validate')) return 'projects-validate';
+    if (path.includes('/funds')) return 'funds';
+    
+    // Reports (multiple roles use this)
+    if (path.includes('/reports')) return 'reports';
+    
+    // System Admin routes
+    if (path.includes('/config')) return 'config';
+    if (path.includes('/roles')) return 'roles';
+    if (path.includes('/users')) return 'users';
+    
     return 'dashboard';
   };
 
   return (
     <Sider
+      trigger={null}
       collapsible
       collapsed={collapsed}
       className={styles.sider}
