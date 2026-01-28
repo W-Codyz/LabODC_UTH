@@ -54,19 +54,25 @@ export const login = createAsyncThunk(
   async (credentials: ILoginRequest, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
-      const userId = parseUserIdFromJwt(response.token) ?? 0;
+      console.log('🔍 Backend login response:', response);
+      
+      // Backend returns { data: { token, email, role, ... }, message, success }
+      const responseData = response.data || response;
+      const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)
-      return {
+      const userData = {
         user: {
           userId,
-          email: response.email,
-          role: response.role,
+          email: responseData.email,
+          role: responseData.role,
           status: 'ACTIVE',
         },
-        accessToken: response.token,
-        refreshToken: '',
+        accessToken: responseData.token,
+        refreshToken: responseData.refreshToken || '',
       };
+      console.log('✅ Transformed user data:', userData);
+      return userData;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
     }
@@ -78,18 +84,21 @@ export const register = createAsyncThunk(
   async (data: IRegisterRequest, { rejectWithValue }) => {
     try {
       const response = await authService.register(data);
-      const userId = parseUserIdFromJwt(response.token) ?? 0;
+      
+      // Backend returns { data: { token, email, role, ... }, message, success }
+      const responseData = response.data || response;
+      const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)
       return {
         user: {
           userId,
-          email: response.email,
-          role: response.role,
+          email: responseData.email,
+          role: responseData.role,
           status: 'ACTIVE',
         },
-        accessToken: response.token,
-        refreshToken: '',
+        accessToken: responseData.token,
+        refreshToken: responseData.refreshToken || '',
       };
     } catch (error: any) {
       return rejectWithValue(
