@@ -13,6 +13,23 @@ interface IUser {
   emailVerified?: boolean;
 }
 
+function parseUserIdFromJwt(token: string): number | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const json = atob(padded);
+    const payload = JSON.parse(json);
+    const sub = payload?.sub;
+    const n = Number(sub);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 interface AuthState {
   user: IUser | null;
   accessToken: string | null;
@@ -37,17 +54,18 @@ export const login = createAsyncThunk(
   async (credentials: ILoginRequest, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
-      // Transform backend response to frontend format
+      const userId = parseUserIdFromJwt(response.token) ?? 0;
+
+      // Transform backend response to frontend format (Phase1/2 microservices)
       return {
         user: {
-          userId: response.userId,
+          userId,
           email: response.email,
           role: response.role,
-          status: response.status,
-          emailVerified: response.emailVerified,
+          status: 'ACTIVE',
         },
         accessToken: response.token,
-        refreshToken: response.refreshToken || '',
+        refreshToken: '',
       };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
@@ -60,20 +78,23 @@ export const register = createAsyncThunk(
   async (data: IRegisterRequest, { rejectWithValue }) => {
     try {
       const response = await authService.register(data);
-      // Transform backend response to frontend format
+      const userId = parseUserIdFromJwt(response.token) ?? 0;
+
+      // Transform backend response to frontend format (Phase1/2 microservices)
       return {
         user: {
-          userId: response.userId,
+          userId,
           email: response.email,
           role: response.role,
-          status: response.status,
-          emailVerified: response.emailVerified,
+          status: 'ACTIVE',
         },
         accessToken: response.token,
-        refreshToken: response.refreshToken || '',
+        refreshToken: '',
       };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || 'Registration failed');
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Registration failed'
+      );
     }
   }
 );

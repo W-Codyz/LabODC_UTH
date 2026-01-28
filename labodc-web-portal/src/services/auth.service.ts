@@ -1,13 +1,12 @@
 // Authentication Service
 import axiosInstance from './api/axios.config';
-import { 
-  ILoginRequest, 
-  IRegisterRequest, 
+import {
+  ILoginRequest,
+  IRegisterRequest,
   IAuthResponse,
   IForgotPasswordRequest,
-  IResetPasswordRequest 
+  IResetPasswordRequest,
 } from '@/types/auth.types';
-import { IApiResponse } from '@/types/api.types';
 
 const AUTH_ENDPOINTS = {
   LOGIN: '/auth/login',
@@ -24,22 +23,26 @@ export const authService = {
    * Login
    */
   login: async (data: ILoginRequest): Promise<IAuthResponse> => {
-    const response = await axiosInstance.post<IApiResponse<IAuthResponse>>(
-      AUTH_ENDPOINTS.LOGIN,
-      data
-    );
-    return response.data.data;
+    const response = await axiosInstance.post<IAuthResponse>(AUTH_ENDPOINTS.LOGIN, data);
+    return response.data;
   },
 
   /**
    * Register
    */
   register: async (data: IRegisterRequest): Promise<IAuthResponse> => {
-    const response = await axiosInstance.post<IApiResponse<IAuthResponse>>(
-      AUTH_ENDPOINTS.REGISTER,
-      data
-    );
-    return response.data.data;
+    // Phase1/2 backend returns empty body for register, so we auto-login right after.
+    await axiosInstance.post(AUTH_ENDPOINTS.REGISTER, {
+      email: data.email,
+      password: data.password,
+      role: data.role,
+    });
+
+    const loginResponse = await axiosInstance.post<IAuthResponse>(AUTH_ENDPOINTS.LOGIN, {
+      email: data.email,
+      password: data.password,
+    });
+    return loginResponse.data;
   },
 
   /**
@@ -53,11 +56,10 @@ export const authService = {
    * Refresh token
    */
   refreshToken: async (refreshToken: string): Promise<IAuthResponse> => {
-    const response = await axiosInstance.post<IApiResponse<IAuthResponse>>(
-      AUTH_ENDPOINTS.REFRESH,
-      { refreshToken }
-    );
-    return response.data.data;
+    const response = await axiosInstance.post<IAuthResponse>(AUTH_ENDPOINTS.REFRESH, {
+      refreshToken,
+    });
+    return response.data;
   },
 
   /**
