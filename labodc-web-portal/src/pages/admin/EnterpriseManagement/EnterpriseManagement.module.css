@@ -1,0 +1,63 @@
+/* Enterprise Management Page Styles */
+.pageWrapper {
+  min-height: 100vh;
+  background: white;
+  padding: var(--spacing-lg);
+}
+
+.header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.pageTitle {
+  color: var(--background-hero) !important;
+  margin-bottom: var(--spacing-xs) !important;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.pageDescription {
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  font-size: var(--font-md);
+}
+
+.statsRow {
+  margin-bottom: var(--spacing-lg);
+}
+
+.filterCard {
+  margin-bottom: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding: var(--spacing-md);
+  }
+
+  .pageTitle {
+    font-size: var(--font-xl) !important;
+  }
+
+  .statsRow {
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .pageWrapper {
+    padding: var(--spacing-sm);
+  }
+
+  .pageTitle {
+    font-size: var(--font-lg) !important;
+  }
+
+  .filterCard {
+    margin-bottom: var(--spacing-sm);
+  }
+}

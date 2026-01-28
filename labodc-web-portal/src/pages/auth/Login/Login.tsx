@@ -31,10 +31,15 @@ const Login: React.FC = () => {
       };
       
       const result = await dispatch(login(loginData)).unwrap();
+      console.log('🎯 Login result:', result);
+      console.log('👤 User role:', result.user.role);
+      
       message.success('Đăng nhập thành công!');
       const defaultRoute = getDefaultRoute(result.user.role);
+      console.log('🚀 Redirecting to:', defaultRoute);
       navigate(defaultRoute);
     } catch (error: any) {
+      console.error('❌ Login error:', error);
       message.error(error || 'Đăng nhập thất bại!');
     }
   };

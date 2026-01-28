@@ -1,5 +1,5 @@
-// Enterprise Management Page
-import React, { useState, useEffect } from 'react';
+export { default } from './EnterpriseManagement';
+
 import {
   Card,
   Table,

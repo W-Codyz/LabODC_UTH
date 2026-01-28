@@ -34,7 +34,7 @@ import {
   SwapOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { fundService } from '../../services/admin/fundService';
+import { fundService } from "@/services/admin/fundService";
 import type { FundAllocation, FundAllocationDetail, DelayedPayment, HybridFundAdvance } from '../../services/admin/fundService';
 
 const { Title, Text } = Typography;

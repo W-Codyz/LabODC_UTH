@@ -37,8 +37,8 @@ import {
   TrophyOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { projectService } from '../../services/admin/projectService';
-import type { Project, ProjectDetail, Mentor } from '../../services/admin/projectService';
+import { projectService } from "@/services/admin/projectService";
+import type { Project, ProjectDetail, Mentor } from '@/services/admin/projectService';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;

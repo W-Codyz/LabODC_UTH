@@ -49,7 +49,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { reportService } from '../../services/admin/reportService';
+import { reportService } from "@/services/admin/reportService";
 import type { TransparencyReport, ReportStatistics, CreateReportRequest } from '../../services/admin/reportService';
 import dayjs from 'dayjs';
 
