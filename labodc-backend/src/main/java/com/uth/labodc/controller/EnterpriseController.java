@@ -4,6 +4,7 @@ import com.uth.labodc.dto.ApiResponse;
 import com.uth.labodc.dto.enterprise.EnterpriseListDTO;
 import com.uth.labodc.dto.enterprise.EnterpriseStatsDTO;
 import com.uth.labodc.model.entity.Enterprise;
+import com.uth.labodc.model.enums.EnterpriseStatus;
 import com.uth.labodc.service.EnterpriseService;
 import com.uth.labodc.service.EnterpriseManagementService;
 import lombok.RequiredArgsConstructor;
@@ -88,9 +89,22 @@ public class EnterpriseController {
     @GetMapping("/management")
     @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<ApiResponse<List<EnterpriseListDTO>>> getEnterprisesForManagement(
-            @RequestParam(required = false) Boolean verified) {
-        log.info("Fetching enterprises for management, verified filter: {}", verified);
-        List<EnterpriseListDTO> enterprises = enterpriseManagementService.getAllEnterprisesWithStats(verified);
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search) {
+        log.info("Fetching enterprises for management, status filter: {}, search: {}", status, search);
+        
+        // Convert string to enum
+        EnterpriseStatus statusFilter = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                statusFilter = EnterpriseStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status value: {}", status);
+                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid status value: " + status));
+            }
+        }
+        
+        List<EnterpriseListDTO> enterprises = enterpriseManagementService.getAllEnterprisesWithStats(statusFilter, search);
         return ResponseEntity.ok(ApiResponse.success(enterprises));
     }
 }

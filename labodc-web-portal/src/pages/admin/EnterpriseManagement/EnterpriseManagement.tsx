@@ -12,10 +12,8 @@ import {
   Select,
   Typography,
   Descriptions,
-  Image,
   message,
   Tabs,
-  Badge,
   Row,
   Col,
   Statistic,
@@ -27,14 +25,14 @@ import {
   ExclamationCircleOutlined,
   EyeOutlined,
   ShopOutlined,
-  FileTextOutlined,
   PhoneOutlined,
   MailOutlined,
   GlobalOutlined,
   EnvironmentOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { enterpriseService, Enterprise, EnterpriseDetail } from '@/services/admin/enterpriseService';
+import { enterpriseManagementService } from '@/services/admin/enterpriseManagementService';
+import type { EnterpriseListItem, EnterpriseDetail } from '@/services/admin/enterpriseManagementService';
 import styles from './EnterpriseManagement.module.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -43,7 +41,7 @@ const { TabPane } = Tabs;
 
 const EnterpriseManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
+  const [enterprises, setEnterprises] = useState<EnterpriseListItem[]>([]);
   const [selectedEnterprise, setSelectedEnterprise] = useState<EnterpriseDetail | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [approveModalVisible, setApproveModalVisible] = useState(false);
@@ -62,23 +60,28 @@ const EnterpriseManagement: React.FC = () => {
 
   useEffect(() => {
     fetchEnterprises();
-  }, [statusFilter]);
+  }, [statusFilter, searchText]);
 
   const fetchEnterprises = async () => {
     try {
       setLoading(true);
       const params: any = {};
+      
+      // Send status param for filtering
       if (statusFilter !== 'ALL') {
-        params.status = statusFilter;
+        params.status = statusFilter; // PENDING, APPROVED, or REJECTED
       }
-      if (searchText) {
-        params.search = searchText;
+      
+      if (searchText && searchText.trim()) {
+        params.search = searchText.trim();
       }
 
-      const response = await enterpriseService.getEnterprises(params);
+      console.log('[EnterpriseManagement] Fetching enterprises with params:', params);
+      const response = await enterpriseManagementService.getEnterprises(params);
+      console.log('[EnterpriseManagement] Response:', response);
       setEnterprises(response.enterprises);
 
-      // Calculate stats
+      // Calculate stats from status field
       const all = response.enterprises;
       setStatsData({
         total: response.pagination.total,
@@ -86,8 +89,15 @@ const EnterpriseManagement: React.FC = () => {
         approved: all.filter(e => e.status === 'APPROVED').length,
         rejected: all.filter(e => e.status === 'REJECTED').length,
       });
-    } catch (error) {
-      message.error('Không thể tải danh sách doanh nghiệp');
+    } catch (error: any) {
+      console.error('[EnterpriseManagement] Error fetching enterprises:', {
+        error,
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      message.error(`Không thể tải danh sách doanh nghiệp: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -96,7 +106,7 @@ const EnterpriseManagement: React.FC = () => {
   const handleViewDetail = async (id: number) => {
     try {
       setLoading(true);
-      const detail = await enterpriseService.getEnterpriseById(id);
+      const detail = await enterpriseManagementService.getEnterpriseById(id);
       setSelectedEnterprise(detail);
       setDetailModalVisible(true);
     } catch (error) {
@@ -106,13 +116,11 @@ const EnterpriseManagement: React.FC = () => {
     }
   };
 
-  const handleApprove = async (values: any) => {
+  const handleApprove = async () => {
     if (!selectedEnterprise) return;
 
     try {
-      await enterpriseService.approveEnterprise(selectedEnterprise.id, {
-        note: values.note,
-      });
+      await enterpriseManagementService.verifyEnterprise(selectedEnterprise.id);
       message.success('Đã phê duyệt doanh nghiệp thành công');
       setApproveModalVisible(false);
       setDetailModalVisible(false);
@@ -127,10 +135,7 @@ const EnterpriseManagement: React.FC = () => {
     if (!selectedEnterprise) return;
 
     try {
-      await enterpriseService.rejectEnterprise(selectedEnterprise.id, {
-        reason: values.reason,
-        details: values.details,
-      });
+      await enterpriseManagementService.rejectEnterprise(selectedEnterprise.id, values.reason);
       message.success('Đã từ chối doanh nghiệp');
       setRejectModalVisible(false);
       setDetailModalVisible(false);
@@ -141,7 +146,7 @@ const EnterpriseManagement: React.FC = () => {
     }
   };
 
-  const getStatusTag = (status: string) => {
+  const getStatusTag = (status: 'PENDING' | 'APPROVED' | 'REJECTED') => {
     switch (status) {
       case 'PENDING':
         return <Tag icon={<ExclamationCircleOutlined />} color="warning">Chờ xác thực</Tag>;
@@ -154,14 +159,13 @@ const EnterpriseManagement: React.FC = () => {
     }
   };
 
-  const columns: ColumnsType<Enterprise> = [
+  const columns: ColumnsType<EnterpriseListItem> = [
     {
       title: 'Tên doanh nghiệp',
       dataIndex: 'companyName',
       key: 'companyName',
-      render: (text: string, record: Enterprise) => (
+      render: (text: string) => (
         <Space>
-          {record.logoUrl && <Image src={record.logoUrl} width={32} preview={false} />}
           <Text strong>{text}</Text>
         </Space>
       ),
@@ -172,31 +176,26 @@ const EnterpriseManagement: React.FC = () => {
       key: 'taxCode',
     },
     {
-      title: 'Người đại diện',
-      dataIndex: 'representative',
-      key: 'representative',
-    },
-    {
       title: 'Lĩnh vực',
       dataIndex: 'industry',
       key: 'industry',
     },
     {
       title: 'Ngày đăng ký',
-      dataIndex: 'registeredAt',
-      key: 'registeredAt',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => getStatusTag(status),
+      render: (status: 'PENDING' | 'APPROVED' | 'REJECTED') => getStatusTag(status),
     },
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_, record: Enterprise) => (
+      render: (_, record: EnterpriseListItem) => (
         <Button
           type="link"
           icon={<EyeOutlined />}
@@ -315,13 +314,20 @@ const EnterpriseManagement: React.FC = () => {
         width={800}
         footer={
           selectedEnterprise?.status === 'PENDING' ? [
+            <Button key="close" onClick={() => setDetailModalVisible(false)}>
+              Đóng
+            </Button>,
             <Button key="reject" danger onClick={() => setRejectModalVisible(true)}>
               <CloseCircleOutlined /> Từ chối
             </Button>,
             <Button key="approve" type="primary" onClick={() => setApproveModalVisible(true)}>
               <CheckCircleOutlined /> Phê duyệt
             </Button>,
-          ] : null
+          ] : [
+            <Button key="close" type="primary" onClick={() => setDetailModalVisible(false)}>
+              Đóng
+            </Button>,
+          ]
         }
       >
         {selectedEnterprise && (
@@ -338,13 +344,13 @@ const EnterpriseManagement: React.FC = () => {
                   {selectedEnterprise.industry}
                 </Descriptions.Item>
                 <Descriptions.Item label="Người đại diện" span={2}>
-                  {selectedEnterprise.representative}
+                  {selectedEnterprise.representativeName}
                 </Descriptions.Item>
                 <Descriptions.Item label="Email" span={2}>
-                  <MailOutlined /> {selectedEnterprise.email}
+                  <MailOutlined /> {selectedEnterprise.contactEmail}
                 </Descriptions.Item>
                 <Descriptions.Item label="Điện thoại">
-                  <PhoneOutlined /> {selectedEnterprise.phone}
+                  <PhoneOutlined /> {selectedEnterprise.contactPhone}
                 </Descriptions.Item>
                 <Descriptions.Item label="Website">
                   {selectedEnterprise.website && (
@@ -360,39 +366,39 @@ const EnterpriseManagement: React.FC = () => {
                   {getStatusTag(selectedEnterprise.status)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày đăng ký">
-                  {new Date(selectedEnterprise.registeredAt).toLocaleDateString('vi-VN')}
+                  {new Date(selectedEnterprise.createdAt).toLocaleDateString('vi-VN')}
                 </Descriptions.Item>
-                {selectedEnterprise.projectsCount !== undefined && (
-                  <Descriptions.Item label="Số dự án">
-                    {selectedEnterprise.projectsCount}
-                  </Descriptions.Item>
+                {selectedEnterprise.status === 'REJECTED' && selectedEnterprise.rejectionReason && (
+                  <>
+                    <Descriptions.Item label="Lý do từ chối" span={2}>
+                      <Text type="danger">{selectedEnterprise.rejectionReason}</Text>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Ngày từ chối" span={2}>
+                      {selectedEnterprise.rejectedAt && new Date(selectedEnterprise.rejectedAt).toLocaleString('vi-VN')}
+                    </Descriptions.Item>
+                  </>
                 )}
-                {selectedEnterprise.totalInvestment !== undefined && (
-                  <Descriptions.Item label="Tổng vốn đầu tư">
-                    {selectedEnterprise.totalInvestment.toLocaleString('vi-VN')} VNĐ
-                  </Descriptions.Item>
-                )}
+                <Descriptions.Item label="Mô tả" span={2}>
+                  {selectedEnterprise.description || 'Chưa có mô tả'}
+                </Descriptions.Item>
               </Descriptions>
             </TabPane>
 
-            <TabPane tab="Tài liệu" key="documents">
-              {selectedEnterprise.documents && selectedEnterprise.documents.length > 0 ? (
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  {selectedEnterprise.documents.map((doc, index) => (
-                    <Card key={index} size="small">
-                      <Space>
-                        <FileTextOutlined />
-                        <Text>{doc.fileName}</Text>
-                        <Button type="link" href={doc.url} target="_blank">
-                          Xem tài liệu
-                        </Button>
-                      </Space>
-                    </Card>
-                  ))}
-                </Space>
-              ) : (
-                <Text type="secondary">Chưa có tài liệu</Text>
-              )}
+            <TabPane tab="Thông tin bổ sung" key="additional">
+              <Descriptions column={2} bordered>
+                <Descriptions.Item label="Quy mô công ty">
+                  {selectedEnterprise.companySize}
+                </Descriptions.Item>
+                <Descriptions.Item label="Năm thành lập">
+                  {selectedEnterprise.yearEstablished}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số giấy phép kinh doanh" span={2}>
+                  {selectedEnterprise.businessLicenseNumber}
+                </Descriptions.Item>
+                <Descriptions.Item label="Chức vụ người đại diện">
+                  {selectedEnterprise.representativePosition}
+                </Descriptions.Item>
+              </Descriptions>
             </TabPane>
           </Tabs>
         )}
