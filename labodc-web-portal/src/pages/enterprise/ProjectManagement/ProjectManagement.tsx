@@ -17,9 +17,13 @@ import {
   DollarOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getProjectSummary, getProjects, Project } from '@/services/enterprise/project.service';
+import {
+  getProjectSummary,
+  getProjects,
+  Project,
+} from '@/services/enterprise/project.service.ts';
 import { formatCurrencyVND } from '@/utils/formatters';
-import styles from './ProjectManagement.module.css';
+import '../enterprise-modern.css';
 
 const ProjectManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -53,14 +57,21 @@ const ProjectManagement: React.FC = () => {
       dataIndex: 'status',
       render: (s: string) => {
         const color =
-          s === 'COMPLETED' ? 'green' : s === 'IN_PROGRESS' ? 'blue' : 'orange';
+          s === 'COMPLETED'
+            ? 'green'
+            : s === 'IN_PROGRESS'
+            ? 'blue'
+            : 'orange';
         return <Tag color={color}>{s}</Tag>;
       },
     },
     {
       title: 'Hành động',
       render: (_: any, record: Project) => (
-        <Button type="link" onClick={() => navigate(`/enterprise/projects/${record.key}`)}>
+        <Button
+          type="link"
+          onClick={() => navigate(`/enterprise/projects/${record.key}`)}
+        >
           Chi tiết
         </Button>
       ),
@@ -68,34 +79,46 @@ const ProjectManagement: React.FC = () => {
   ];
 
   return (
-    <div className={styles.wrapper}>
+    <div className="page-wrapper">
       {/* HEADER */}
-      <div className={styles.header}>
+      <div className="page-header">
         <h1>Quản lý dự án</h1>
         <Button type="primary" icon={<ProjectOutlined />}>
           Tạo dự án mới
         </Button>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <Row gutter={16} className={styles.cardRow}>
+      {/* SUMMARY */}
+      <Row gutter={16} className="stat-row">
         <Col span={6}>
-          <Card>
-            <Statistic title="Tổng dự án" value={summary.total} prefix={<ProjectOutlined />} />
+          <Card className="modern-card stat-card">
+            <Statistic
+              title="Tổng dự án"
+              value={summary.total}
+              prefix={<ProjectOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
-            <Statistic title="Đang thực hiện" value={summary.inProgress} prefix={<RiseOutlined />} />
+          <Card className="modern-card stat-card">
+            <Statistic
+              title="Đang thực hiện"
+              value={summary.inProgress}
+              prefix={<RiseOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
-            <Statistic title="Hoàn thành" value={summary.completed} prefix={<CheckCircleOutlined />} />
+          <Card className="modern-card stat-card">
+            <Statistic
+              title="Hoàn thành"
+              value={summary.completed}
+              prefix={<CheckCircleOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card className="modern-card stat-card">
             <Statistic
               title="Tổng ngân sách"
               value={summary.totalBudget}
@@ -107,7 +130,7 @@ const ProjectManagement: React.FC = () => {
       </Row>
 
       {/* FILTER */}
-      <div className={styles.filterBar}>
+      <div className="filter-bar">
         <Select value={status} onChange={setStatus} style={{ width: 220 }}>
           <Select.Option value="ALL">Tất cả</Select.Option>
           <Select.Option value="IN_PROGRESS">Đang thực hiện</Select.Option>
@@ -117,7 +140,7 @@ const ProjectManagement: React.FC = () => {
       </div>
 
       {/* TABLE */}
-      <Card className={styles.tableCard}>
+      <Card className="table-card">
         <Table columns={columns} dataSource={projects} />
       </Card>
     </div>

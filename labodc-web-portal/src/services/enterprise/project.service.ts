@@ -1,5 +1,15 @@
+// Enterprise Project Service
+// Mock service – giữ nguyên interface để frontend không bị lỗi
+
+export interface ProjectSummary {
+  total: number;
+  inProgress: number;
+  completed: number;
+  totalBudget: number;
+}
+
 export interface Project {
-  key: string;
+  key: number;
   name: string;
   budget: number;
   spent: number;
@@ -7,42 +17,43 @@ export interface Project {
   status: 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
 }
 
-export const getProjectSummary = () => ({
-  total: 12,
-  inProgress: 6,
-  completed: 4,
-  totalBudget: 3200000000,
-});
+export const getProjectSummary = (): ProjectSummary => {
+  return {
+    total: 8,
+    inProgress: 4,
+    completed: 3,
+    totalBudget: 3200000000,
+  };
+};
 
 export const getProjects = (status: string): Project[] => {
   const data: Project[] = [
     {
-      key: '1',
+      key: 1,
       name: 'Hệ thống ERP',
-      budget: 800000000,
-      spent: 500000000,
-      progress: 65,
+      budget: 1200000000,
+      spent: 800000000,
+      progress: 70,
       status: 'IN_PROGRESS',
     },
     {
-      key: '2',
+      key: 2,
       name: 'Website doanh nghiệp',
-      budget: 300000000,
-      spent: 300000000,
+      budget: 600000000,
+      spent: 600000000,
       progress: 100,
       status: 'COMPLETED',
     },
     {
-      key: '3',
-      name: 'Mobile App',
-      budget: 600000000,
-      spent: 200000000,
-      progress: 35,
+      key: 3,
+      name: 'Ứng dụng nội bộ',
+      budget: 400000000,
+      spent: 150000000,
+      progress: 30,
       status: 'ON_HOLD',
     },
   ];
 
-  return status === 'ALL'
-    ? data
-    : data.filter(p => p.status === status);
+  if (status === 'ALL') return data;
+  return data.filter((p) => p.status === status);
 };

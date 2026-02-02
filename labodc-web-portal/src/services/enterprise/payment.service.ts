@@ -1,5 +1,15 @@
+// Enterprise Payment Service
+// Mock service – giữ nguyên interface cho frontend
+
+export interface PaymentSummary {
+  paid: number;
+  pending: number;
+  overdue: number;
+  remaining: number;
+}
+
 export interface Payment {
-  key: string;
+  key: number;
   code: string;
   project: string;
   amount: number;
@@ -7,28 +17,40 @@ export interface Payment {
   status: 'PAID' | 'PENDING' | 'OVERDUE';
 }
 
-export const getPaymentSummary = () => ({
-  paid: 1200000000,
-  pending: 250000000,
-  overdue: 50000000,
-  remaining: 500000000,
-});
+export const getPaymentSummary = (): PaymentSummary => {
+  return {
+    paid: 5,
+    pending: 2,
+    overdue: 1,
+    remaining: 950000000,
+  };
+};
 
-export const getPayments = (): Payment[] => [
-  {
-    key: '1',
-    code: 'PAY-001',
-    project: 'ERP System',
-    amount: 200000000,
-    dueDate: '20/01/2026',
-    status: 'PAID',
-  },
-  {
-    key: '2',
-    code: 'PAY-002',
-    project: 'CRM Platform',
-    amount: 150000000,
-    dueDate: '25/01/2026',
-    status: 'OVERDUE',
-  },
-];
+export const getPayments = (): Payment[] => {
+  return [
+    {
+      key: 1,
+      code: 'PAY-001',
+      project: 'Hệ thống ERP',
+      amount: 300000000,
+      dueDate: '2026-01-20',
+      status: 'PAID',
+    },
+    {
+      key: 2,
+      code: 'PAY-002',
+      project: 'Website doanh nghiệp',
+      amount: 200000000,
+      dueDate: '2026-02-05',
+      status: 'PENDING',
+    },
+    {
+      key: 3,
+      code: 'PAY-003',
+      project: 'Ứng dụng nội bộ',
+      amount: 150000000,
+      dueDate: '2026-01-10',
+      status: 'OVERDUE',
+    },
+  ];
+};
