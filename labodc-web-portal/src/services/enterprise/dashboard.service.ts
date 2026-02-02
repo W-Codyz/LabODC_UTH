@@ -1,39 +1,45 @@
-export interface EnterpriseProject {
-  key: string;
-  name: string;
-  status: 'IN_PROGRESS' | 'COMPLETED';
-  progress: number;
-  members: number;
+// Enterprise Dashboard Service
+// Mock service – giữ nguyên interface để sau này nối API thật
+
+export interface DashboardSummary {
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  totalSpent: number;
 }
 
-export const getEnterpriseDashboardSummary = () => ({
-  totalProjects: 14,
-  activeProjects: 6,
-  completedProjects: 8,
-  totalSpent: 4200000000,
-  pendingPayments: 350000000,
-});
+export interface RecentProject {
+  key: number;
+  name: string;
+  progress: number;
+  members: number;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+}
 
-export const getRecentProjects = (): EnterpriseProject[] => [
-  {
-    key: '1',
-    name: 'Hệ thống ERP',
-    status: 'IN_PROGRESS',
-    progress: 70,
-    members: 6,
-  },
-  {
-    key: '2',
-    name: 'Website doanh nghiệp',
-    status: 'COMPLETED',
-    progress: 100,
-    members: 4,
-  },
-  {
-    key: '3',
-    name: 'Mobile App',
-    status: 'IN_PROGRESS',
-    progress: 45,
-    members: 5,
-  },
-];
+export const getEnterpriseDashboardSummary = (): DashboardSummary => {
+  return {
+    totalProjects: 12,
+    activeProjects: 5,
+    completedProjects: 7,
+    totalSpent: 1250000000,
+  };
+};
+
+export const getRecentProjects = (): RecentProject[] => {
+  return [
+    {
+      key: 1,
+      name: 'Hệ thống ERP',
+      progress: 70,
+      members: 6,
+      status: 'IN_PROGRESS',
+    },
+    {
+      key: 2,
+      name: 'Website doanh nghiệp',
+      progress: 100,
+      members: 4,
+      status: 'COMPLETED',
+    },
+  ];
+};

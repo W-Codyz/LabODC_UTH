@@ -10,9 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   getEnterpriseDashboardSummary,
   getRecentProjects,
-} from '@/services/enterprise/dashboard.service';
+} from '@/services/enterprise/dashboard.service.ts';
 import { formatCurrencyVND } from '@/utils/formatters';
-import styles from './EnterpriseDashboard.module.css';
+import "../enterprise-modern.css";
 
 const EnterpriseDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -28,33 +28,28 @@ const EnterpriseDashboard: React.FC = () => {
     {
       title: 'Tiến độ',
       dataIndex: 'progress',
-      render: (progress: number) => <Progress percent={progress} />,
+      render: (v: number) => <Progress percent={v} />,
     },
     {
       title: 'Thành viên',
       dataIndex: 'members',
-      render: (members: number) => (
+      render: (v: number) => (
         <>
-          <TeamOutlined /> {members}
+          <TeamOutlined /> {v}
         </>
       ),
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'COMPLETED' ? 'green' : 'blue'}>
-          {status}
-        </Tag>
+      render: (s: string) => (
+        <Tag color={s === 'COMPLETED' ? 'green' : 'blue'}>{s}</Tag>
       ),
     },
     {
       title: 'Hành động',
       render: (_: any, record: any) => (
-        <Button
-          type="link"
-          onClick={() => navigate(`/enterprise/projects/${record.key}`)}
-        >
+        <Button type="link" onClick={() => navigate(`/enterprise/projects/${record.key}`)}>
           Xem chi tiết
         </Button>
       ),
@@ -62,54 +57,44 @@ const EnterpriseDashboard: React.FC = () => {
   ];
 
   return (
-    <div className={styles.dashboard}>
+    <div className="page-wrapper">
       {/* HEADER */}
-      <div className={styles.header}>
+      <div className="page-header">
         <h1>Dashboard Doanh nghiệp</h1>
-        <Button
-          type="primary"
-          onClick={() => navigate('/enterprise/projects/new')}
-        >
+        <Button type="primary" onClick={() => navigate('/enterprise/projects/new')}>
           Đề xuất dự án mới
         </Button>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <Row gutter={16} className={styles.cardRow}>
+      {/* SUMMARY */}
+      <Row gutter={16} className="stat-row">
         <Col span={6}>
-          <Card>
-            <Statistic
-              title="Tổng dự án"
-              value={summary.totalProjects}
-              prefix={<ProjectOutlined />}
-            />
+          <Card className="modern-card stat-card">
+            <Statistic title="Tổng dự án" value={summary.totalProjects} prefix={<ProjectOutlined />} />
           </Card>
         </Col>
-
         <Col span={6}>
-          <Card>
+          <Card className="modern-card stat-card">
             <Statistic
               title="Đang thực hiện"
               value={summary.activeProjects}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#f59e0b' }}
             />
           </Card>
         </Col>
-
         <Col span={6}>
-          <Card>
+          <Card className="modern-card stat-card">
             <Statistic
-              title="Đã hoàn thành"
+              title="Hoàn thành"
               value={summary.completedProjects}
               prefix={<ProjectOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#22c55e' }}
             />
           </Card>
         </Col>
-
         <Col span={6}>
-          <Card>
+          <Card className="modern-card stat-card">
             <Statistic
               title="Tổng chi phí"
               value={summary.totalSpent}
@@ -120,21 +105,17 @@ const EnterpriseDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      {/* RECENT PROJECTS */}
+      {/* TABLE */}
       <Card
         title="Dự án gần đây"
+        className="table-card"
         extra={
           <Button type="link" onClick={() => navigate('/enterprise/projects')}>
             Xem tất cả
           </Button>
         }
-        className={styles.tableCard}
       >
-        <Table
-          columns={columns}
-          dataSource={recentProjects}
-          pagination={false}
-        />
+        <Table columns={columns} dataSource={recentProjects} pagination={false} />
       </Card>
     </div>
   );
