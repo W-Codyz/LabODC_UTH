@@ -26,18 +26,6 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
-      '/auth': {
-        target: 'http://localhost:8085',
-        changeOrigin: true,
-      },
-      '/users': {
-        target: 'http://localhost:8085',
-        changeOrigin: true,
-      },
-      '/projects': {
-        target: 'http://localhost:8085',
-        changeOrigin: true,
-      },
       '/actuator': {
         target: 'http://localhost:8085',
         changeOrigin: true,
