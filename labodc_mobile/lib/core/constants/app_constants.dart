@@ -5,7 +5,11 @@ class AppConstants {
   static const String appVersion = '1.0.0';
   
   // API Configuration
-  static const String baseUrl = 'http://localhost:8080/api';
+  static const String baseUrl = 'http://localhost:8085';
+  static const String emulatorBaseUrl = 'http://10.0.2.2:8085';
+  static const bool enableRefreshTokenEndpoint = false;
+  static const bool enableOptionalAuthEndpoints = false;
+  static const bool enableMockServices = true;
   static const String apiVersion = 'v1';
   
   // Timeouts

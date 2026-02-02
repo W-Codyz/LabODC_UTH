@@ -29,6 +29,7 @@ class EnterpriseProjectListScreen extends StatefulWidget {
 class _EnterpriseProjectListScreenState
     extends State<EnterpriseProjectListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _listController = ScrollController();
   final List<_TabConfig> _tabs = const [
     _TabConfig('Tat ca', null),
     _TabConfig('Cho duyet', ProjectStatus.pending),
@@ -36,19 +37,24 @@ class _EnterpriseProjectListScreenState
     _TabConfig('Hoan thanh', ProjectStatus.completed),
     _TabConfig('Da tu choi', ProjectStatus.rejected),
   ];
-
   ProjectStatus? _selectedStatus;
   int? _enterpriseUserId;
   bool _initialized = false;
+  String? _lastLoadMoreError;
+  String _searchTerm = '';
+  String _sortBy = 'newest';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    _listController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _listController.removeListener(_onScroll);
+    _listController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -69,7 +75,14 @@ class _EnterpriseProjectListScreenState
 
   void _selectTab(ProjectStatus? status) {
     setState(() => _selectedStatus = status);
-    context.read<ProjectProvider>().setFilter(status);
+    final provider = context.read<ProjectProvider>();
+    provider.setFilter(status);
+
+    if (_enterpriseUserId != null) {
+      provider.loadEnterpriseProjects(_enterpriseUserId!, status: status);
+    } else {
+      provider.loadProjects(status: status);
+    }
 
     final index = _tabs.indexWhere((tab) => tab.status == status);
     if (index != -1 && _scrollController.hasClients) {
@@ -85,17 +98,88 @@ class _EnterpriseProjectListScreenState
     }
   }
 
+  void _onScroll() {
+    final provider = context.read<ProjectProvider>();
+    if (!provider.hasMore || provider.isLoadingMore) return;
+    if (_listController.position.extentAfter < 200) {
+      provider.loadMore(enterpriseId: _enterpriseUserId);
+    }
+  }
+
+  void _maybeShowLoadMoreError(String? message) {
+    if (message == null) {
+      _lastLoadMoreError = null;
+      return;
+    }
+    if (_lastLoadMoreError == message) return;
+    _lastLoadMoreError = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Tai them that bai, vui long thu lai.'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProjectProvider>();
+    _maybeShowLoadMoreError(provider.loadMoreError);
     final projects = provider.projects;
     final isLoading = provider.isLoading && projects.isEmpty;
     final hasError = provider.error != null && projects.isEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Du an cua toi')),
+      appBar: AppBar(
+        title: const Text('Du an cua toi'),
+        actions: [
+          PopupMenuButton<String>(
+            initialValue: _sortBy,
+            icon: const Icon(Icons.sort),
+            onSelected: (value) {
+              setState(() => _sortBy = value);
+              context.read<ProjectProvider>().setSort(value);
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'newest', child: Text('Moi nhat')),
+              PopupMenuItem(value: 'budget', child: Text('Ngan sach cao')),
+              PopupMenuItem(value: 'deadline', child: Text('Han gan')),
+            ],
+          ),
+          PopupMenuButton<int>(
+            initialValue: provider.pageSize,
+            icon: const Icon(Icons.tune),
+            onSelected: (size) =>
+                context.read<ProjectProvider>().setPageSize(size),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 10, child: Text('10 / trang')),
+              PopupMenuItem(value: 20, child: Text('20 / trang')),
+              PopupMenuItem(value: 50, child: Text('50 / trang')),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Tim kiem theo ten du an',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (value) => setState(() => _searchTerm = value),
+              onSubmitted: (value) => context
+                  .read<ProjectProvider>()
+                  .setSearchTerm(value),
+            ),
+          ),
           Container(
             color: AppColors.white,
             height: 56,
@@ -186,6 +270,18 @@ class _EnterpriseProjectListScreenState
   }
 
   Widget _buildContent(List<ProjectModel> projects) {
+    final provider = context.watch<ProjectProvider>();
+    final filtered = _searchTerm.trim().isEmpty
+        ? projects
+        : projects
+            .where(
+              (p) => p.name.toLowerCase().contains(
+                    _searchTerm.toLowerCase(),
+                  ),
+            )
+            .toList();
+
+    _sortProjects(filtered);
     if (projects.isEmpty) {
       return RefreshIndicator(
         onRefresh: () => context.read<ProjectProvider>().refresh(
@@ -205,12 +301,66 @@ class _EnterpriseProjectListScreenState
         enterpriseId: _enterpriseUserId,
       ),
       child: ListView.separated(
+        controller: _listController,
         padding: const EdgeInsets.all(16),
-        itemCount: projects.length,
+        itemCount: filtered.length + (provider.hasMore ? 1 : 0),
         separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (context, index) => _buildProjectCard(projects[index]),
+        itemBuilder: (context, index) {
+          if (index >= filtered.length) {
+            if (provider.isLoadingMore) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (provider.loadMoreError != null) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    Text(
+                      'Tải thêm thất bại. Chạm để thử lại.',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    AppButton(
+                      text: 'Thử lại',
+                      height: 40,
+                      onPressed: () => context
+                          .read<ProjectProvider>()
+                          .loadMore(enterpriseId: _enterpriseUserId),
+                      isOutlined: true,
+                      borderColor: AppColors.error,
+                      textColor: AppColors.error,
+                      backgroundColor: AppColors.white,
+                    ),
+                  ],
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }
+          return _buildProjectCard(filtered[index]);
+        },
       ),
     );
+  }
+
+  void _sortProjects(List<ProjectModel> items) {
+    switch (_sortBy) {
+      case 'budget':
+        items.sort((a, b) => b.budget.compareTo(a.budget));
+        break;
+      case 'deadline':
+        items.sort((a, b) => a.endDate.compareTo(b.endDate));
+        break;
+      default:
+        items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
   }
 
   Widget _buildProjectCard(ProjectModel project) {

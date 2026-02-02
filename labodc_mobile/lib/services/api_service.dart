@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:labodc_mobile/core/constants/app_constants.dart';
 import 'package:labodc_mobile/services/storage_service.dart';
@@ -13,9 +15,10 @@ class ApiService {
   final _storage = StorageService();
   
   ApiService._internal() {
+    final resolvedBaseUrl = _resolveBaseUrl();
     _dio = Dio(
       BaseOptions(
-        baseUrl: AppConstants.baseUrl,
+        baseUrl: resolvedBaseUrl,
         connectTimeout: const Duration(milliseconds: AppConstants.connectionTimeout),
         receiveTimeout: const Duration(milliseconds: AppConstants.receiveTimeout),
         headers: {
@@ -84,6 +87,9 @@ class ApiService {
   }
   
   Future<bool> _refreshToken() async {
+    if (!AppConstants.enableRefreshTokenEndpoint) {
+      return false;
+    }
     try {
       final refreshToken = await _storage.getRefreshToken();
       if (refreshToken == null) return false;
@@ -247,5 +253,15 @@ class ApiService {
       default:
         return Exception('Không có kết nối internet. Vui lòng kiểm tra lại.');
     }
+  }
+
+  String _resolveBaseUrl() {
+    // Nếu chạy trên Android emulator và dùng localhost thì chuyển sang 10.0.2.2:8085.
+    final raw = AppConstants.baseUrl;
+    final isLocal = raw.contains('localhost') || raw.contains('127.0.0.1');
+    if (isLocal && Platform.isAndroid) {
+      return AppConstants.emulatorBaseUrl;
+    }
+    return raw;
   }
 }

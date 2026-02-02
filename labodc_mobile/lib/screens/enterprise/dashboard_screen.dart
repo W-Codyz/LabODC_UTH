@@ -61,137 +61,150 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
           ),
         ],
       ),
-  Widget _buildRecentProjects(List<ProjectModel> projects) {
-    if (projects.isEmpty) {
-      return const EmptyState(
-        icon: Icons.folder_open,
-        message: 'Chưa có dự án nào',
-      );
-    }
+      body: Consumer<ProjectProvider>(
+        builder: (context, provider, _) {
+          final projects = provider.projects;
+          final stats = _computeStats(projects);
+          final recent = _recentProjects(projects);
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: projects.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final project = projects[index];
-        return _buildProjectCard(project);
-      },
-    );
-  }
+          if (provider.isLoading && projects.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-  Widget _buildProjectCard(ProjectModel project) {
-    final statusColor = _statusColor(project.status);
-    final statusLabel = _statusLabel(project.status);
-
-    return AppCard(
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          if (provider.error != null && projects.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
                 children: [
-                  Expanded(
-                    child: Text(
-                      project.name,
-                      style: AppTextStyles.heading4,
-                    ),
+                  EmptyState(
+                    icon: Icons.error_outline,
+                    message: provider.error ?? 'Không thể tải dữ liệu',
                   ),
-                  StatusBadge(label: statusLabel, color: statusColor),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                children: [
-                  _buildMeta(
-                    Icons.calendar_today,
-                    '${_formatDate(project.startDate)} - ${_formatDate(project.endDate)}',
-                  ),
-                  _buildMeta(
-                    Icons.people,
-                    '${project.requiredTalents} sinh viên',
-                  ),
-                  _buildMeta(
-                    Icons.payments,
-                    '${project.budget ~/ 1000000}M VND',
+                  const SizedBox(height: 12),
+                  AppButton(
+                    text: 'Thử lại',
+                    onPressed: _handleRefresh,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+            );
+          }
 
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      text: 'Xem chi tiết',
-                      onPressed: () {},
-                      backgroundColor: AppColors.white,
-                      textColor: AppColors.primary,
-                      borderColor: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppButton(
-                      text: 'Báo cáo',
-                      onPressed: () {},
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+          return RefreshIndicator(
+            onRefresh: _handleRefresh,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text('Tổng quan', style: AppTextStyles.heading4),
+                const SizedBox(height: 12),
+                _buildStats(stats),
+                const SizedBox(height: 20),
+                Text('Hành động nhanh', style: AppTextStyles.heading5),
+                const SizedBox(height: 12),
+                _buildQuickActions(),
+                const SizedBox(height: 20),
+                Text('Dự án gần đây', style: AppTextStyles.heading5),
+                const SizedBox(height: 12),
+                _buildRecentProjects(recent),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildMeta(IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+  Widget _buildStats(_DashboardStats stats) {
+    return Column(
       children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textSecondary,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                label: 'Tổng dự án',
+                value: stats.total.toString(),
+                color: AppColors.primary,
+                icon: Icons.folder_copy,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Đang hoạt động',
+                value: stats.active.toString(),
+                color: AppColors.info,
+                icon: Icons.play_circle_fill,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                label: 'Hoàn thành',
+                value: stats.completed.toString(),
+                color: AppColors.success,
+                icon: Icons.check_circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Ngân sách (M)',
+                value: stats.totalBudgetM.toStringAsFixed(1),
+                color: AppColors.warning,
+                icon: Icons.payments,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Future<void> _handleRefresh() async {
-    final projectProvider = context.read<ProjectProvider>();
-    if (_enterpriseUserId != null) {
-      await projectProvider.loadEnterpriseProjects(_enterpriseUserId!);
-    } else {
-      await projectProvider.loadProjects();
-    }
-  }
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textSecondary,
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+  }) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
               ),
-              textAlign: TextAlign.center,
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.caption),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: AppTextStyles.heading4.copyWith(color: color),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildQuickActions() {
     return Row(
       children: [
@@ -239,15 +252,15 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: projects.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final project = projects[index];
-        return _buildProjectCard(project);
-      },
+    return Column(
+      children: projects
+          .map(
+            (project) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildProjectCard(project),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -276,7 +289,6 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-
               Wrap(
                 spacing: 16,
                 runSpacing: 8,
@@ -291,12 +303,11 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
                   ),
                   _buildMeta(
                     Icons.payments,
-                    '${project.budget ~/ 1000000}M VND',
+                    '${(project.budget / 1000000).toStringAsFixed(1)}M VND',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -362,22 +373,27 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
     final completed = projects
         .where((p) => p.status == ProjectStatus.completed)
         .length;
-    final totalBudget = projects.fold<int>(0, (sum, p) => sum + p.budget);
+    final totalBudget = projects.fold<double>(0, (sum, p) => sum + p.budget);
     return _DashboardStats(
       total: total,
       active: active,
       completed: completed,
-      totalBudgetM: totalBudget ~/ 1000000,
+      totalBudgetM: totalBudget / 1000000,
     );
   }
 
   List<ProjectModel> _recentProjects(List<ProjectModel> projects) {
     final sorted = [...projects];
-    sorted.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    sorted.sort((a, b) => _effectiveUpdatedAt(b).compareTo(_effectiveUpdatedAt(a)));
     return sorted.take(5).toList();
   }
 
-  String _formatDate(DateTime date) {
+  DateTime _effectiveUpdatedAt(ProjectModel project) {
+    return project.updatedAt ?? project.createdAt;
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '--/--/----';
     final d = date.day.toString().padLeft(2, '0');
     final m = date.month.toString().padLeft(2, '0');
     return '$d/$m/${date.year}';
@@ -424,7 +440,7 @@ class _DashboardStats {
   final int total;
   final int active;
   final int completed;
-  final int totalBudgetM;
+  final double totalBudgetM;
 
   const _DashboardStats({
     required this.total,

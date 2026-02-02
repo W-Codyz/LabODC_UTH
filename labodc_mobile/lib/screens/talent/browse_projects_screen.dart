@@ -18,7 +18,11 @@ class BrowseProjectsScreen extends StatefulWidget {
 class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
   String _selectedTech = 'ALL';
   String _sortBy = 'newest';
+  String _searchTerm = '';
+  String _statusFilter = 'active';
   bool _initialized = false;
+  String? _lastLoadMoreError;
+  final ScrollController _listController = ScrollController();
 
   @override
   void initState() {
@@ -28,11 +32,20 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
       _initialized = true;
       await context.read<ProjectProvider>().ensureLoaded();
     });
+    _listController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _listController.removeListener(_onScroll);
+    _listController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProjectProvider>();
+    _maybeShowLoadMoreError(provider.loadMoreError);
     final techFilters = _buildTechnologyFilters(provider);
     final projects = _filteredProjects(provider);
     final isLoading = provider.isLoading && !provider.hasData;
@@ -44,17 +57,70 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
-            onSelected: (value) => setState(() => _sortBy = value),
+            onSelected: (value) {
+              setState(() => _sortBy = value);
+              context.read<ProjectProvider>().setSort(value);
+            },
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'newest', child: Text('Mới nhất')),
               PopupMenuItem(value: 'budget', child: Text('Ngân sách cao')),
               PopupMenuItem(value: 'deadline', child: Text('Hạn chót gần')),
             ],
           ),
+          PopupMenuButton<int>(
+            initialValue: context.watch<ProjectProvider>().pageSize,
+            icon: const Icon(Icons.tune),
+            onSelected: (size) =>
+                context.read<ProjectProvider>().setPageSize(size),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 10, child: Text('10 / trang')),
+              PopupMenuItem(value: 20, child: Text('20 / trang')),
+              PopupMenuItem(value: 50, child: Text('50 / trang')),
+            ],
+          ),
         ],
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Tìm kiếm dự án theo tên',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (value) => setState(() => _searchTerm = value),
+              onSubmitted: (value) => context
+                  .read<ProjectProvider>()
+                  .setSearchTerm(value),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Đang mở'),
+                  selected: _statusFilter == 'active',
+                  onSelected: (_) => _onStatusChanged('active'),
+                ),
+                ChoiceChip(
+                  label: const Text('Hoàn thành'),
+                  selected: _statusFilter == 'completed',
+                  onSelected: (_) => _onStatusChanged('completed'),
+                ),
+                ChoiceChip(
+                  label: const Text('Tất cả'),
+                  selected: _statusFilter == 'all',
+                  onSelected: (_) => _onStatusChanged('all'),
+                ),
+              ],
+            ),
+          ),
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -108,11 +174,14 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
                 : RefreshIndicator(
                     onRefresh: () => provider.refresh(),
                     child: ListView.builder(
+                      controller: _listController,
                       padding: const EdgeInsets.all(16),
-                      itemCount: projects.length,
+                      itemCount: projects.length + (provider.hasMore ? 1 : 0),
                       itemBuilder: (context, index) => Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildProjectCard(projects[index], provider),
+                        child: index >= projects.length
+                            ? _buildLoadMoreStatus(provider)
+                            : _buildProjectCard(projects[index], provider),
                       ),
                     ),
                   ),
@@ -122,17 +191,96 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
     );
   }
 
+  Widget _buildLoadMoreStatus(ProjectProvider provider) {
+    if (provider.isLoadingMore) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (provider.loadMoreError != null) {
+      return Column(
+        children: [
+          Text(
+            'Tải thêm thất bại. Chạm để thử lại.',
+            style: AppTextStyles.caption.copyWith(color: AppColors.error),
+          ),
+          const SizedBox(height: 8),
+          AppButton(
+            text: 'Thử lại',
+            height: 40,
+            onPressed: () => provider.loadMore(),
+            isOutlined: true,
+            borderColor: AppColors.error,
+            textColor: AppColors.error,
+            backgroundColor: AppColors.white,
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  void _onScroll() {
+    final provider = context.read<ProjectProvider>();
+    if (!provider.hasMore || provider.isLoadingMore) return;
+    if (_listController.position.extentAfter < 200) {
+      provider.loadMore();
+    }
+  }
+
+  void _onStatusChanged(String value) {
+    setState(() => _statusFilter = value);
+    final status = value == 'completed' ? ProjectStatus.completed : null;
+    context.read<ProjectProvider>().loadProjects(status: status);
+  }
+
+  void _maybeShowLoadMoreError(String? message) {
+    if (message == null) {
+      _lastLoadMoreError = null;
+      return;
+    }
+    if (_lastLoadMoreError == message) return;
+    _lastLoadMoreError = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Tai them that bai, vui long thu lai.'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
+  }
+
   List<ProjectModel> _filteredProjects(ProjectProvider provider) {
     List<ProjectModel> items = provider.allProjects;
     items = items.where((project) {
-      return project.status == ProjectStatus.pending ||
-          project.status == ProjectStatus.approved ||
-          project.status == ProjectStatus.inProgress;
+      switch (_statusFilter) {
+        case 'completed':
+          return project.status == ProjectStatus.completed;
+        case 'all':
+          return true;
+        default:
+          return project.status == ProjectStatus.pending ||
+              project.status == ProjectStatus.approved ||
+              project.status == ProjectStatus.inProgress;
+      }
     }).toList();
 
     if (_selectedTech != 'ALL') {
       items = items
           .where((project) => project.technologies.contains(_selectedTech))
+          .toList();
+    }
+
+    if (_searchTerm.trim().isNotEmpty) {
+      final term = _searchTerm.toLowerCase();
+      items = items
+          .where((project) => project.name.toLowerCase().contains(term))
           .toList();
     }
 

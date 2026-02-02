@@ -1,4 +1,5 @@
 import 'package:labodc_mobile/core/constants/api_endpoints.dart';
+import 'package:labodc_mobile/core/constants/app_constants.dart';
 import 'package:labodc_mobile/models/auth_model.dart';
 import 'package:labodc_mobile/models/api_response.dart';
 import 'package:labodc_mobile/services/api_service.dart';
@@ -62,6 +63,9 @@ class AuthService {
   
   /// Forgot password
   Future<ApiResponse> forgotPassword(String email) async {
+    if (!AppConstants.enableOptionalAuthEndpoints) {
+      return _notAvailable('forgot-password');
+    }
     try {
       final response = await _api.post(
         ApiEndpoints.forgotPassword,
@@ -80,6 +84,9 @@ class AuthService {
     required String otp,
     required String newPassword,
   }) async {
+    if (!AppConstants.enableOptionalAuthEndpoints) {
+      return _notAvailable('reset-password');
+    }
     try {
       final response = await _api.post(
         ApiEndpoints.resetPassword,
@@ -98,6 +105,9 @@ class AuthService {
   
   /// Verify email
   Future<ApiResponse> verifyEmail(String token) async {
+    if (!AppConstants.enableOptionalAuthEndpoints) {
+      return _notAvailable('verify-email');
+    }
     try {
       final response = await _api.post(
         ApiEndpoints.verifyEmail,
@@ -138,5 +148,14 @@ class AuthService {
   /// Get current user role
   String? getCurrentUserRole() {
     return _storage.getUserRole();
+  }
+
+  ApiResponse _notAvailable(String feature) {
+    return ApiResponse(
+      success: false,
+      message: 'Endpoint $feature chưa hỗ trợ trên backend hiện tại',
+      data: null,
+      timestamp: DateTime.now().toIso8601String(),
+    );
   }
 }
