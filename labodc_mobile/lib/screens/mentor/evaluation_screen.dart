@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:labodc_mobile/core/theme/app_colors.dart';
 import 'package:labodc_mobile/core/theme/app_text_styles.dart';
-import 'package:labodc_mobile/widgets/common_widgets.dart';
 import 'package:labodc_mobile/widgets/app_button.dart';
 
 class EvaluationScreen extends StatefulWidget {
@@ -13,7 +12,7 @@ class EvaluationScreen extends StatefulWidget {
 
 class _EvaluationScreenState extends State<EvaluationScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Selected talent
   String? _selectedTalent;
   String _evaluationPeriod = '2026-02';
@@ -65,8 +64,13 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
   }
 
   double get _overallScore {
-    return (_technicalSkills + _problemSolving + _teamwork + 
-            _communication + _codeQuality + _punctuality) / 6;
+    return (_technicalSkills +
+            _problemSolving +
+            _teamwork +
+            _communication +
+            _codeQuality +
+            _punctuality) /
+        6;
   }
 
   String get _grade {
@@ -175,9 +179,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đánh giá Sinh viên'),
-      ),
+      appBar: AppBar(title: const Text('Đánh giá Sinh viên')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -188,9 +190,9 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
               // Talent selection
               Text('Thông tin đánh giá', style: AppTextStyles.heading3),
               const SizedBox(height: 16),
-              
+
               DropdownButtonFormField<String>(
-                value: _selectedTalent,
+                initialValue: _selectedTalent,
                 decoration: const InputDecoration(
                   labelText: 'Chọn sinh viên *',
                   border: OutlineInputBorder(),
@@ -222,10 +224,15 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primary.withOpacity(0.1), AppColors.primary.withOpacity(0.05)],
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.1),
+                      AppColors.primary.withValues(alpha: 0.05),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -247,11 +254,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                         ),
                       ],
                     ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: AppColors.divider,
-                    ),
+                    Container(width: 1, height: 40, color: AppColors.divider),
                     Column(
                       children: [
                         Text(
@@ -330,7 +333,8 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                 controller: _strengthsController,
                 decoration: const InputDecoration(
                   labelText: 'Điểm mạnh',
-                  hintText: 'VD: Frontend development skills mạnh, tự học nhanh...',
+                  hintText:
+                      'VD: Frontend development skills mạnh, tự học nhanh...',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
@@ -436,9 +440,12 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: _getScoreColor(value).withOpacity(0.1),
+                  color: _getScoreColor(value).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -452,7 +459,7 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          
+
           Slider(
             value: value,
             min: 0,
@@ -461,13 +468,28 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
             label: value.toStringAsFixed(1),
             onChanged: onChanged,
           ),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('0', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-              Text('5', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-              Text('10', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+              Text(
+                '0',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '5',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '10',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -493,4 +515,3 @@ class _EvaluationScreenState extends State<EvaluationScreen> {
     return AppColors.error;
   }
 }
-

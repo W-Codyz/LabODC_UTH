@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:flutter/material.dart';
 import 'package:labodc_mobile/screens/auth/login_screen.dart';
 import 'package:labodc_mobile/screens/auth/register_screen.dart';
 import 'package:labodc_mobile/screens/auth/forgot_password_screen.dart';
@@ -40,34 +39,35 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
-  
+
   // Home
   static const String home = '/home';
-  
+
   // Enterprise Routes
   static const String enterpriseDashboard = '/enterprise/dashboard';
   static const String projectProposal = '/enterprise/project-proposal';
   static const String enterpriseProjects = '/enterprise/projects';
   static const String enterprisePayment = '/enterprise/payment';
   static const String enterpriseReports = '/enterprise/reports';
-  
+
   // Talent Routes
   static const String talentDashboard = '/talent/dashboard';
   static const String browseProjects = '/talent/browse-projects';
   static const String myProjects = '/talent/my-projects';
   static const String talentTasks = '/talent/tasks';
   static const String talentProfile = '/talent/profile';
-  
+
   // Mentor Routes
   static const String mentorDashboard = '/mentor/dashboard';
   static const String projectInvitations = '/mentor/invitations';
   static const String taskManagement = '/mentor/task-management';
   static const String evaluation = '/mentor/evaluation';
   static const String reportSubmission = '/mentor/report-submission';
-  
+
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
-  static const String adminEnterpriseManagement = '/admin/enterprise-management';
+  static const String adminEnterpriseManagement =
+      '/admin/enterprise-management';
   static const String adminProjectValidation = '/admin/project-validation';
   static const String adminFundAllocation = '/admin/fund-allocation';
 }
@@ -82,7 +82,7 @@ class AppRouter {
         path: AppRoutes.splash,
         builder: (context, state) => const SplashScreen(),
       ),
-      
+
       // Auth Routes
       GoRoute(
         path: AppRoutes.login,
@@ -96,13 +96,13 @@ class AppRouter {
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
-      
+
       // Home
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),
       ),
-      
+
       // Enterprise Routes
       GoRoute(
         path: AppRoutes.enterpriseDashboard,
@@ -124,7 +124,7 @@ class AppRouter {
         path: AppRoutes.enterpriseReports,
         builder: (context, state) => const EnterpriseReportsScreen(),
       ),
-      
+
       // Talent Routes
       GoRoute(
         path: AppRoutes.talentDashboard,
@@ -146,7 +146,7 @@ class AppRouter {
         path: AppRoutes.talentProfile,
         builder: (context, state) => const TalentProfileScreen(),
       ),
-      
+
       // Mentor Routes
       GoRoute(
         path: AppRoutes.mentorDashboard,
@@ -168,7 +168,7 @@ class AppRouter {
         path: AppRoutes.reportSubmission,
         builder: (context, state) => const ReportSubmissionScreen(),
       ),
-      
+
       // Admin Routes
       GoRoute(
         path: AppRoutes.adminDashboard,

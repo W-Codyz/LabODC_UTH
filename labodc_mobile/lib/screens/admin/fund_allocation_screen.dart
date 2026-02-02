@@ -155,7 +155,7 @@ class _FundAllocationScreenState extends State<FundAllocationScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _pendingAllocations.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, separatorIndex) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final allocation = _pendingAllocations[index];
         return _buildAllocationCard(allocation);
@@ -167,7 +167,7 @@ class _FundAllocationScreenState extends State<FundAllocationScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _disbursedAllocations.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, separatorIndex) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final allocation = _disbursedAllocations[index];
         return AppCard(
@@ -244,7 +244,7 @@ class _FundAllocationScreenState extends State<FundAllocationScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -324,7 +324,7 @@ class _FundAllocationScreenState extends State<FundAllocationScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -332,7 +332,7 @@ class _FundAllocationScreenState extends State<FundAllocationScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 20),
@@ -418,3 +418,6 @@ class _FundAllocationScreenState extends State<FundAllocationScreen> {
     );
   }
 }
+
+
+

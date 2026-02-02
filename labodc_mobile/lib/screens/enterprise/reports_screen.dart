@@ -89,7 +89,7 @@ class _EnterpriseReportsScreenState extends State<EnterpriseReportsScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: _reports.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, separatorIndex) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final report = _reports[index];
                   return _buildReportCard(report);
@@ -239,7 +239,7 @@ class _EnterpriseReportsScreenState extends State<EnterpriseReportsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withOpacity(0.1),
+                    color: AppColors.warning.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -295,7 +295,7 @@ class _EnterpriseReportsScreenState extends State<EnterpriseReportsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -476,3 +476,6 @@ class _EnterpriseReportsScreenState extends State<EnterpriseReportsScreen> {
     }
   }
 }
+
+
+

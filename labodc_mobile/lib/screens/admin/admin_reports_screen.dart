@@ -13,7 +13,7 @@ class AdminReportsScreen extends StatefulWidget {
 
 class _AdminReportsScreenState extends State<AdminReportsScreen> {
   String _selectedTab = 'published';
-  
+
   // Mock data
   final List<Map<String, dynamic>> _publishedReports = [
     {
@@ -37,9 +37,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       'downloads': 456,
     },
   ];
-  
+
   final List<Map<String, dynamic>> _draftReports = [];
-  
+
   final Map<String, dynamic> _statistics = {
     'totalReports': 8,
     'totalProjects': 120,
@@ -50,9 +50,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Báo cáo Minh bạch'),
-      ),
+      appBar: AppBar(title: const Text('Báo cáo Minh bạch')),
       body: Column(
         children: [
           // Statistics Summary
@@ -108,7 +106,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             ),
           ),
           const Divider(height: 1),
-          
+
           // Tab Bar
           Container(
             color: AppColors.white,
@@ -120,11 +118,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             ),
           ),
           const Divider(height: 1),
-          
+
           // Content
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -134,8 +130,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       ),
     );
   }
-  
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -143,10 +144,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTextStyles.heading2.copyWith(color: color),
-            ),
+            Text(value, style: AppTextStyles.heading2.copyWith(color: color)),
             const SizedBox(height: 4),
             Text(
               label,
@@ -160,7 +158,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       ),
     );
   }
-  
+
   Widget _buildTab(String label, String value, int count) {
     final isSelected = _selectedTab == value;
     return Expanded(
@@ -182,16 +180,23 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
               Text(
                 label,
                 style: AppTextStyles.subtitle2.copyWith(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               if (count > 0) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -209,7 +214,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       ),
     );
   }
-  
+
   Widget _buildContent() {
     if (_selectedTab == 'published' && _publishedReports.isNotEmpty) {
       return _buildPublishedList();
@@ -217,41 +222,38 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       return _buildDraftList();
     } else {
       return const Center(
-        child: EmptyState(
-          icon: Icons.article,
-          message: 'Chưa có báo cáo nào',
-        ),
+        child: EmptyState(icon: Icons.article, message: 'Chưa có báo cáo nào'),
       );
     }
   }
-  
+
   Widget _buildPublishedList() {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _publishedReports.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final report = _publishedReports[index];
         return _buildReportCard(report);
       },
     );
   }
-  
+
   Widget _buildDraftList() {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _draftReports.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final report = _draftReports[index];
         return _buildReportCard(report);
       },
     );
   }
-  
+
   Widget _buildReportCard(Map<String, dynamic> report) {
     final isPublished = report['status'] == 'PUBLISHED';
-    
+
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -283,7 +285,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Statistics
             Container(
               padding: const EdgeInsets.all(12),
@@ -299,11 +301,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                       '${report['totalProjects']} dự án',
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 30,
-                    color: AppColors.divider,
-                  ),
+                  Container(width: 1, height: 30, color: AppColors.divider),
                   Expanded(
                     child: _buildReportStat(
                       Icons.payments,
@@ -311,11 +309,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                     ),
                   ),
                   if (isPublished) ...[
-                    Container(
-                      width: 1,
-                      height: 30,
-                      color: AppColors.divider,
-                    ),
+                    Container(width: 1, height: 30, color: AppColors.divider),
                     Expanded(
                       child: _buildReportStat(
                         Icons.download,
@@ -326,7 +320,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                 ],
               ),
             ),
-            
+
             if (isPublished) ...[
               const SizedBox(height: 12),
               Text(
@@ -336,11 +330,11 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 16),
             const Divider(height: 1),
             const SizedBox(height: 16),
-            
+
             // Actions
             Row(
               children: [
@@ -380,7 +374,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       ),
     );
   }
-  
+
   Widget _buildReportStat(IconData icon, String label) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -389,18 +383,16 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
   }
-  
+
   void _showCreateReportDialog() {
     final titleController = TextEditingController();
     final periodController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -432,8 +424,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (titleController.text.trim().isEmpty || 
-                  periodController.text.trim().isEmpty) return;
+              if (titleController.text.trim().isEmpty ||
+                  periodController.text.trim().isEmpty) {
+                return;
+              }
               // TODO: Call API
               Navigator.pop(context);
               _showSuccessSnackBar('Đã tạo báo cáo mới');
@@ -444,17 +438,17 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       ),
     );
   }
-  
+
   void _viewReportDetails(Map<String, dynamic> report) {
     _showSuccessSnackBar('Xem chi tiết báo cáo #${report['id']}');
     // TODO: Navigate to detail screen
   }
-  
+
   void _downloadReport(Map<String, dynamic> report) {
     _showSuccessSnackBar('Đang tải báo cáo "${report['title']}"...');
     // TODO: Implement download
   }
-  
+
   void _publishReport(Map<String, dynamic> report) {
     showDialog(
       context: context,
@@ -478,7 +472,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
       ),
     );
   }
-  
+
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.success),

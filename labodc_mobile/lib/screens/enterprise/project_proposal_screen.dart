@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:labodc_mobile/core/theme/app_colors.dart';
 import 'package:labodc_mobile/core/theme/app_text_styles.dart';
+import 'package:labodc_mobile/services/project_service.dart';
 import 'package:labodc_mobile/widgets/common_widgets.dart';
 import 'package:labodc_mobile/widgets/app_button.dart';
 
@@ -18,20 +19,32 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
   final _objectivesController = TextEditingController();
   final _budgetController = TextEditingController();
   final _studentCountController = TextEditingController();
-  
+
+  final _projectService = ProjectService();
+  bool _isSubmitting = false;
+
   DateTime? _startDate;
   DateTime? _endDate;
-  
+
   final List<String> _selectedTechnologies = [];
   final List<String> _availableTechnologies = [
-    'ReactJS', 'NodeJS', 'Flutter', 'React Native',
-    'Java', 'Spring Boot', 'Python', 'Django',
-    'MongoDB', 'PostgreSQL', 'MySQL', 'Redis',
-    'Docker', 'Kubernetes', 'AWS', 'Azure'
+    'ReactJS',
+    'NodeJS',
+    'Flutter',
+    'React Native',
+    'Java',
+    'Spring Boot',
+    'Python',
+    'Django',
+    'MongoDB',
+    'PostgreSQL',
+    'MySQL',
+    'Redis',
+    'Docker',
+    'Kubernetes',
+    'AWS',
+    'Azure',
   ];
-  
-  final List<Map<String, dynamic>> _skillRequirements = [];
-  bool _isDraft = false;
 
   @override
   void dispose() {
@@ -86,11 +99,11 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Basic Information
             Text('Thông tin cơ bản', style: AppTextStyles.heading4),
             const SizedBox(height: 12),
-            
+
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
@@ -109,7 +122,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               },
             ),
             const SizedBox(height: 16),
-            
+
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
@@ -129,7 +142,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               },
             ),
             const SizedBox(height: 16),
-            
+
             TextFormField(
               controller: _objectivesController,
               decoration: const InputDecoration(
@@ -146,11 +159,11 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               },
             ),
             const SizedBox(height: 24),
-            
+
             // Technologies
             Text('Công nghệ sử dụng', style: AppTextStyles.heading4),
             const SizedBox(height: 12),
-            
+
             AppCard(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -179,7 +192,9 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
                               }
                             });
                           },
-                          selectedColor: AppColors.primary.withOpacity(0.2),
+                          selectedColor: AppColors.primary.withValues(
+                            alpha: 0.2,
+                          ),
                           checkmarkColor: AppColors.primary,
                         );
                       }).toList(),
@@ -189,11 +204,11 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Timeline & Budget
             Text('Thời gian & Ngân sách', style: AppTextStyles.heading4),
             const SizedBox(height: 12),
-            
+
             Row(
               children: [
                 Expanded(
@@ -242,7 +257,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             TextFormField(
               controller: _budgetController,
               decoration: const InputDecoration(
@@ -267,7 +282,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               },
             ),
             const SizedBox(height: 16),
-            
+
             // Budget Distribution Info
             if (_budgetController.text.isNotEmpty &&
                 int.tryParse(_budgetController.text) != null) ...[
@@ -305,7 +320,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            
+
             TextFormField(
               controller: _studentCountController,
               decoration: const InputDecoration(
@@ -330,7 +345,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
               },
             ),
             const SizedBox(height: 32),
-            
+
             // Submit Buttons
             Row(
               children: [
@@ -347,8 +362,9 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
                 Expanded(
                   flex: 2,
                   child: AppButton(
-                    text: 'Gửi đề xuất',
-                    onPressed: () => _submitProposal(),
+                    text: _isSubmitting ? 'Đang gửi...' : 'Gửi đề xuất',
+                    onPressed: _isSubmitting ? () {} : () => _submitProposal(),
+                    isLoading: _isSubmitting,
                     icon: Icons.send,
                   ),
                 ),
@@ -360,16 +376,14 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       ),
     );
   }
-  
+
   Widget _buildBudgetDistribution(String label, double amount, Color color) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: AppTextStyles.body2.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: AppTextStyles.body2.copyWith(color: AppColors.textSecondary),
         ),
         Text(
           '${amount ~/ 1000000}M VNĐ',
@@ -381,7 +395,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       ],
     );
   }
-  
+
   Future<void> _selectStartDate() async {
     final date = await showDatePicker(
       context: context,
@@ -393,9 +407,10 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       setState(() => _startDate = date);
     }
   }
-  
+
   Future<void> _selectEndDate() async {
-    final initialDate = _startDate?.add(const Duration(days: 30)) ??
+    final initialDate =
+        _startDate?.add(const Duration(days: 30)) ??
         DateTime.now().add(const Duration(days: 60));
     final date = await showDatePicker(
       context: context,
@@ -407,9 +422,8 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       setState(() => _endDate = date);
     }
   }
-  
+
   void _saveDraft() {
-    _isDraft = true;
     // TODO: Save to local storage or API
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -418,12 +432,12 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       ),
     );
   }
-  
+
   void _submitProposal() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -433,7 +447,7 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       );
       return;
     }
-    
+
     if (_selectedTechnologies.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -443,36 +457,68 @@ class _ProjectProposalScreenState extends State<ProjectProposalScreen> {
       );
       return;
     }
-    
-    // TODO: Call API
+
+    final objectives = _objectivesController.text
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    final payload = {
+      'name': _titleController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'objectives': objectives,
+      'startDate': _startDate!.toIso8601String().split('T').first,
+      'endDate': _endDate!.toIso8601String().split('T').first,
+      'budget': double.parse(_budgetController.text.trim()),
+      'requiredTalents': int.parse(_studentCountController.text.trim()),
+      'technologies': _selectedTechnologies,
+      'allowApplications': true,
+    };
+
+    setState(() => _isSubmitting = true);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xác nhận gửi đề xuất'),
-        content: Text(
-          'Gửi đề xuất dự án "${_titleController.text}"?\n\n'
-          'Lab sẽ xem xét trong vòng 48 giờ.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Back to previous screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Đã gửi đề xuất dự án thành công!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            child: const Text('Xác nhận'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+
+    _projectService.createProject(payload: payload).then((success) {
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+
+      if (success) {
+        Navigator.pop(context); // back
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Đã gửi đề xuất dự án thành công!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gửi đề xuất thất bại, vui lòng thử lại'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }).catchError((_) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gửi đề xuất thất bại, vui lòng thử lại'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }).whenComplete(() {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    });
   }
 }

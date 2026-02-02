@@ -129,7 +129,7 @@ class _EnterpriseManagementScreenState extends State<EnterpriseManagementScreen>
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _pendingEnterprises.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, separatorIndex) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final enterprise = _pendingEnterprises[index];
         return _buildEnterpriseCard(enterprise);
@@ -150,7 +150,7 @@ class _EnterpriseManagementScreenState extends State<EnterpriseManagementScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -368,3 +368,6 @@ class _EnterpriseManagementScreenState extends State<EnterpriseManagementScreen>
     );
   }
 }
+
+
+

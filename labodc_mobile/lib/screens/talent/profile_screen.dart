@@ -21,7 +21,9 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
   final _yearOfStudyController = TextEditingController(text: '3');
   final _emailController = TextEditingController(text: 'student@uth.edu.vn');
   final _phoneController = TextEditingController(text: '0901234567');
-  final _portfolioController = TextEditingController(text: 'https://github.com/tranthic');
+  final _portfolioController = TextEditingController(
+    text: 'https://github.com/tranthic',
+  );
 
   final Map<String, dynamic> _profileData = {
     'avatarUrl': 'https://ui-avatars.com/api/?name=Tran+Thi+C&size=200',
@@ -104,14 +106,17 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: selectedLevel,
+              initialValue: selectedLevel,
               decoration: const InputDecoration(
                 labelText: 'Trình độ *',
                 border: OutlineInputBorder(),
               ),
               items: const [
                 DropdownMenuItem(value: 'Beginner', child: Text('Beginner')),
-                DropdownMenuItem(value: 'Intermediate', child: Text('Intermediate')),
+                DropdownMenuItem(
+                  value: 'Intermediate',
+                  child: Text('Intermediate'),
+                ),
                 DropdownMenuItem(value: 'Advanced', child: Text('Advanced')),
               ],
               onChanged: (value) => selectedLevel = value!,
@@ -156,15 +161,9 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
         title: const Text('Hồ sơ của tôi'),
         actions: [
           if (!_isEditing)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: _toggleEdit,
-            )
+            IconButton(icon: const Icon(Icons.edit), onPressed: _toggleEdit)
           else
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: _toggleEdit,
-            ),
+            IconButton(icon: const Icon(Icons.close), onPressed: _toggleEdit),
         ],
       ),
       body: Form(
@@ -182,7 +181,9 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 60,
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           child: Text(
                             _fullNameController.text[0],
                             style: AppTextStyles.heading1.copyWith(
@@ -266,7 +267,7 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
               // Personal information
               Text('Thông tin cá nhân', style: AppTextStyles.heading3),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _fullNameController,
                 decoration: const InputDecoration(
@@ -368,125 +369,142 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
-              ..._skills.map((skill) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.divider),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  skill['name'],
-                                  style: AppTextStyles.subtitle2.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.info.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        skill['level'],
-                                        style: AppTextStyles.caption.copyWith(
-                                          color: AppColors.info,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${skill['years']} năm',
-                                      style: AppTextStyles.caption.copyWith(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (_isEditing)
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: AppColors.error),
-                              onPressed: () {
-                                // TODO: Delete skill
-                              },
-                            ),
-                        ],
-                      ),
+
+              ..._skills.map(
+                (skill) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.divider),
                     ),
-                  )),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                skill['name'],
+                                style: AppTextStyles.subtitle2.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.info.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      skill['level'],
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppColors.info,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${skill['years']} năm',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_isEditing)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AppColors.error,
+                            ),
+                            onPressed: () {
+                              // TODO: Delete skill
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 24),
 
               // Certifications
               Text('Chứng chỉ', style: AppTextStyles.heading3),
               const SizedBox(height: 16),
-              
-              ..._certifications.map((cert) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.divider),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            cert['name'],
-                            style: AppTextStyles.subtitle2.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(Icons.business, size: 14, color: AppColors.textSecondary),
-                              const SizedBox(width: 4),
-                              Text(
-                                cert['issuer'],
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
-                              const SizedBox(width: 4),
-                              Text(
-                                cert['issueDate'],
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+
+              ..._certifications.map(
+                (cert) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.divider),
                     ),
-                  )),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cert['name'],
+                          style: AppTextStyles.subtitle2.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.business,
+                              size: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              cert['issuer'],
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              cert['issueDate'],
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
               if (_isEditing) ...[
                 const SizedBox(height: 24),
@@ -508,11 +526,16 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -529,10 +552,7 @@ class _TalentProfileScreenState extends State<TalentProfileScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: AppTextStyles.caption.copyWith(
-              color: color,
-              fontSize: 10,
-            ),
+            style: AppTextStyles.caption.copyWith(color: color, fontSize: 10),
             textAlign: TextAlign.center,
           ),
         ],

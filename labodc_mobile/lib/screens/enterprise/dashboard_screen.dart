@@ -239,7 +239,7 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _recentProjects.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, separatorIndex) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final project = _recentProjects[index];
         return _buildProjectCard(project);
@@ -365,3 +365,5 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
     }
   }
 }
+
+

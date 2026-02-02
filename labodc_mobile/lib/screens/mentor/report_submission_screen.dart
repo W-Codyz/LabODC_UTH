@@ -13,7 +13,7 @@ class ReportSubmissionScreen extends StatefulWidget {
 
 class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   String _reportType = 'MONTHLY';
   String _reportingPeriod = '2026-02';
   String? _selectedProject;
@@ -144,9 +144,7 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nộp Báo cáo'),
-      ),
+      appBar: AppBar(title: const Text('Nộp Báo cáo')),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -168,23 +166,30 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
 
                     // Report type
                     DropdownButtonFormField<String>(
-                      value: _reportType,
+                      initialValue: _reportType,
                       decoration: const InputDecoration(
                         labelText: 'Loại báo cáo *',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.category),
                       ),
                       items: const [
-                        DropdownMenuItem<String>(value: 'MONTHLY', child: Text('Báo cáo tháng')),
-                        DropdownMenuItem<String>(value: 'PHASE', child: Text('Báo cáo giai đoạn')),
+                        DropdownMenuItem<String>(
+                          value: 'MONTHLY',
+                          child: Text('Báo cáo tháng'),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'PHASE',
+                          child: Text('Báo cáo giai đoạn'),
+                        ),
                       ],
-                      onChanged: (value) => setState(() => _reportType = value!),
+                      onChanged: (value) =>
+                          setState(() => _reportType = value!),
                     ),
                     const SizedBox(height: 16),
 
                     // Project selection
                     DropdownButtonFormField<String>(
-                      value: _selectedProject,
+                      initialValue: _selectedProject,
                       decoration: const InputDecoration(
                         labelText: 'Dự án *',
                         border: OutlineInputBorder(),
@@ -196,7 +201,8 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
                           child: Text(project['title']),
                         );
                       }).toList(),
-                      onChanged: (value) => setState(() => _selectedProject = value),
+                      onChanged: (value) =>
+                          setState(() => _selectedProject = value),
                     ),
                     const SizedBox(height: 16),
 
@@ -291,12 +297,13 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
                     // Achievements
                     Text('Thành tựu', style: AppTextStyles.heading3),
                     const SizedBox(height: 16),
-                    
+
                     TextFormField(
                       controller: _achievementsController,
                       decoration: const InputDecoration(
                         labelText: 'Danh sách thành tựu',
-                        hintText: 'Mỗi thành tựu một dòng...\nVD:\n- Hoàn thành frontend dashboard\n- Backend APIs pass tests',
+                        hintText:
+                            'Mỗi thành tựu một dòng...\nVD:\n- Hoàn thành frontend dashboard\n- Backend APIs pass tests',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 5,
@@ -310,14 +317,18 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
                     const SizedBox(height: 24),
 
                     // Challenges
-                    Text('Thách thức & Giải pháp', style: AppTextStyles.heading3),
+                    Text(
+                      'Thách thức & Giải pháp',
+                      style: AppTextStyles.heading3,
+                    ),
                     const SizedBox(height: 16),
-                    
+
                     TextFormField(
                       controller: _challengesController,
                       decoration: const InputDecoration(
                         labelText: 'Thách thức gặp phải và cách giải quyết',
-                        hintText: 'VD:\n- Issue: Cloudinary upload slow\n  Solution: Image compression + lazy loading',
+                        hintText:
+                            'VD:\n- Issue: Cloudinary upload slow\n  Solution: Image compression + lazy loading',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 5,
@@ -327,12 +338,13 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
                     // Risks
                     Text('Rủi ro tiềm ẩn', style: AppTextStyles.heading3),
                     const SizedBox(height: 16),
-                    
+
                     TextFormField(
                       controller: _risksController,
                       decoration: const InputDecoration(
                         labelText: 'Rủi ro và biện pháp phòng ngừa',
-                        hintText: 'VD:\n- Third-party API có thể thay đổi\n  Mitigation: Tạo abstraction layer',
+                        hintText:
+                            'VD:\n- Third-party API có thể thay đổi\n  Mitigation: Tạo abstraction layer',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 4,
@@ -342,12 +354,13 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
                     // Next month goals
                     Text('Mục tiêu tháng tới', style: AppTextStyles.heading3),
                     const SizedBox(height: 16),
-                    
+
                     TextFormField(
                       controller: _nextMonthGoalsController,
                       decoration: const InputDecoration(
                         labelText: 'Kế hoạch tháng tới',
-                        hintText: 'Mỗi mục tiêu một dòng...\nVD:\n- Complete Payment module\n- Deploy to staging',
+                        hintText:
+                            'Mỗi mục tiêu một dòng...\nVD:\n- Complete Payment module\n- Deploy to staging',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 5,
@@ -418,10 +431,14 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ..._previousReports.take(2).map((report) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _buildReportCard(report),
-          )),
+          ..._previousReports
+              .take(2)
+              .map(
+                (report) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildReportCard(report),
+                ),
+              ),
         ],
       ),
     );
@@ -437,11 +454,13 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              report['reportType'] == 'MONTHLY' ? Icons.calendar_month : Icons.flag,
+              report['reportType'] == 'MONTHLY'
+                  ? Icons.calendar_month
+                  : Icons.flag,
               color: AppColors.success,
             ),
           ),
@@ -492,4 +511,3 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
-

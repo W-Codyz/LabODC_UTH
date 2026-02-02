@@ -13,8 +13,6 @@ class MentorDashboardScreen extends StatefulWidget {
 }
 
 class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
-  bool _isRefreshing = false;
-
   // Mock data
   final Map<String, dynamic> _stats = {
     'totalProjects': 3,
@@ -55,9 +53,7 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
   ];
 
   Future<void> _refreshData() async {
-    setState(() => _isRefreshing = true);
     await Future.delayed(const Duration(seconds: 1));
-    setState(() => _isRefreshing = false);
   }
 
   @override
@@ -159,7 +155,12 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +172,7 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -187,9 +188,7 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             label,
-            style: AppTextStyles.body2.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.body2.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -236,16 +235,21 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
     );
   }
 
-  Widget _buildQuickActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -282,10 +286,12 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        ..._activeProjects.map((project) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildProjectCard(project),
-        )),
+        ..._activeProjects.map(
+          (project) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildProjectCard(project),
+          ),
+        ),
       ],
     );
   }
@@ -356,8 +362,14 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
             runSpacing: 8,
             children: [
               _buildInfoChip(Icons.people, '${project['teamSize']} SV'),
-              _buildInfoChip(Icons.paid, '${project['compensation'] ~/ 1000000}M VNĐ'),
-              _buildInfoChip(Icons.event, '${project['startDate']} - ${project['endDate']}'),
+              _buildInfoChip(
+                Icons.paid,
+                '${project['compensation'] ~/ 1000000}M VNĐ',
+              ),
+              _buildInfoChip(
+                Icons.event,
+                '${project['startDate']} - ${project['endDate']}',
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -366,9 +378,11 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+              border: Border.all(
+                color: AppColors.warning.withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               children: [
@@ -419,7 +433,7 @@ class _MentorDashboardScreenState extends State<MentorDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.warning.withOpacity(0.1),
+          color: AppColors.warning.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.warning),
         ),

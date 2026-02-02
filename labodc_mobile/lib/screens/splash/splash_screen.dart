@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:labodc_mobile/core/theme/app_colors.dart';
@@ -89,9 +89,9 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Kết nối Doanh nghiệp - Sinh viên UTH',
+              'Káº¿t ná»‘i Doanh nghiá»‡p - Sinh viÃªn UTH',
               style: AppTextStyles.body2.copyWith(
-                color: AppColors.white.withOpacity(0.9),
+                color: AppColors.white.withValues(alpha: 0.9),
               ),
               textAlign: TextAlign.center,
             ),
@@ -105,3 +105,4 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+

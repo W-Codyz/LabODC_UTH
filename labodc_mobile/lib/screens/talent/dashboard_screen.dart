@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:labodc_mobile/core/routes/app_router.dart';
 import 'package:labodc_mobile/core/theme/app_colors.dart';
 import 'package:labodc_mobile/core/theme/app_text_styles.dart';
-import 'package:labodc_mobile/widgets/common_widgets.dart';
-import 'package:labodc_mobile/widgets/app_button.dart';
 
 class TalentDashboardScreen extends StatefulWidget {
   const TalentDashboardScreen({super.key});
@@ -14,8 +12,6 @@ class TalentDashboardScreen extends StatefulWidget {
 }
 
 class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
-  bool _isRefreshing = false;
-
   // Mock data
   final Map<String, dynamic> _stats = {
     'currentProjects': 2,
@@ -77,9 +73,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
   ];
 
   Future<void> _refreshData() async {
-    setState(() => _isRefreshing = true);
     await Future.delayed(const Duration(seconds: 1));
-    setState(() => _isRefreshing = false);
   }
 
   @override
@@ -201,10 +195,12 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              ..._activeProjects.map((project) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildProjectCard(project),
-                  )),
+              ..._activeProjects.map(
+                (project) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildProjectCard(project),
+                ),
+              ),
 
               const SizedBox(height: 24),
 
@@ -220,10 +216,12 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              ..._upcomingTasks.map((task) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildTaskCard(task),
-                  )),
+              ..._upcomingTasks.map(
+                (task) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildTaskCard(task),
+                ),
+              ),
 
               const SizedBox(height: 16),
             ],
@@ -233,7 +231,12 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -241,7 +244,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -253,7 +256,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -269,9 +272,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: AppTextStyles.body2.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.body2.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -279,16 +280,20 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
   }
 
   Widget _buildQuickActionButton(
-      String label, IconData icon, Color color, VoidCallback onTap) {
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -316,7 +321,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -340,7 +345,11 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.business, size: 14, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.business,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           project['company'],
@@ -354,9 +363,12 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -390,8 +402,8 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
                         project['progress'] >= 70
                             ? AppColors.success
                             : project['progress'] >= 40
-                                ? AppColors.warning
-                                : AppColors.error,
+                            ? AppColors.warning
+                            : AppColors.error,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -447,8 +459,8 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
     final priorityColor = task['priority'] == 'HIGH'
         ? AppColors.error
         : task['priority'] == 'MEDIUM'
-            ? AppColors.warning
-            : AppColors.info;
+        ? AppColors.warning
+        : AppColors.info;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -465,7 +477,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: priorityColor.withOpacity(0.1),
+                  color: priorityColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -480,7 +492,7 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: priorityColor.withOpacity(0.1),
+                  color: priorityColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -510,7 +522,11 @@ class _TalentDashboardScreenState extends State<TalentDashboardScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+              Icon(
+                Icons.calendar_today,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 4),
               Text(
                 'Hạn: ${task['dueDate']}',

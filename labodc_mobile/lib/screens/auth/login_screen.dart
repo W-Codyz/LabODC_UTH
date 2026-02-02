@@ -11,7 +11,7 @@ import 'package:labodc_mobile/widgets/app_text_field.dart';
 /// Login Screen
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-  
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -21,14 +21,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
+
       if (success && mounted) {
         // Navigate based on user role
         final role = authProvider.userRole;
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Title
                   Text(
                     'Đăng nhập',
@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Email Field
                   AppTextField(
                     controller: _emailController,
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Password Field
                   AppTextField(
                     controller: _passwordController,
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
@@ -184,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Login Button
                   Consumer<AuthProvider>(
                     builder: (context, authProvider, _) {
@@ -197,16 +197,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Register Link
                   Wrap(
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(
-                        'Chưa có tài khoản? ',
-                        style: AppTextStyles.body2,
-                      ),
+                      Text('Chưa có tài khoản? ', style: AppTextStyles.body2),
                       TextButton(
                         onPressed: () {
                           context.push(AppRoutes.register);
@@ -219,39 +216,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-  
-  Widget _buildTestAccount(String role, String email) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Row(
-        children: [
-          Text(
-            '• $role: ',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 11,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              email,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textPrimary,
-                fontSize: 11,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

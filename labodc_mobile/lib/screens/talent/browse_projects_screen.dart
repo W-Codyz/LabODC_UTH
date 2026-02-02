@@ -1,8 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:labodc_mobile/core/enums/app_enums.dart';
 import 'package:labodc_mobile/core/theme/app_colors.dart';
 import 'package:labodc_mobile/core/theme/app_text_styles.dart';
-import 'package:labodc_mobile/widgets/common_widgets.dart';
+import 'package:labodc_mobile/models/project_model.dart';
+import 'package:labodc_mobile/providers/project_provider.dart';
 import 'package:labodc_mobile/widgets/app_button.dart';
+import 'package:labodc_mobile/widgets/common_widgets.dart';
 
 class BrowseProjectsScreen extends StatefulWidget {
   const BrowseProjectsScreen({super.key});
@@ -14,145 +18,26 @@ class BrowseProjectsScreen extends StatefulWidget {
 class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
   String _selectedTech = 'ALL';
   String _sortBy = 'newest';
-  
-  final List<String> _technologies = [
-    'ALL',
-    'ReactJS',
-    'NodeJS',
-    'MongoDB',
-    'Python',
-    'Java',
-    'Flutter',
-  ];
+  bool _initialized = false;
 
-  final List<Map<String, dynamic>> _projects = [
-    {
-      'id': 789,
-      'title': 'Website Quản lý Bán hàng',
-      'company': 'ABC Technology',
-      'companyLogo': 'https://ui-avatars.com/api/?name=ABC+Technology',
-      'description': 'Xây dựng website quản lý bán hàng online với các tính năng: quản lý sản phẩm, đơn hàng, khách hàng, báo cáo doanh thu.',
-      'technologies': ['ReactJS', 'NodeJS', 'MongoDB'],
-      'startDate': '2026-02-01',
-      'endDate': '2026-05-31',
-      'duration': '4 tháng',
-      'budget': 100000000,
-      'allowancePerStudent': 14000000,
-      'numberOfStudents': 5,
-      'spotsAvailable': 3,
-      'skillRequirements': ['ReactJS (Intermediate)', 'NodeJS (Intermediate)'],
-      'status': 'RECRUITING',
-    },
-    {
-      'id': 790,
-      'title': 'Mobile App Quản lý Tài chính',
-      'company': 'FinTech Solutions',
-      'companyLogo': 'https://ui-avatars.com/api/?name=FinTech+Solutions',
-      'description': 'Ứng dụng mobile giúp người dùng quản lý chi tiêu, lập kế hoạch tài chính cá nhân, đầu tư và tiết kiệm.',
-      'technologies': ['Flutter', 'Python', 'PostgreSQL'],
-      'startDate': '2026-02-15',
-      'endDate': '2026-06-30',
-      'duration': '4.5 tháng',
-      'budget': 120000000,
-      'allowancePerStudent': 16000000,
-      'numberOfStudents': 6,
-      'spotsAvailable': 4,
-      'skillRequirements': ['Flutter (Intermediate)', 'Python (Beginner)'],
-      'status': 'RECRUITING',
-    },
-    {
-      'id': 791,
-      'title': 'Hệ thống CRM cho Doanh nghiệp',
-      'company': 'Enterprise Systems Co.',
-      'companyLogo': 'https://ui-avatars.com/api/?name=Enterprise+Systems',
-      'description': 'Hệ thống quản lý quan hệ khách hàng (CRM) với các module: lead management, sales pipeline, customer service.',
-      'technologies': ['ReactJS', 'Java', 'MySQL'],
-      'startDate': '2026-03-01',
-      'endDate': '2026-07-31',
-      'duration': '5 tháng',
-      'budget': 150000000,
-      'allowancePerStudent': 18000000,
-      'numberOfStudents': 7,
-      'spotsAvailable': 2,
-      'skillRequirements': ['ReactJS (Advanced)', 'Java Spring Boot (Intermediate)'],
-      'status': 'RECRUITING',
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredProjects {
-    var filtered = _projects.where((p) => p['status'] == 'RECRUITING').toList();
-    
-    if (_selectedTech != 'ALL') {
-      filtered = filtered.where((p) {
-        final techs = p['technologies'] as List<String>;
-        return techs.contains(_selectedTech);
-      }).toList();
-    }
-
-    if (_sortBy == 'newest') {
-      filtered.sort((a, b) => b['id'].compareTo(a['id']));
-    } else if (_sortBy == 'budget') {
-      filtered.sort((a, b) => b['budget'].compareTo(a['budget']));
-    } else if (_sortBy == 'deadline') {
-      filtered.sort((a, b) => a['endDate'].compareTo(b['endDate']));
-    }
-
-    return filtered;
-  }
-
-  void _showJoinDialog(Map<String, dynamic> project) {
-    final messageController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Đăng ký tham gia dự án'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              project['title'],
-              style: AppTextStyles.subtitle1.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: messageController,
-              decoration: const InputDecoration(
-                labelText: 'Lời nhắn đến Mentor (tùy chọn)',
-                hintText: 'Chia sẻ lý do bạn muốn tham gia dự án này...',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 4,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Đã gửi yêu cầu tham gia dự án'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            child: const Text('Gửi yêu cầu'),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_initialized) return;
+      _initialized = true;
+      await context.read<ProjectProvider>().ensureLoaded();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProjectProvider>();
+    final techFilters = _buildTechnologyFilters(provider);
+    final projects = _filteredProjects(provider);
+    final isLoading = provider.isLoading && !provider.hasData;
+    final hasError = provider.error != null && !provider.hasData;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Duyệt Dự án'),
@@ -160,67 +45,76 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             onSelected: (value) => setState(() => _sortBy = value),
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'newest', child: Text('Mới nhất')),
-              const PopupMenuItem(value: 'budget', child: Text('Ngân sách cao')),
-              const PopupMenuItem(value: 'deadline', child: Text('Hạn chót gần')),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'newest', child: Text('Mới nhất')),
+              PopupMenuItem(value: 'budget', child: Text('Ngân sách cao')),
+              PopupMenuItem(value: 'deadline', child: Text('Hạn chót gần')),
             ],
           ),
         ],
       ),
       body: Column(
         children: [
-          // Technology filter
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _technologies.length,
+              itemCount: techFilters.length,
               itemBuilder: (context, index) {
-                final tech = _technologies[index];
+                final tech = techFilters[index];
                 final isSelected = tech == _selectedTech;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     label: Text(tech),
                     selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() => _selectedTech = tech);
-                    },
+                    onSelected: (_) => setState(() => _selectedTech = tech),
                     backgroundColor: AppColors.white,
-                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.2),
                     checkmarkColor: AppColors.primary,
                     labelStyle: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 );
               },
             ),
           ),
-
-          // Projects list
           Expanded(
-            child: _filteredProjects.isEmpty
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : hasError
+                ? const Center(
+                    child: EmptyState(
+                      icon: Icons.error_outline,
+                      message:
+                          'Không thể tải danh sách dự án. Kéo xuống để thử lại.',
+                    ),
+                  )
+                : projects.isEmpty
                 ? const Center(
                     child: EmptyState(
                       icon: Icons.search_off,
                       message: 'Không tìm thấy dự án phù hợp',
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredProjects.length,
-                    itemBuilder: (context, index) {
-                      final project = _filteredProjects[index];
-                      return Padding(
+                : RefreshIndicator(
+                    onRefresh: () => provider.refresh(),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: projects.length,
+                      itemBuilder: (context, index) => Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildProjectCard(project),
-                      );
-                    },
+                        child: _buildProjectCard(projects[index], provider),
+                      ),
+                    ),
                   ),
           ),
         ],
@@ -228,14 +122,137 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
     );
   }
 
-  Widget _buildProjectCard(Map<String, dynamic> project) {
+  List<ProjectModel> _filteredProjects(ProjectProvider provider) {
+    List<ProjectModel> items = provider.allProjects;
+    items = items.where((project) {
+      return project.status == ProjectStatus.pending ||
+          project.status == ProjectStatus.approved ||
+          project.status == ProjectStatus.inProgress;
+    }).toList();
+
+    if (_selectedTech != 'ALL') {
+      items = items
+          .where((project) => project.technologies.contains(_selectedTech))
+          .toList();
+    }
+
+    switch (_sortBy) {
+      case 'budget':
+        items.sort((a, b) => b.budget.compareTo(a.budget));
+        break;
+      case 'deadline':
+        items.sort((a, b) => a.endDate.compareTo(b.endDate));
+        break;
+      default:
+        items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+
+    return items;
+  }
+
+  List<String> _buildTechnologyFilters(ProjectProvider provider) {
+    final techs = provider.availableTechnologies;
+    if (techs.isEmpty) {
+      return const ['ALL'];
+    }
+    return ['ALL', ...techs];
+  }
+
+  void _showJoinDialog(ProjectModel project) {
+    final scaffoldContext = context;
+    final messageController = TextEditingController();
+    final provider = context.read<ProjectProvider>();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: scaffoldContext,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Đăng ký tham gia dự án'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    project.name,
+                    style: AppTextStyles.subtitle1.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: messageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Lời nhắn tới doanh nghiệp',
+                      hintText: 'Giới thiệu ngắn về bản thân và lý do tham gia',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 4,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          setState(() => isSubmitting = true);
+                          final success = await provider.submitTalentApplication(
+                            projectId: project.id,
+                            message: messageController.text.trim(),
+                          );
+
+                          if (!mounted || !dialogContext.mounted) return;
+
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                            SnackBar(
+                              backgroundColor: success
+                                  ? AppColors.success
+                                  : AppColors.error,
+                              content: Text(
+                                success
+                                    ? 'Đã gửi yêu cầu tham gia dự án'
+                                    : 'Gửi yêu cầu thất bại, vui lòng thử lại',
+                              ),
+                            ),
+                          );
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Gửi yêu cầu'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).whenComplete(() => messageController.dispose());
+  }
+
+  Widget _buildProjectCard(ProjectModel project, ProjectProvider provider) {
+    final isSubmitting =
+        provider.isSubmittingApplication &&
+        provider.submittingProjectId == project.id;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -244,11 +261,10 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -258,9 +274,9 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   child: Text(
-                    project['company'][0],
+                    'D${project.enterpriseId}',
                     style: AppTextStyles.subtitle1.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
@@ -273,14 +289,14 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        project['title'],
+                        project.name,
                         style: AppTextStyles.subtitle1.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        project['company'],
+                        'Doanh nghiệp #${project.enterpriseId}',
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -289,9 +305,12 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
+                    color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -300,7 +319,7 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
                       Icon(Icons.people, size: 14, color: AppColors.success),
                       const SizedBox(width: 4),
                       Text(
-                        '${project['spotsAvailable']} chỗ',
+                        '${project.requiredTalents} chỗ',
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.success,
                           fontWeight: FontWeight.w600,
@@ -312,15 +331,13 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
               ],
             ),
           ),
-
-          // Content
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  project['description'],
+                  project.description,
                   style: AppTextStyles.body2.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -328,46 +345,46 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
-
-                // Technologies
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: (project['technologies'] as List<String>).map((tech) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.info.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        tech,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.info,
-                          fontWeight: FontWeight.w600,
+                  children: project.technologies
+                      .map(
+                        (tech) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.info.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            tech,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.info,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      )
+                      .toList(),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Details
                 Row(
                   children: [
                     Expanded(
                       child: _buildInfoItem(
                         Icons.calendar_today,
                         'Thời gian',
-                        project['duration'],
+                        _projectDuration(project),
                       ),
                     ),
                     Expanded(
                       child: _buildInfoItem(
                         Icons.attach_money,
-                        'Phụ cấp',
-                        '${(project['allowancePerStudent'] / 1000000).toStringAsFixed(0)}M',
+                        'Ngân sách',
+                        _formatCurrency(project.budget),
                       ),
                     ),
                   ],
@@ -378,29 +395,26 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
                     Expanded(
                       child: _buildInfoItem(
                         Icons.people,
-                        'Đội ngũ',
-                        '${project['numberOfStudents']} sinh viên',
+                        'Số thành viên',
+                        '${project.requiredTalents} sinh viên',
                       ),
                     ),
                     Expanded(
                       child: _buildInfoItem(
                         Icons.event,
                         'Bắt đầu',
-                        project['startDate'],
+                        _formatDate(project.startDate),
                       ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
-                // Join button
                 SizedBox(
                   width: double.infinity,
                   child: AppButton(
                     text: 'Đăng ký tham gia',
+                    isLoading: isSubmitting,
                     onPressed: () => _showJoinDialog(project),
-                    icon: Icons.arrow_forward,
                   ),
                 ),
               ],
@@ -436,5 +450,28 @@ class _BrowseProjectsScreenState extends State<BrowseProjectsScreen> {
         ),
       ],
     );
+  }
+
+  String _projectDuration(ProjectModel project) {
+    final days = project.endDate.difference(project.startDate).inDays;
+    if (days <= 0) return 'Không xác định';
+    final months = (days / 30).round();
+    if (months <= 1) {
+      return '$days ngày';
+    }
+    return '$months tháng';
+  }
+
+  String _formatDate(DateTime dateTime) {
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    return '$day/$month/${dateTime.year}';
+  }
+
+  String _formatCurrency(double amount) {
+    if (amount >= 1000000000) {
+      return '${(amount / 1000000000).toStringAsFixed(1)}B';
+    }
+    return '${(amount / 1000000).toStringAsFixed(0)}M';
   }
 }

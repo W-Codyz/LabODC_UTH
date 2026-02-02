@@ -8,19 +8,21 @@ class ProjectValidationScreen extends StatefulWidget {
   const ProjectValidationScreen({super.key});
 
   @override
-  State<ProjectValidationScreen> createState() => _ProjectValidationScreenState();
+  State<ProjectValidationScreen> createState() =>
+      _ProjectValidationScreenState();
 }
 
 class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
   String _selectedTab = 'pending';
-  
+
   // Mock data
   final List<Map<String, dynamic>> _pendingProjects = [
     {
       'id': 789,
       'title': 'Website Quản lý Bán hàng',
       'enterprise': 'ABC Technology Co., Ltd',
-      'description': 'Xây dựng website quản lý bán hàng với các tính năng: quản lý sản phẩm, đơn hàng, khách hàng, báo cáo thống kê',
+      'description':
+          'Xây dựng website quản lý bán hàng với các tính năng: quản lý sản phẩm, đơn hàng, khách hàng, báo cáo thống kê',
       'budget': 100000000,
       'duration': '6 tháng',
       'requiredTalents': 5,
@@ -32,7 +34,8 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       'id': 790,
       'title': 'Mobile App E-commerce',
       'enterprise': 'XYZ Corporation',
-      'description': 'Phát triển ứng dụng di động bán hàng trực tuyến với tích hợp thanh toán và giao hàng',
+      'description':
+          'Phát triển ứng dụng di động bán hàng trực tuyến với tích hợp thanh toán và giao hàng',
       'budget': 150000000,
       'duration': '8 tháng',
       'requiredTalents': 6,
@@ -41,7 +44,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       'status': 'PENDING',
     },
   ];
-  
+
   final List<Map<String, dynamic>> _availableMentors = [
     {
       'id': 201,
@@ -64,9 +67,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Duyệt Dự án'),
-      ),
+      appBar: AppBar(title: const Text('Duyệt Dự án')),
       body: Column(
         children: [
           // Tab Bar
@@ -81,7 +82,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
             ),
           ),
           const Divider(height: 1),
-          
+
           // Content
           Expanded(
             child: _selectedTab == 'pending' && _pendingProjects.isNotEmpty
@@ -97,7 +98,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       ),
     );
   }
-  
+
   Widget _buildTab(String label, String value, int count) {
     final isSelected = _selectedTab == value;
     return Expanded(
@@ -118,14 +119,19 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
               Text(
                 label,
                 style: AppTextStyles.subtitle2.copyWith(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               if (count > 0) ...[
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.error,
                     borderRadius: BorderRadius.circular(10),
@@ -145,19 +151,19 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       ),
     );
   }
-  
+
   Widget _buildPendingList() {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _pendingProjects.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, separatorIndex) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final project = _pendingProjects[index];
         return _buildProjectCard(project);
       },
     );
   }
-  
+
   Widget _buildProjectCard(Map<String, dynamic> project) {
     return AppCard(
       child: Padding(
@@ -187,7 +193,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Description
             Text(
               project['description'],
@@ -196,36 +202,44 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 16),
-            
+
             // Info Grid
             Wrap(
               spacing: 16,
               runSpacing: 12,
               children: [
-                _buildInfoChip(Icons.payments, '${project['budget'] ~/ 1000000}M VNĐ'),
+                _buildInfoChip(
+                  Icons.payments,
+                  '${project['budget'] ~/ 1000000}M VNĐ',
+                ),
                 _buildInfoChip(Icons.schedule, project['duration']),
-                _buildInfoChip(Icons.people, '${project['requiredTalents']} SV'),
+                _buildInfoChip(
+                  Icons.people,
+                  '${project['requiredTalents']} SV',
+                ),
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Technologies
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: (project['technologies'] as List<String>)
-                  .map((tech) => Chip(
-                        label: Text(tech, style: const TextStyle(fontSize: 11)),
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ))
+                  .map(
+                    (tech) => Chip(
+                      label: Text(tech, style: const TextStyle(fontSize: 11)),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 16),
             const Divider(height: 1),
             const SizedBox(height: 16),
-            
+
             // Actions
             Row(
               children: [
@@ -252,7 +266,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       ),
     );
   }
-  
+
   Widget _buildInfoChip(IconData icon, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -261,17 +275,15 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
   }
-  
+
   void _showAssignMentorDialog(Map<String, dynamic> project) {
     int? selectedMentorId;
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -292,16 +304,27 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
                 const SizedBox(height: 12),
                 ..._availableMentors.map((mentor) {
                   final isSelected = selectedMentorId == mentor['id'];
-                  return RadioListTile<int>(
-                    value: mentor['id'],
-                    groupValue: selectedMentorId,
-                    onChanged: (value) => setState(() => selectedMentorId = value),
+                  return ListTile(
+                    onTap: () =>
+                        setState(() => selectedMentorId = mentor['id'] as int),
+                    leading: Icon(
+                      isSelected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
                     title: Text(mentor['name']),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Chuyên môn: ${(mentor['expertise'] as List).join(', ')}'),
-                        Text('Dự án: ${mentor['currentProjects']}/${mentor['maxProjects']} • ⭐ ${mentor['rating']}'),
+                        Text(
+                          'Chuyên môn: ${(mentor['expertise'] as List).join(', ')}',
+                        ),
+                        Text(
+                          'Dự án: ${mentor['currentProjects']}/${mentor['maxProjects']} • ⭐ ${mentor['rating']}',
+                        ),
                       ],
                     ),
                     contentPadding: EdgeInsets.zero,
@@ -322,9 +345,13 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
                   : () {
                       // TODO: Call API
                       Navigator.pop(context);
-                      _showSuccessSnackBar('Đã phê duyệt dự án và gán Mentor thành công');
+                      _showSuccessSnackBar(
+                        'Đã phê duyệt dự án và gán Mentor thành công',
+                      );
                       this.setState(() {
-                        _pendingProjects.removeWhere((p) => p['id'] == project['id']);
+                        _pendingProjects.removeWhere(
+                          (p) => p['id'] == project['id'],
+                        );
                       });
                     },
               child: const Text('Xác nhận'),
@@ -334,10 +361,10 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       ),
     );
   }
-  
+
   void _showRejectDialog(Map<String, dynamic> project) {
     final reasonController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -380,7 +407,7 @@ class _ProjectValidationScreenState extends State<ProjectValidationScreen> {
       ),
     );
   }
-  
+
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.success),

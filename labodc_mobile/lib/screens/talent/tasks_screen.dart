@@ -296,7 +296,7 @@ class _TalentTasksScreenState extends State<TalentTasksScreen> with SingleTicker
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -343,7 +343,7 @@ class _TalentTasksScreenState extends State<TalentTasksScreen> with SingleTicker
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: task['status'] == 'COMPLETED'
-                ? AppColors.success.withOpacity(0.3)
+                ? AppColors.success.withValues(alpha: 0.3)
                 : AppColors.divider,
           ),
         ),
@@ -355,7 +355,7 @@ class _TalentTasksScreenState extends State<TalentTasksScreen> with SingleTicker
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: priorityColor.withOpacity(0.1),
+                    color: priorityColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -370,7 +370,7 @@ class _TalentTasksScreenState extends State<TalentTasksScreen> with SingleTicker
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: priorityColor.withOpacity(0.1),
+                    color: priorityColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -385,7 +385,7 @@ class _TalentTasksScreenState extends State<TalentTasksScreen> with SingleTicker
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -464,3 +464,4 @@ class _TalentTasksScreenState extends State<TalentTasksScreen> with SingleTicker
     );
   }
 }
+

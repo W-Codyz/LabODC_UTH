@@ -1,0 +1,136 @@
+import 'package:dio/dio.dart';
+import 'package:labodc_mobile/core/enums/app_enums.dart';
+import 'package:labodc_mobile/models/project_model.dart';
+import 'package:labodc_mobile/services/api_service.dart';
+import 'package:logger/logger.dart';
+
+/// Service lớp trung gian giữa UI và project-service backend.
+///
+/// - Khi gateway cung cấp đầy đủ endpoint, class này chỉ cần giữ nguyên chữ ký
+///   và thay đổi logic parse response.
+/// - Hiện tại vẫn trả mock data khi gặp lỗi/404 để UI có thể hoạt động.
+class ProjectService {
+  ProjectService({ApiService? apiService}) : _api = apiService ?? ApiService();
+
+  final ApiService _api;
+  final _logger = Logger();
+
+  Future<List<ProjectModel>> fetchProjects({
+    ProjectStatus? status,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _api.get(
+        '/projects',
+        queryParameters: {
+          if (status != null) 'status': status.name,
+          'page': page,
+        },
+      );
+      return _mapProjects(response);
+    } on DioException catch (e) {
+      _logger.e('ProjectService.fetchProjects error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<List<ProjectModel>> fetchEnterpriseProjects(int enterpriseId) async {
+    try {
+      final response = await _api.get('/projects/enterprise/$enterpriseId');
+      return _mapProjects(response);
+    } on DioException catch (e) {
+      _logger.e('ProjectService.fetchEnterpriseProjects error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<List<ProjectTeamModel>> fetchProjectMembers(int projectId) async {
+    try {
+      final response = await _api.get('/projects/$projectId/members');
+      final items = _extractList(response.data);
+      return items
+          .map(
+            (json) => ProjectTeamModel.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
+    } on DioException catch (e) {
+      _logger.e('ProjectService.fetchProjectMembers error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<bool> leaveProject(int projectId) async {
+    try {
+      final response = await _api.post('/projects/$projectId/leave');
+      return response.statusCode == 200;
+    } on DioException catch (e) {
+      _logger.e('ProjectService.leaveProject error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<List<ProjectModel>> fetchMyProjects({ProjectStatus? status}) async {
+    try {
+      final response = await _api.get(
+        '/projects/my',
+        queryParameters: {if (status != null) 'status': status.name},
+      );
+      return _mapProjects(response);
+    } on DioException catch (e) {
+      _logger.e('ProjectService.fetchMyProjects error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<bool> submitTalentApplication({
+    required int projectId,
+    String? motivation,
+  }) async {
+    try {
+      final response = await _api.post(
+        '/projects/$projectId/join',
+        data: {
+          if (motivation != null && motivation.isNotEmpty)
+            'motivationLetter': motivation,
+        },
+      );
+      return response.statusCode == 200;
+    } on DioException catch (e) {
+      _logger.e('ProjectService.submitTalentApplication error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<bool> createProject({required Map<String, dynamic> payload}) async {
+    try {
+      final response = await _api.post('/projects', data: payload);
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      _logger.e('ProjectService.createProject error: ${e.message}');
+      rethrow;
+    }
+  }
+
+  List<ProjectModel> _mapProjects(Response response) {
+    final items = _extractList(response.data);
+    return items
+        .map((json) => ProjectModel.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  List<dynamic> _extractList(dynamic payload) {
+    if (payload is Map<String, dynamic>) {
+      final data = payload['data'];
+      if (data is List) {
+        return data;
+      }
+      if (data is Map<String, dynamic>) {
+        return [data];
+      }
+    }
+    if (payload is List) {
+      return payload;
+    }
+    return const [];
+  }
+}
