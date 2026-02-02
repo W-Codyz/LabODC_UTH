@@ -34,6 +34,7 @@ const ReportSubmission = lazy(() => import('@/pages/mentor/ReportSubmission'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
+const PendingApprovals = lazy(() => import('@/pages/admin/Approvals/PendingApprovals'));
 const EnterpriseManagement = lazy(() => import('@/pages/admin/EnterpriseManagement'));
 const ProjectValidation = lazy(() => import('@/pages/admin/ProjectValidation'));
 const FundAllocation = lazy(() => import('@/pages/admin/FundAllocation'));
@@ -140,6 +141,7 @@ const AppRoutes: React.FC = () => {
           }
         >
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="approvals" element={<PendingApprovals />} />
           <Route path="enterprises" element={<EnterpriseManagement />} />
           <Route path="projects/validate" element={<ProjectValidation />} />
           <Route path="funds" element={<FundAllocation />} />

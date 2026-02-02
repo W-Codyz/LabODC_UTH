@@ -8,12 +8,17 @@ import com.uth.labodc.exception.ResourceNotFoundException;
 import com.uth.labodc.model.entity.User;
 import com.uth.labodc.repository.UserRepository;
 import com.uth.labodc.service.ProjectDataService;
+import com.uth.labodc.service.ProjectService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/projects")
 @RequiredArgsConstructor
@@ -29,6 +35,7 @@ public class ProjectController {
 
     private final ProjectDataService projectDataService;
     private final UserRepository userRepository;
+    private final ProjectService projectService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> getProjects(
@@ -89,6 +96,40 @@ public class ProjectController {
         User user = currentUser(authentication);
         projectDataService.leaveProject(projectId, user);
         return ResponseEntity.ok(ApiResponse.success("Đã rời dự án", null));
+    }
+
+    @PutMapping("/{id}/validate")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> validateProject(
+            @PathVariable Long id,
+            Authentication authentication) {
+        log.info("Admin {} validating project {}", authentication.getName(), id);
+        
+        // Get admin user ID from authentication
+        Long adminId = 1L; // TODO: Extract from authentication
+        
+        projectService.validateProject(id, adminId);
+        return ResponseEntity.ok(ApiResponse.success("Project validated successfully", null));
+    }
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> deleteProject(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body,
+            Authentication authentication) {
+        log.info("Admin {} rejecting/deleting project {}", authentication.getName(), id);
+        
+        // Get admin user ID from authentication
+        Long adminId = 1L; // TODO: Extract from authentication properly
+        
+        String reason = body != null ? body.get("reason") : null;
+        if (reason != null) {
+            log.info("Rejection reason: {}", reason);
+        }
+        
+        projectService.deleteProject(id, adminId, reason);
+        return ResponseEntity.ok(ApiResponse.success("Project rejected and deleted", null));
     }
 
     private User currentUser(Authentication authentication) {

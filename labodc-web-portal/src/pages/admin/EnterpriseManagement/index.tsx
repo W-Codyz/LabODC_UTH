@@ -1,293 +1,331 @@
-export { default } from './EnterpriseManagement';
-
+// Enterprise Management Page
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
   Tag,
   Button,
-  Input,
   Space,
-  Modal,
-  Form,
-  Select,
-  Typography,
-  Descriptions,
-  Image,
-  message,
-  Tabs,
-  Badge,
+  Statistic,
   Row,
   Col,
-  Statistic,
+  Input,
+  Select,
+  Modal,
+  Descriptions,
+  message,
+  Tooltip,
+  Badge,
 } from 'antd';
 import {
-  SearchOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-  EyeOutlined,
   ShopOutlined,
-  FileTextOutlined,
-  PhoneOutlined,
-  MailOutlined,
-  GlobalOutlined,
-  EnvironmentOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  SearchOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
-import { enterpriseService, Enterprise, EnterpriseDetail } from '@/services/admin/enterpriseService';
+import { enterpriseManagementService, EnterpriseListItem, EnterpriseDetail, EnterpriseStats } from '@/services/admin/enterpriseManagementService';
 import styles from './EnterpriseManagement.module.css';
 
-const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
-const { TabPane } = Tabs;
 
-const EnterpriseManagement: React.FC = () => {
+const EnterpriseManagement = () => {
   const [loading, setLoading] = useState(false);
-  const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
-  const [selectedEnterprise, setSelectedEnterprise] = useState<EnterpriseDetail | null>(null);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [approveModalVisible, setApproveModalVisible] = useState(false);
-  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [stats, setStats] = useState<EnterpriseStats | null>(null);
+  const [enterprises, setEnterprises] = useState<EnterpriseListItem[]>([]);
+  const [filteredEnterprises, setFilteredEnterprises] = useState<EnterpriseListItem[]>([]);
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
-  const [statsData, setStatsData] = useState({
-    total: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-  });
-
-  const [approveForm] = Form.useForm();
-  const [rejectForm] = Form.useForm();
+  const [verifiedFilter, setVerifiedFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedEnterprise, setSelectedEnterprise] = useState<EnterpriseDetail | null>(null);
+  
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    fetchEnterprises();
-  }, [statusFilter]);
+    loadData();
+  }, []);
 
-  const fetchEnterprises = async () => {
+  useEffect(() => {
+    filterEnterprises();
+  }, [searchText, verifiedFilter, enterprises]);
+
+  const loadData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const params: any = {};
-      if (statusFilter !== 'ALL') {
-        params.status = statusFilter;
-      }
-      if (searchText) {
-        params.search = searchText;
-      }
-
-      const response = await enterpriseService.getEnterprises(params);
-      setEnterprises(response.enterprises);
-
-      // Calculate stats
-      const all = response.enterprises;
-      setStatsData({
-        total: response.pagination.total,
-        pending: all.filter(e => e.status === 'PENDING').length,
-        approved: all.filter(e => e.status === 'APPROVED').length,
-        rejected: all.filter(e => e.status === 'REJECTED').length,
-      });
-    } catch (error) {
-      message.error('Không thể tải danh sách doanh nghiệp');
+      const [statsData, enterprisesData] = await Promise.all([
+        enterpriseManagementService.getStats(),
+        enterpriseManagementService.getEnterprises(),
+      ]);
+      setStats(statsData);
+      setEnterprises(enterprisesData);
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Failed to load data');
+      console.error('Load error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetail = async (id: number) => {
+  const filterEnterprises = () => {
+    let filtered = [...enterprises];
+
+    // Verified filter
+    if (verifiedFilter === 'verified') {
+      filtered = filtered.filter(e => e.verified);
+    } else if (verifiedFilter === 'unverified') {
+      filtered = filtered.filter(e => !e.verified);
+    }
+
+    // Search filter
+    if (searchText) {
+      const search = searchText.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.companyName.toLowerCase().includes(search) ||
+        e.taxCode.toLowerCase().includes(search) ||
+        e.contactEmail.toLowerCase().includes(search)
+      );
+    }
+
+    setFilteredEnterprises(filtered);
+  };
+
+  const handleView = async (id: number) => {
     try {
-      setLoading(true);
-      const detail = await enterpriseService.getEnterpriseById(id);
+      const detail = await enterpriseManagementService.getEnterpriseById(id);
       setSelectedEnterprise(detail);
-      setDetailModalVisible(true);
-    } catch (error) {
-      message.error('Không thể tải chi tiết doanh nghiệp');
+      setDetailModalOpen(true);
+    } catch (error: any) {
+      message.error('Failed to load enterprise details');
+    }
+  };
+
+  const handleVerify = async (id: number, companyName: string) => {
+    setActionLoading(true);
+    try {
+      await enterpriseManagementService.verifyEnterprise(id);
+      message.success(`Đã xác minh doanh nghiệp "${companyName}"`);
+      setDetailModalOpen(false);
+      loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Failed to verify enterprise');
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
-  const handleApprove = async (values: any) => {
+  const handleRejectClick = () => {
+    setDetailModalOpen(false);
+    setRejectModalOpen(true);
+  };
+
+  const handleRejectConfirm = async () => {
     if (!selectedEnterprise) return;
-
+    
+    setActionLoading(true);
     try {
-      await enterpriseService.approveEnterprise(selectedEnterprise.id, {
-        note: values.note,
-      });
-      message.success('Đã phê duyệt doanh nghiệp thành công');
-      setApproveModalVisible(false);
-      setDetailModalVisible(false);
-      approveForm.resetFields();
-      fetchEnterprises();
-    } catch (error) {
-      message.error('Không thể phê duyệt doanh nghiệp');
+      await enterpriseManagementService.rejectEnterprise(selectedEnterprise.id, rejectReason);
+      message.success(`Đã từ chối doanh nghiệp "${selectedEnterprise.companyName}"`);
+      setRejectModalOpen(false);
+      setRejectReason('');
+      setSelectedEnterprise(null);
+      loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Failed to reject enterprise');
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleReject = async (values: any) => {
-    if (!selectedEnterprise) return;
-
-    try {
-      await enterpriseService.rejectEnterprise(selectedEnterprise.id, {
-        reason: values.reason,
-        details: values.details,
-      });
-      message.success('Đã từ chối doanh nghiệp');
-      setRejectModalVisible(false);
-      setDetailModalVisible(false);
-      rejectForm.resetFields();
-      fetchEnterprises();
-    } catch (error) {
-      message.error('Không thể từ chối doanh nghiệp');
-    }
-  };
-
-  const getStatusTag = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return <Tag icon={<ExclamationCircleOutlined />} color="warning">Chờ xác thực</Tag>;
-      case 'APPROVED':
-        return <Tag icon={<CheckCircleOutlined />} color="success">Đã duyệt</Tag>;
-      case 'REJECTED':
-        return <Tag icon={<CloseCircleOutlined />} color="error">Từ chối</Tag>;
-      default:
-        return <Tag>{status}</Tag>;
-    }
-  };
-
-  const columns: ColumnsType<Enterprise> = [
+  const columns = [
     {
-      title: 'Tên doanh nghiệp',
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 70,
+    },
+    {
+      title: 'Tên công ty',
       dataIndex: 'companyName',
       key: 'companyName',
-      render: (text: string, record: Enterprise) => (
-        <Space>
-          {record.logoUrl && <Image src={record.logoUrl} width={32} preview={false} />}
-          <Text strong>{text}</Text>
+      width: 250,
+      render: (text: string, record: EnterpriseListItem) => (
+        <Space direction="vertical" size={0}>
+          <strong>{text}</strong>
+          <span style={{ fontSize: '12px', color: '#888' }}>{record.taxCode}</span>
         </Space>
       ),
     },
     {
-      title: 'Mã số thuế',
-      dataIndex: 'taxCode',
-      key: 'taxCode',
-    },
-    {
-      title: 'Người đại diện',
-      dataIndex: 'representative',
-      key: 'representative',
-    },
-    {
-      title: 'Lĩnh vực',
+      title: 'Ngành nghề',
       dataIndex: 'industry',
       key: 'industry',
+      width: 150,
     },
     {
-      title: 'Ngày đăng ký',
-      dataIndex: 'registeredAt',
-      key: 'registeredAt',
-      render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+      title: 'Quy mô',
+      dataIndex: 'companySize',
+      key: 'companySize',
+      width: 120,
+    },
+    {
+      title: 'Liên hệ',
+      dataIndex: 'contactEmail',
+      key: 'contactEmail',
+      width: 200,
+      render: (text: string, record: EnterpriseListItem) => (
+        <Space direction="vertical" size={0}>
+          <span style={{ fontSize: '12px' }}>{text}</span>
+          <span style={{ fontSize: '12px', color: '#888' }}>{record.contactPhone}</span>
+        </Space>
+      ),
+    },
+    {
+      title: 'Dự án',
+      key: 'projects',
+      width: 120,
+      render: (record: EnterpriseListItem) => (
+        <Space direction="vertical" size={0}>
+          <span>Tổng: <strong>{record.totalProjects}</strong></span>
+          <span style={{ fontSize: '12px', color: '#1890ff' }}>
+            Hoạt động: {record.activeProjects}
+          </span>
+        </Space>
+      ),
+    },
+    {
+      title: 'Tổng ngân sách',
+      dataIndex: 'totalBudget',
+      key: 'totalBudget',
+      width: 150,
+      render: (value: number) => (
+        <span>{value.toLocaleString()} VND</span>
+      ),
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => getStatusTag(status),
+      dataIndex: 'verified',
+      key: 'verified',
+      width: 120,
+      render: (verified: boolean) => (
+        <Tag color={verified ? 'success' : 'warning'} icon={verified ? <CheckCircleOutlined /> : <ClockCircleOutlined />}>
+          {verified ? 'Đã xác minh' : 'Chờ xác minh'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 150,
+      render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
     },
     {
       title: 'Thao tác',
-      key: 'action',
-      render: (_, record: Enterprise) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => handleViewDetail(record.id)}
-        >
-          Xem chi tiết
-        </Button>
+      key: 'actions',
+      width: 100,
+      fixed: 'right' as const,
+      render: (record: EnterpriseListItem) => (
+        <Space>
+          <Tooltip title="Xem chi tiết">
+            <Button
+              type="primary"
+              icon={<EyeOutlined />}
+              size="small"
+              onClick={() => handleView(record.id)}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
   ];
 
   return (
-    <div className={styles.pageWrapper}>
+    <div className={styles.container}>
       <div className={styles.header}>
-        <div>
-          <Title level={2} className={styles.pageTitle}>
-            <ShopOutlined /> Quản lý Doanh nghiệp
-          </Title>
-          <Paragraph className={styles.pageDescription}>
-            Xác thực và quản lý các doanh nghiệp đăng ký hợp tác
-          </Paragraph>
-        </div>
+        <h1><ShopOutlined /> Quản lý Doanh nghiệp</h1>
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} className={styles.statsRow}>
-        <Col xs={24} sm={12} lg={6}>
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={4}>
           <Card>
             <Statistic
-              title="Tổng số doanh nghiệp"
-              value={statsData.total}
-              valueStyle={{ color: '#1890ff' }}
+              title="Tổng số"
+              value={stats?.total || 0}
               prefix={<ShopOutlined />}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={5}>
           <Card>
             <Statistic
-              title="Chờ xác thực"
-              value={statsData.pending}
-              valueStyle={{ color: '#faad14' }}
-              prefix={<ExclamationCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Đã duyệt"
-              value={statsData.approved}
-              valueStyle={{ color: '#52c41a' }}
+              title="Đã xác minh"
+              value={stats?.verified || 0}
+              valueStyle={{ color: '#3f8600' }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={5}>
           <Card>
             <Statistic
-              title="Từ chối"
-              value={statsData.rejected}
-              valueStyle={{ color: '#ff4d4f' }}
-              prefix={<CloseCircleOutlined />}
+              title="Chờ xác minh"
+              value={stats?.unverified || 0}
+              valueStyle={{ color: '#faad14' }}
+              prefix={<ClockCircleOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={5}>
+          <Card>
+            <Statistic
+              title="Hoạt động"
+              value={stats?.active || 0}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col span={5}>
+          <Card>
+            <Statistic
+              title="Tháng này"
+              value={stats?.thisMonth || 0}
+              prefix={<Badge status="processing" />}
             />
           </Card>
         </Col>
       </Row>
 
       {/* Filters */}
-      <Card className={styles.filterCard}>
-        <Space size="large" wrap>
-          <Input
-            placeholder="Tìm kiếm theo tên, mã số thuế..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={fetchEnterprises}
-            style={{ width: 300 }}
-          />
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            style={{ width: 180 }}
-          >
-            <Select.Option value="ALL">Tất cả trạng thái</Select.Option>
-            <Select.Option value="PENDING">Chờ xác thực</Select.Option>
-            <Select.Option value="APPROVED">Đã duyệt</Select.Option>
-            <Select.Option value="REJECTED">Từ chối</Select.Option>
-          </Select>
-          <Button type="primary" icon={<SearchOutlined />} onClick={fetchEnterprises}>
-            Tìm kiếm
+      <Card style={{ marginBottom: 16 }}>
+        <Space size="middle" style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Space>
+            <Input
+              placeholder="Tìm kiếm theo tên, mã số thuế, email..."
+              prefix={<SearchOutlined />}
+              style={{ width: 350 }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+            <Select
+              style={{ width: 180 }}
+              value={verifiedFilter}
+              onChange={setVerifiedFilter}
+            >
+              <Select.Option value="all">Tất cả trạng thái</Select.Option>
+              <Select.Option value="verified">Đã xác minh</Select.Option>
+              <Select.Option value="unverified">Chờ xác minh</Select.Option>
+            </Select>
+          </Space>
+          <Button icon={<ReloadOutlined />} onClick={loadData}>
+            Làm mới
           </Button>
         </Space>
       </Card>
@@ -296,155 +334,146 @@ const EnterpriseManagement: React.FC = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={enterprises}
+          dataSource={filteredEnterprises}
           rowKey="id"
           loading={loading}
           pagination={{
             pageSize: 10,
+            showTotal: (total) => `Tổng ${total} doanh nghiệp`,
             showSizeChanger: true,
-            showTotal: (total) => `Tổng số ${total} doanh nghiệp`,
           }}
+          scroll={{ x: 1500 }}
         />
       </Card>
 
       {/* Detail Modal */}
       <Modal
-        title="Chi tiết Doanh nghiệp"
-        open={detailModalVisible}
-        onCancel={() => setDetailModalVisible(false)}
-        width={800}
-        footer={
-          selectedEnterprise?.status === 'PENDING' ? [
-            <Button key="reject" danger onClick={() => setRejectModalVisible(true)}>
-              <CloseCircleOutlined /> Từ chối
-            </Button>,
-            <Button key="approve" type="primary" onClick={() => setApproveModalVisible(true)}>
-              <CheckCircleOutlined /> Phê duyệt
-            </Button>,
-          ] : null
-        }
+        title={<span><ShopOutlined /> Chi tiết Doanh nghiệp</span>}
+        open={detailModalOpen}
+        onCancel={() => setDetailModalOpen(false)}
+        width={900}
+        footer={selectedEnterprise && !selectedEnterprise.verified ? [
+          <Button key="close" onClick={() => setDetailModalOpen(false)}>
+            Đóng
+          </Button>,
+          <Button
+            key="reject"
+            danger
+            icon={<CloseOutlined />}
+            onClick={handleRejectClick}
+            loading={actionLoading}
+          >
+            Từ chối
+          </Button>,
+          <Button
+            key="verify"
+            type="primary"
+            icon={<CheckOutlined />}
+            onClick={() => handleVerify(selectedEnterprise.id, selectedEnterprise.companyName)}
+            loading={actionLoading}
+          >
+            Xác minh
+          </Button>,
+        ] : [
+          <Button key="close" type="primary" onClick={() => setDetailModalOpen(false)}>
+            Đóng
+          </Button>,
+        ]}
       >
         {selectedEnterprise && (
-          <Tabs defaultActiveKey="info">
-            <TabPane tab="Thông tin chung" key="info">
-              <Descriptions column={2} bordered>
-                <Descriptions.Item label="Tên doanh nghiệp" span={2}>
-                  {selectedEnterprise.companyName}
-                </Descriptions.Item>
-                <Descriptions.Item label="Mã số thuế">
-                  {selectedEnterprise.taxCode}
-                </Descriptions.Item>
-                <Descriptions.Item label="Lĩnh vực">
-                  {selectedEnterprise.industry}
-                </Descriptions.Item>
-                <Descriptions.Item label="Người đại diện" span={2}>
-                  {selectedEnterprise.representative}
-                </Descriptions.Item>
-                <Descriptions.Item label="Email" span={2}>
-                  <MailOutlined /> {selectedEnterprise.email}
-                </Descriptions.Item>
-                <Descriptions.Item label="Điện thoại">
-                  <PhoneOutlined /> {selectedEnterprise.phone}
-                </Descriptions.Item>
-                <Descriptions.Item label="Website">
-                  {selectedEnterprise.website && (
-                    <a href={selectedEnterprise.website} target="_blank" rel="noopener noreferrer">
-                      <GlobalOutlined /> {selectedEnterprise.website}
-                    </a>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ" span={2}>
-                  <EnvironmentOutlined /> {selectedEnterprise.address}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
-                  {getStatusTag(selectedEnterprise.status)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày đăng ký">
-                  {new Date(selectedEnterprise.registeredAt).toLocaleDateString('vi-VN')}
-                </Descriptions.Item>
-                {selectedEnterprise.projectsCount !== undefined && (
-                  <Descriptions.Item label="Số dự án">
-                    {selectedEnterprise.projectsCount}
-                  </Descriptions.Item>
-                )}
-                {selectedEnterprise.totalInvestment !== undefined && (
-                  <Descriptions.Item label="Tổng vốn đầu tư">
-                    {selectedEnterprise.totalInvestment.toLocaleString('vi-VN')} VNĐ
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </TabPane>
-
-            <TabPane tab="Tài liệu" key="documents">
-              {selectedEnterprise.documents && selectedEnterprise.documents.length > 0 ? (
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  {selectedEnterprise.documents.map((doc, index) => (
-                    <Card key={index} size="small">
-                      <Space>
-                        <FileTextOutlined />
-                        <Text>{doc.fileName}</Text>
-                        <Button type="link" href={doc.url} target="_blank">
-                          Xem tài liệu
-                        </Button>
-                      </Space>
-                    </Card>
-                  ))}
-                </Space>
-              ) : (
-                <Text type="secondary">Chưa có tài liệu</Text>
-              )}
-            </TabPane>
-          </Tabs>
+          <Descriptions bordered column={2} size="small">
+            <Descriptions.Item label="Trạng thái" span={2}>
+              <Tag color={selectedEnterprise.verified ? 'success' : 'warning'}>
+                {selectedEnterprise.verified ? 'Đã xác minh' : 'Chờ xác minh'}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Tên công ty" span={2}>
+              <strong>{selectedEnterprise.companyName}</strong>
+            </Descriptions.Item>
+            <Descriptions.Item label="Mã số thuế">
+              {selectedEnterprise.taxCode}
+            </Descriptions.Item>
+            <Descriptions.Item label="Số GPKD">
+              {selectedEnterprise.businessLicenseNumber}
+            </Descriptions.Item>
+            <Descriptions.Item label="Địa chỉ" span={2}>
+              {selectedEnterprise.address}, {selectedEnterprise.ward}, {selectedEnterprise.district}, {selectedEnterprise.city}
+            </Descriptions.Item>
+            <Descriptions.Item label="Người đại diện">
+              {selectedEnterprise.representativeName}
+            </Descriptions.Item>
+            <Descriptions.Item label="Chức vụ">
+              {selectedEnterprise.representativePosition}
+            </Descriptions.Item>
+            <Descriptions.Item label="Email">
+              {selectedEnterprise.contactEmail}
+            </Descriptions.Item>
+            <Descriptions.Item label="Điện thoại">
+              {selectedEnterprise.contactPhone}
+            </Descriptions.Item>
+            <Descriptions.Item label="Website" span={2}>
+              {selectedEnterprise.website ? (
+                <a href={selectedEnterprise.website} target="_blank" rel="noopener noreferrer">
+                  {selectedEnterprise.website}
+                </a>
+              ) : 'Chưa cập nhật'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngành nghề">
+              {selectedEnterprise.industry}
+            </Descriptions.Item>
+            <Descriptions.Item label="Quy mô">
+              {selectedEnterprise.companySize}
+            </Descriptions.Item>
+            <Descriptions.Item label="Năm thành lập" span={2}>
+              {selectedEnterprise.yearEstablished}
+            </Descriptions.Item>
+            <Descriptions.Item label="Mô tả" span={2}>
+              {selectedEnterprise.description || 'Chưa có mô tả'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày đăng ký">
+              {new Date(selectedEnterprise.createdAt).toLocaleString('vi-VN')}
+            </Descriptions.Item>
+            <Descriptions.Item label="Cập nhật lần cuối">
+              {new Date(selectedEnterprise.updatedAt).toLocaleString('vi-VN')}
+            </Descriptions.Item>
+            {selectedEnterprise.verified && (
+              <Descriptions.Item label="Ngày xác minh" span={2}>
+                {selectedEnterprise.verifiedAt ? new Date(selectedEnterprise.verifiedAt).toLocaleString('vi-VN') : 'N/A'}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
         )}
-      </Modal>
-
-      {/* Approve Modal */}
-      <Modal
-        title="Phê duyệt Doanh nghiệp"
-        open={approveModalVisible}
-        onCancel={() => setApproveModalVisible(false)}
-        onOk={() => approveForm.submit()}
-        okText="Phê duyệt"
-        cancelText="Hủy"
-      >
-        <Form form={approveForm} onFinish={handleApprove} layout="vertical">
-          <Form.Item label="Ghi chú" name="note">
-            <TextArea rows={4} placeholder="Nhập ghi chú (không bắt buộc)" />
-          </Form.Item>
-        </Form>
       </Modal>
 
       {/* Reject Modal */}
       <Modal
-        title="Từ chối Doanh nghiệp"
-        open={rejectModalVisible}
-        onCancel={() => setRejectModalVisible(false)}
-        onOk={() => rejectForm.submit()}
-        okText="Từ chối"
-        okButtonProps={{ danger: true }}
+        title={<span style={{ color: '#ff4d4f' }}><CloseOutlined /> Từ chối Doanh nghiệp</span>}
+        open={rejectModalOpen}
+        onCancel={() => {
+          setRejectModalOpen(false);
+          setRejectReason('');
+        }}
+        onOk={handleRejectConfirm}
+        okText="Xác nhận từ chối"
         cancelText="Hủy"
+        okButtonProps={{ danger: true, loading: actionLoading }}
+        cancelButtonProps={{ disabled: actionLoading }}
+        width={600}
       >
-        <Form form={rejectForm} onFinish={handleReject} layout="vertical">
-          <Form.Item
-            label="Lý do"
-            name="reason"
-            rules={[{ required: true, message: 'Vui lòng chọn lý do' }]}
-          >
-            <Select placeholder="Chọn lý do từ chối">
-              <Select.Option value="INVALID_DOCUMENTS">Giấy tờ không hợp lệ</Select.Option>
-              <Select.Option value="NOT_ELIGIBLE">Không đủ điều kiện</Select.Option>
-              <Select.Option value="DUPLICATE">Trùng lặp</Select.Option>
-              <Select.Option value="OTHER">Khác</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label="Chi tiết"
-            name="details"
-            rules={[{ required: true, message: 'Vui lòng nhập chi tiết' }]}
-          >
-            <TextArea rows={4} placeholder="Nhập chi tiết lý do từ chối" />
-          </Form.Item>
-        </Form>
+        <Space direction="vertical" style={{ width: '100%' }} size="large">
+          <div>
+            <p><strong>Lý do từ chối (tùy chọn):</strong></p>
+            <TextArea
+              rows={4}
+              placeholder="Nhập lý do từ chối để thông báo cho doanh nghiệp..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              disabled={actionLoading}
+              maxLength={500}
+              showCount
+            />
+          </div>
+        </Space>
       </Modal>
     </div>
   );

@@ -2,7 +2,8 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+// Use relative URL to leverage Vite proxy configuration
+const API_BASE_URL = '/api';
 
 // Axios instance với config
 const api = axios.create({
@@ -14,12 +15,35 @@ const api = axios.create({
 
 // Interceptor để thêm token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('🔑 Request with token:', token.substring(0, 30) + '...');
+  } else {
+    console.warn('⚠️ No token found in localStorage!');
   }
   return config;
 });
+
+// Response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log('📥 Response received:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
+    });
+    return response;
+  },
+  (error) => {
+    console.error('❌ API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Types theo SRS document
 export interface DashboardStats {
@@ -78,198 +102,170 @@ export interface PendingApproval {
   title: string;
   submittedAt: string;
   priority: 'high' | 'medium' | 'low';
+  
+  // Enterprise specific fields
+  companyName?: string;
+  taxCode?: string;
+  businessLicenseNumber?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  ward?: string;
+  representativeName?: string;
+  representativePosition?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+  industry?: string;
+  companySize?: string;
+  yearEstablished?: number;
+  description?: string;
+  
+  // Project specific fields
+  slug?: string;
+  requirements?: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  currency?: string;
+  numberOfStudents?: number;
+  status?: string;
+  enterpriseName?: string;
 }
 
 // API Service
 class DashboardService {
   // Lấy thống kê tổng quan
   async getStats(): Promise<DashboardStats> {
-    // Mock data - backend chưa sẵn sàng
-    console.log('📊 Loading dashboard stats...');
+    console.log('📊 Loading dashboard stats from backend...');
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const response = await api.get('/dashboard/stats');
+    console.log('✅ Full response:', response);
+    console.log('✅ response.data:', response.data);
+    console.log('✅ response.data.data:', response.data.data);
     
-    const mockStats: DashboardStats = {
+    // Map backend response to frontend format
+    const data = response.data.data;
+    
+    if (!data) {
+      console.error('❌ Backend response missing data field!');
+      throw new Error('Invalid backend response structure');
+    }
+    
+    return {
       projects: {
-        total: 45,
-        new: 8,
-        ongoing: 22,
-        completed: 15,
-        cancelled: 0,
-        successRate: 88.5,
+        total: data.projects.total,
+        new: data.projects.newCount,
+        ongoing: data.projects.ongoing,
+        completed: data.projects.completed,
+        cancelled: data.projects.cancelled,
+        successRate: data.projects.successRate,
       },
       enterprises: {
-        total: 28,
-        new: 5,
-        active: 23,
-        verified: 25,
+        total: data.enterprises.total,
+        new: data.enterprises.newCount,
+        active: data.enterprises.active,
+        verified: data.enterprises.verified,
       },
       talents: {
-        total: 156,
-        new: 24,
-        active: 142,
-        averageRating: 4.2,
+        total: data.talents.total,
+        new: data.talents.newCount,
+        active: data.talents.active,
+        averageRating: data.talents.averageRating,
       },
       mentors: {
-        total: 18,
-        active: 16,
-        averageRating: 4.5,
+        total: data.mentors.total,
+        active: data.mentors.active,
+        averageRating: data.mentors.averageRating,
       },
       financials: {
-        totalRevenue: 2450000000,
-        teamDisbursed: 1715000000,
-        mentorDisbursed: 490000000,
-        labRevenue: 245000000,
-        hybridFundAdvanced: 850000000,
-        hybridFundRepaid: 680000000,
+        totalRevenue: data.financials.totalRevenue,
+        teamDisbursed: data.financials.teamDisbursed,
+        mentorDisbursed: data.financials.mentorDisbursed,
+        labRevenue: data.financials.labRevenue,
+        hybridFundAdvanced: data.financials.hybridFundAdvanced,
+        hybridFundRepaid: data.financials.hybridFundRepaid,
       },
       performance: {
-        avgProjectCompletion: 85,
-        onTimeDelivery: 92,
-        customerSatisfaction: 4.3,
+        avgProjectCompletion: data.performance.avgProjectCompletion,
+        onTimeDelivery: data.performance.onTimeDelivery,
+        customerSatisfaction: data.performance.customerSatisfaction,
       },
     };
-    
-    console.log('✅ Stats loaded:', mockStats);
-    return mockStats;
-    
-    /* // Uncomment khi backend ready
-    try {
-      const response = await api.get('/lab-admin/dashboard/stats');
-      return response.data.data;
-    } catch (error) {
-      console.warn('Backend not ready, using mock data');
-      return mockStats;
-    }
-    */
   }
 
   // Lấy hoạt động gần đây
   async getRecentActivities(): Promise<RecentActivity[]> {
-    console.log('📝 Loading recent activities...');
+    console.log('📝 Loading recent activities from backend...');
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const response = await api.get('/dashboard/activities?limit=10');
+    console.log('✅ Activities loaded from backend:', response.data.data.length);
     
-    const mockActivities: RecentActivity[] = [
-      {
-        id: 1,
-        type: 'project',
-        title: 'Dự án AI Chatbot được phê duyệt',
-        description: 'Công ty TNHH Tech Innovation',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        status: 'success',
-      },
-      {
-        id: 2,
-        type: 'payment',
-        title: 'Giải ngân 70% cho Team DA-001',
-        description: 'Số tiền: 350,000,000 VNĐ',
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        status: 'success',
-      },
-      {
-        id: 3,
-        type: 'enterprise',
-        title: 'DN mới đăng ký: ABC Corp',
-        description: 'Chờ xác thực giấy tờ',
-        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-        status: 'warning',
-      },
-      {
-        id: 4,
-        type: 'report',
-        title: 'Báo cáo tháng 12/2025 đã được tạo',
-        description: 'Xem chi tiết báo cáo minh bạch',
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        status: 'info',
-      },
-      {
-        id: 5,
-        type: 'project',
-        title: 'Dự án Web App cần bổ sung thông tin',
-        description: 'Thiếu mô tả kỹ thuật chi tiết',
-        timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
-        status: 'warning',
-      },
-    ];
-    
-    console.log('✅ Activities loaded:', mockActivities.length);
-    return mockActivities;
+    // Map backend response to frontend format
+    return response.data.data.map((activity: any) => ({
+      id: activity.id,
+      type: activity.activityType,
+      title: activity.title,
+      description: activity.description,
+      timestamp: activity.timestamp,
+      status: activity.status,
+    }));
   }
 
   // Lấy danh sách chờ phê duyệt
-  async getPendingApprovals(): Promise<PendingApproval[]> {
-    console.log('⏳ Loading pending approvals...');
+  async getPendingApprovals(limit: number = 10): Promise<PendingApproval[]> {
+    console.log('⏳ Loading pending approvals from backend...');
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const response = await api.get(`/dashboard/approvals?limit=${limit}`);
+    console.log('✅ Approvals loaded from backend:', response.data.data);
     
-    const mockApprovals: PendingApproval[] = [
-      {
-        id: 1,
-        type: 'enterprise',
-        title: 'Công ty TNHH XYZ Solutions',
-        submittedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        priority: 'high',
-      },
-      {
-        id: 2,
-        type: 'project',
-        title: 'Dự án Mobile App cho Logistics',
-        submittedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-        priority: 'high',
-      },
-      {
-        id: 3,
-        type: 'enterprise',
-        title: 'Công ty CP Digital Marketing',
-        submittedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
-        priority: 'medium',
-      },
-      {
-        id: 4,
-        type: 'project',
-        title: 'Dự án E-commerce Platform',
-        submittedAt: new Date(Date.now() - 96 * 60 * 60 * 1000).toISOString(),
-        priority: 'medium',
-      },
-      {
-        id: 5,
-        type: 'project',
-        title: 'Dự án IoT Smart Home',
-        submittedAt: new Date(Date.now() - 120 * 60 * 60 * 1000).toISOString(),
-        priority: 'low',
-      },
-    ];
-    
-    console.log('✅ Approvals loaded:', mockApprovals.length);
-    return mockApprovals;
+    // Return full data from backend (already matches interface)
+    return response.data.data;
+  }
+
+  // Approve enterprise
+  async approveEnterprise(id: number): Promise<void> {
+    const response = await api.put(`/enterprises/${id}/verify`);
+    return response.data;
+  }
+
+  // Reject enterprise
+  async rejectEnterprise(id: number, reason?: string): Promise<void> {
+    const response = await api.delete(`/enterprises/${id}`, {
+      data: { reason }
+    });
+    return response.data;
+  }
+
+  // Approve project
+  async approveProject(id: number): Promise<void> {
+    const response = await api.put(`/projects/${id}/validate`);
+    return response.data;
+  }
+
+  // Reject project
+  async rejectProject(id: number, reason?: string): Promise<void> {
+    const response = await api.delete(`/projects/${id}`, {
+      data: { reason }
+    });
+    return response.data;
   }
 
   // Lấy dữ liệu biểu đồ doanh thu theo tháng
   async getRevenueChart(months: number = 6): Promise<any[]> {
-    console.log('📈 Loading revenue chart...');
+    console.log('📈 Loading revenue chart from backend...');
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const response = await api.get(`/dashboard/revenue?months=${months}`);
+    console.log('✅ Chart data loaded from backend:', response.data.data.length);
     
-    const now = new Date();
-    const chartData = [];
-    
-    for (let i = months - 1; i >= 0; i--) {
-      const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthName = month.toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
-      
-      chartData.push({
-        month: monthName,
-        revenue: Math.floor(300000000 + Math.random() * 200000000),
-        teamDisbursed: Math.floor(210000000 + Math.random() * 140000000),
-        mentorDisbursed: Math.floor(60000000 + Math.random() * 40000000),
-        labRevenue: Math.floor(30000000 + Math.random() * 20000000),
-      });
-    }
-    
-    console.log('✅ Chart data loaded:', chartData.length);
-    return chartData;
+    // Map backend response to frontend format
+    return response.data.data.map((item: any) => ({
+      month: item.month,
+      revenue: item.revenue,
+      teamDisbursed: item.teamDisbursed,
+      mentorDisbursed: item.mentorDisbursed,
+      labRevenue: item.labRevenue,
+    }));
   }
 }
 

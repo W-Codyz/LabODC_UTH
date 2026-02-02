@@ -1,6 +1,6 @@
 // Sidebar Component
-import React from 'react';
-import { Layout, Menu, MenuProps } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, MenuProps, Badge } from 'antd';
 import {
   DashboardOutlined,
   ProjectOutlined,

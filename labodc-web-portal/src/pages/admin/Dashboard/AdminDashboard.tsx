@@ -15,7 +15,15 @@ import {
   Divider,
   Badge,
   Tooltip as AntTooltip,
+  Modal,
+  Descriptions,
+  message,
+  Input,
+  Space,
 } from 'antd';
+
+const { TextArea } = Input;
+import { useNavigate } from 'react-router-dom';
 import {
   ProjectOutlined,
   ShopOutlined,
@@ -25,6 +33,7 @@ import {
   FallOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
+  CloseCircleOutlined,
   WarningOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
@@ -52,12 +61,18 @@ import styles from './AdminDashboard.module.css';
 const { Title, Text } = Typography;
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedApproval, setSelectedApproval] = useState<PendingApproval | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -132,6 +147,65 @@ export default function AdminDashboard() {
     return 'Thấp';
   };
 
+  const handleViewApproval = (approval: PendingApproval) => {
+    setSelectedApproval(approval);
+    setDetailModalOpen(true);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedApproval) return;
+    
+    setActionLoading(true);
+    try {
+      if (selectedApproval.type === 'enterprise') {
+        await dashboardService.approveEnterprise(selectedApproval.id);
+        message.success(`Đã phê duyệt doanh nghiệp "${selectedApproval.companyName}"`);
+      } else {
+        await dashboardService.approveProject(selectedApproval.id);
+        message.success(`Đã phê duyệt dự án "${selectedApproval.title}"`);
+      }
+      setDetailModalOpen(false);
+      loadDashboardData(); // Reload dashboard data
+      window.dispatchEvent(new CustomEvent('approvalStatusChanged'));
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Không thể phê duyệt');
+      console.error('Approve error:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectClick = () => {
+    setDetailModalOpen(false);
+    setRejectModalOpen(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedApproval) return;
+    
+    setActionLoading(true);
+    try {
+      if (selectedApproval.type === 'enterprise') {
+        await dashboardService.rejectEnterprise(selectedApproval.id, rejectReason);
+        message.success(`Đã từ chối doanh nghiệp "${selectedApproval.companyName}"`);
+      } else {
+        await dashboardService.rejectProject(selectedApproval.id, rejectReason);
+        message.success(`Đã từ chối dự án "${selectedApproval.title}"`);
+      }
+      setRejectModalOpen(false);
+      setRejectReason('');
+      loadDashboardData(); // Reload dashboard data
+      window.dispatchEvent(new CustomEvent('approvalStatusChanged'));
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Không thể từ chối');
+      console.error('Reject error:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+
+
   const pendingColumns = [
     {
       title: 'Loại',
@@ -139,7 +213,7 @@ export default function AdminDashboard() {
       key: 'type',
       render: (type: string) => (
         <Tag color={type === 'enterprise' ? 'blue' : 'green'}>
-          {type === 'enterprise' ? 'DN' : 'DA'}
+          {type === 'enterprise' ? 'Doanh nghiệp' : 'Dự án'}
         </Tag>
       ),
     },
@@ -169,8 +243,13 @@ export default function AdminDashboard() {
     {
       title: '',
       key: 'action',
-      render: (_: any) => (
-        <Button type="link" size="small" icon={<EyeOutlined />} />
+      render: (_: any, record: PendingApproval) => (
+        <Button 
+          type="link" 
+          size="small" 
+          icon={<EyeOutlined />}
+          onClick={() => handleViewApproval(record)}
+        />
       ),
     },
   ];
@@ -560,11 +639,6 @@ export default function AdminDashboard() {
                 </span>
               }
               className={styles.approvalCard}
-              extra={
-                <Button type="primary" size="small">
-                  Xem tất cả
-                </Button>
-              }
             >
               <Table
                 dataSource={pendingApprovals}
@@ -577,6 +651,198 @@ export default function AdminDashboard() {
             </Card>
           </Col>
         </Row>
+
+        {/* Approval Detail Modal */}
+        <Modal
+          title={
+            <span>
+              <InfoCircleOutlined /> Chi tiết {selectedApproval?.type === 'enterprise' ? 'Doanh nghiệp' : 'Dự án'}
+            </span>
+          }
+          open={detailModalOpen}
+          onCancel={() => setDetailModalOpen(false)}
+          width={800}
+          footer={[
+            <Button key="close" onClick={() => setDetailModalOpen(false)}>
+              Đóng
+            </Button>,
+            <Button 
+              key="reject" 
+              danger 
+              icon={<CloseCircleOutlined />}
+              onClick={handleRejectClick}
+              loading={actionLoading}
+            >
+              Từ chối
+            </Button>,
+            <Button 
+              key="approve" 
+              type="primary" 
+              icon={<CheckCircleOutlined />}
+              onClick={handleApprove}
+              loading={actionLoading}
+            >
+              Phê duyệt
+            </Button>,
+          ]}
+        >
+          {selectedApproval && selectedApproval.type === 'enterprise' && (
+            <Descriptions bordered column={2} size="small">
+              <Descriptions.Item label="Loại" span={2}>
+                <Tag color="blue">Doanh nghiệp</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Tên công ty" span={2}>
+                <Text strong>{selectedApproval.companyName}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Mã số thuế">
+                {selectedApproval.taxCode}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số GPKD">
+                {selectedApproval.businessLicenseNumber || 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Người đại diện">
+                {selectedApproval.representativeName}
+              </Descriptions.Item>
+              <Descriptions.Item label="Chức vụ">
+                {selectedApproval.representativePosition || 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Email liên hệ">
+                {selectedApproval.contactEmail}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại">
+                {selectedApproval.contactPhone}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngành nghề">
+                {selectedApproval.industry || 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Quy mô">
+                {selectedApproval.companySize || 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Năm thành lập">
+                {selectedApproval.yearEstablished || 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Website">
+                {selectedApproval.website ? (
+                  <a href={selectedApproval.website} target="_blank" rel="noopener noreferrer">
+                    {selectedApproval.website}
+                  </a>
+                ) : 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ" span={2}>
+                {[
+                  selectedApproval.address,
+                  selectedApproval.ward,
+                  selectedApproval.district,
+                  selectedApproval.city
+                ].filter(Boolean).join(', ') || 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mô tả" span={2}>
+                {selectedApproval.description || 'Chưa có mô tả'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày nộp" span={1}>
+                {new Date(selectedApproval.submittedAt).toLocaleString('vi-VN')}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mức độ ưu tiên" span={1}>
+                <Tag color={getPriorityColor(selectedApproval.priority)}>
+                  {getPriorityLabel(selectedApproval.priority)}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+          
+          {selectedApproval && selectedApproval.type === 'project' && (
+            <Descriptions bordered column={2} size="small">
+              <Descriptions.Item label="Loại" span={2}>
+                <Tag color="green">Dự án</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Tên dự án" span={2}>
+                <Text strong>{selectedApproval.title}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Doanh nghiệp" span={2}>
+                <Text>{selectedApproval.enterpriseName}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày bắt đầu">
+                {selectedApproval.startDate ? new Date(selectedApproval.startDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày kết thúc">
+                {selectedApproval.endDate ? new Date(selectedApproval.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngân sách">
+                {selectedApproval.budget ? new Intl.NumberFormat('vi-VN', {
+                  style: 'currency',
+                  currency: selectedApproval.currency || 'VND'
+                }).format(selectedApproval.budget) : 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số sinh viên">
+                {selectedApproval.numberOfStudents || 'Chưa xác định'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái" span={2}>
+                <Tag color="orange">{selectedApproval.status || 'PENDING'}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Mô tả" span={2}>
+                {selectedApproval.description || 'Chưa có mô tả'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Yêu cầu" span={2}>
+                {selectedApproval.requirements || 'Chưa có yêu cầu cụ thể'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày nộp" span={1}>
+                {new Date(selectedApproval.submittedAt).toLocaleString('vi-VN')}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mức độ ưu tiên" span={1}>
+                <Tag color={getPriorityColor(selectedApproval.priority)}>
+                  {getPriorityLabel(selectedApproval.priority)}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+        </Modal>
+
+        {/* Reject Modal */}
+        <Modal
+          title={
+            <span style={{ color: '#ff4d4f' }}>
+              <CloseCircleOutlined /> Từ chối {selectedApproval?.type === 'enterprise' ? 'doanh nghiệp' : 'dự án'}
+            </span>
+          }
+          open={rejectModalOpen}
+          onCancel={() => {
+            setRejectModalOpen(false);
+            setRejectReason('');
+          }}
+          onOk={handleRejectConfirm}
+          okText="Xác nhận từ chối"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true, loading: actionLoading }}
+          cancelButtonProps={{ disabled: actionLoading }}
+          width={600}
+          closable={!actionLoading}
+          maskClosable={!actionLoading}
+        >
+          <Space direction="vertical" style={{ width: '100%' }} size="large">
+            <Alert
+              message="Cảnh báo"
+              description={
+                selectedApproval?.type === 'enterprise'
+                  ? 'Bạn đang từ chối yêu cầu xác minh doanh nghiệp. Hành động này không thể hoàn tác.'
+                  : 'Bạn đang từ chối yêu cầu xác thực dự án. Hành động này không thể hoàn tác.'
+              }
+              type="warning"
+              showIcon
+            />
+            <div>
+              <Typography.Text strong>Lý do từ chối (tùy chọn):</Typography.Text>
+              <TextArea
+                rows={4}
+                placeholder="Nhập lý do từ chối để thông báo cho người dùng..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                disabled={actionLoading}
+                maxLength={500}
+                showCount
+              />
+            </div>
+          </Space>
+        </Modal>
       </div>
     </div>
   );
