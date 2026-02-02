@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class ProjectListDTO {
     private String title;
     private String description;
     private ProjectStatus status;
-    private Boolean validated;
+    private String validated; // pending, approved, rejected
     private LocalDateTime validatedAt;
     private Long budget;
     private Integer numberOfStudents;
@@ -32,4 +33,5 @@ public class ProjectListDTO {
     // Aggregated data
     private Integer totalTeamMembers;
     private Integer totalApplications;
+    private List<String> technologies;
 }

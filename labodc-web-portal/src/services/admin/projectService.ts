@@ -1,6 +1,7 @@
 // src/services/admin/projectService.ts
 
 import axios from 'axios';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -14,7 +15,7 @@ const api = axios.create({
 
 // Interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,26 +25,29 @@ api.interceptors.request.use((config) => {
 // Types
 export interface Project {
   id: number;
+  enterpriseId: number;
   title: string;
   description: string;
-  enterprise: {
-    id: number;
-    name: string;
-    logoUrl?: string;
-    verified: boolean;
-  };
-  objectives: string[];
-  technologies: string[];
-  startDate: string;
-  endDate: string;
-  duration: string;
+  status: 'DRAFT' | 'PENDING_VALIDATION' | 'RECRUITING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  validated: 'pending' | 'approved' | 'rejected';
+  validatedAt?: string;
   budget: number;
   numberOfStudents: number;
-  skillRequirements: SkillRequirement[];
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'RECRUITING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  submittedAt: string;
-  attachments?: ProjectAttachment[];
-  feasibilityScore?: number;
+  currentMembersCount: number;
+  progressPercentage: number;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  // Aggregated data
+  totalTeamMembers: number;
+  totalApplications: number;
+  
+  // Optional enterprise info (may need separate call)
+  enterprise?: {
+    id: number;
+    name: string;
+    verified: boolean;
+  };
 }
 
 export interface SkillRequirement {
@@ -59,20 +63,31 @@ export interface ProjectAttachment {
 }
 
 export interface ProjectDetail extends Project {
-  validatedBy?: number;
-  validatedAt?: string;
+  // Additional detail fields
+  slug: string;
+  objectives?: string;
+  requirements?: string;
+  technologies?: string[];
+  requiredSkills?: string[];
+  attachments?: string[];
+  mentorId?: number;
+  currency: string;
+  isPublic: boolean;
+  allowApplications: boolean;
+  updatedAt?: string;
+  duration?: string;
+  
+  // Rejection info (if rejected)
   rejectionReason?: string;
+  rejectedAt?: string;
+  rejectedBy?: number;
+  
+  // Related data (may need separate calls)
   mentor?: {
     id: number;
     name: string;
     email: string;
     expertise: string[];
-  };
-  fundDistribution?: {
-    total: number;
-    team: number;
-    mentor: number;
-    lab: number;
   };
 }
 
@@ -124,10 +139,52 @@ export interface ProjectListResponse {
 
 // API Service
 class ProjectService {
-  // Lấy danh sách dự án
+  // Lấy danh sách dự án (dùng cho project validation/management)
   async getProjects(params: ProjectListParams): Promise<ProjectListResponse> {
-    const response = await api.get('/lab-admin/projects', { params });
-    return response.data.data;
+    try {
+      // Map frontend params to backend params
+      const backendParams: any = {};
+      
+      if (params.search) {
+        backendParams.search = params.search;
+      }
+      
+      // Map status filter to appropriate backend params
+      if (params.status === 'PENDING') {
+        backendParams.validated = 'pending';
+      } else if (params.status === 'APPROVED') {
+        backendParams.validated = 'approved';
+      } else if (params.status === 'REJECTED') {
+        backendParams.validated = 'rejected';
+      } else if (params.status === 'RECRUITING' || params.status === 'IN_PROGRESS' || params.status === 'COMPLETED') {
+        // For status-based filters, we'll filter client-side after getting all data
+        // Or we need a different backend endpoint that supports status filter
+        // For now, get all and filter client-side
+      }
+      // For 'ALL' or other statuses, don't send validated param (get all)
+      
+      const response = await api.get('/api/projects/management', { params: backendParams });
+      
+      // Backend returns List<ProjectListDTO>, wrap in pagination structure
+      let projects = response.data.data || [];
+      
+      // Client-side filter for status-based tabs (RECRUITING, IN_PROGRESS, etc.)
+      if (params.status === 'RECRUITING' || params.status === 'IN_PROGRESS' || params.status === 'COMPLETED') {
+        projects = projects.filter((p: Project) => p.status === params.status);
+      }
+      
+      return {
+        projects: projects,
+        pagination: {
+          total: projects.length,
+          page: params.page || 1,
+          totalPages: Math.ceil(projects.length / (params.limit || 10))
+        }
+      };
+    } catch (error: any) {
+      console.error('[ProjectService] Error fetching projects:', error);
+      throw error;
+    }
   }
 
   // Lấy danh sách dự án chờ xác thực
@@ -138,18 +195,31 @@ class ProjectService {
 
   // Lấy chi tiết dự án
   async getProjectById(id: number): Promise<ProjectDetail> {
-    const response = await api.get(`/lab-admin/projects/${id}`);
-    return response.data.data;
+    const response = await api.get(`/api/projects/${id}`);
+    const data = response.data.data;
+    
+    // Map backend response to frontend interface
+    // Backend uses: name, objective, requiredTalents
+    // Frontend uses: title, objectives, numberOfStudents
+    return {
+      ...data,
+      title: data.name || data.title,
+      objectives: data.objective || data.objectives,
+      numberOfStudents: data.requiredTalents || data.numberOfStudents,
+      validated: data.validated || 'pending',
+    } as ProjectDetail;
   }
-
-  // Phê duyệt dự án
+  
+  // Phê duyệt dự án (approve)
   async approveProject(id: number, data: ApproveProjectRequest): Promise<void> {
-    await api.post(`/lab-admin/projects/${id}/approve`, data);
+    await api.put(`/api/projects/${id}/approve`);
   }
-
-  // Từ chối dự án
+  
+  // Từ chối dự án (reject)
   async rejectProject(id: number, data: RejectProjectRequest): Promise<void> {
-    await api.post(`/lab-admin/projects/${id}/reject`, data);
+    await api.put(`/api/projects/${id}/reject`, {
+      reason: data.reason + ': ' + data.details
+    });
   }
 
   // Lấy danh sách mentor có sẵn
@@ -162,7 +232,7 @@ class ProjectService {
 
   // Gán mentor cho dự án
   async assignMentor(projectId: number, data: AssignMentorRequest): Promise<void> {
-    await api.post(`/lab-admin/projects/${projectId}/assign-mentor`, data);
+    await api.post(`/lab-admin/project-validation/projects/${projectId}/assign-mentor`, data);
   }
 
   // Tìm kiếm dự án

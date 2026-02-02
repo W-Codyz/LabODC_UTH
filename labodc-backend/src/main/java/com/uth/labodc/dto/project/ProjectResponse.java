@@ -33,4 +33,7 @@ public class ProjectResponse {
     private List<String> attachments = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String validated; // pending, approved, rejected
+    private String rejectionReason;
+    private Integer progressPercentage;
 }

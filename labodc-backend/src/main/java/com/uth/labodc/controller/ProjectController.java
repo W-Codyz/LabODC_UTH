@@ -2,12 +2,15 @@ package com.uth.labodc.controller;
 
 import com.uth.labodc.dto.ApiResponse;
 import com.uth.labodc.dto.project.CreateProjectRequest;
+import com.uth.labodc.dto.project.ProjectListDTO;
 import com.uth.labodc.dto.project.ProjectMemberResponse;
 import com.uth.labodc.dto.project.ProjectResponse;
+import com.uth.labodc.dto.project.ProjectStatsDTO;
 import com.uth.labodc.exception.ResourceNotFoundException;
 import com.uth.labodc.model.entity.User;
 import com.uth.labodc.repository.UserRepository;
 import com.uth.labodc.service.ProjectDataService;
+import com.uth.labodc.service.ProjectManagementService;
 import com.uth.labodc.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectDataService projectDataService;
+    private final ProjectManagementService projectManagementService;
     private final UserRepository userRepository;
     private final ProjectService projectService;
 
@@ -42,6 +46,32 @@ public class ProjectController {
             @RequestParam(value = "status", required = false) String status
     ) {
         return ResponseEntity.ok(ApiResponse.success(projectDataService.getProjects(status)));
+    }
+    
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<ProjectStatsDTO>> getProjectStats() {
+        log.info("Fetching project statistics");
+        ProjectStatsDTO stats = projectManagementService.getProjectStats();
+        return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectById(@PathVariable Long id) {
+        log.info("Fetching project details for id: {}", id);
+        ProjectResponse project = projectDataService.getProjectById(id);
+        return ResponseEntity.ok(ApiResponse.success(project));
+    }
+    
+    @GetMapping("/management")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<List<ProjectListDTO>>> getProjectsForManagement(
+            @RequestParam(value = "validated", required = false) String validated,
+            @RequestParam(value = "search", required = false) String search) {
+        log.info("Fetching projects for management, validated: {}, search: {}", validated, search);
+        
+        List<ProjectListDTO> projects = projectManagementService.getAllProjectsWithStats(validated, search);
+        return ResponseEntity.ok(ApiResponse.success(projects));
     }
 
     @PostMapping
@@ -98,38 +128,65 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success("Đã rời dự án", null));
     }
 
-    @PutMapping("/{id}/validate")
+    @PutMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
-    public ResponseEntity<ApiResponse<String>> validateProject(
+    public ResponseEntity<ApiResponse<String>> approveProject(
             @PathVariable Long id,
             Authentication authentication) {
-        log.info("Admin {} validating project {}", authentication.getName(), id);
+        log.info("Admin {} approving project {}", authentication.getName(), id);
         
         // Get admin user ID from authentication
         Long adminId = 1L; // TODO: Extract from authentication
         
         projectService.validateProject(id, adminId);
-        return ResponseEntity.ok(ApiResponse.success("Project validated successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("Đã phê duyệt dự án", null));
+    }
+    
+    @PutMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> rejectProject(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        log.info("Admin {} rejecting project {}", authentication.getName(), id);
+        
+        // Get admin user ID from authentication
+        Long adminId = 1L; // TODO: Extract from authentication properly
+        
+        String reason = body != null ? body.get("reason") : null;
+        if (reason == null || reason.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                ApiResponse.error("Lý do từ chối không được để trống")
+            );
+        }
+        
+        log.info("Rejection reason: {}", reason);
+        projectService.rejectProject(id, adminId, reason);
+        return ResponseEntity.ok(ApiResponse.success("Đã từ chối dự án", null));
+    }
+    
+    @PutMapping("/{id}/validate")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> validateProject(
+            @PathVariable Long id,
+            Authentication authentication) {
+        // Deprecated - use /approve endpoint instead
+        return approveProject(id, authentication);
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProject(
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body,
             Authentication authentication) {
-        log.info("Admin {} rejecting/deleting project {}", authentication.getName(), id);
+        log.info("Admin {} deleting project {}", authentication.getName(), id);
         
         // Get admin user ID from authentication
         Long adminId = 1L; // TODO: Extract from authentication properly
         
-        String reason = body != null ? body.get("reason") : null;
-        if (reason != null) {
-            log.info("Rejection reason: {}", reason);
-        }
-        
-        projectService.deleteProject(id, adminId, reason);
-        return ResponseEntity.ok(ApiResponse.success("Project rejected and deleted", null));
+        // For now, reject with generic reason
+        projectService.rejectProject(id, adminId, "Deleted by admin");
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa dự án", null));
     }
 
     private User currentUser(Authentication authentication) {

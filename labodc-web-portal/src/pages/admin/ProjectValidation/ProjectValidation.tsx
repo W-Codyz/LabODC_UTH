@@ -69,7 +69,7 @@ export default function ProjectValidation() {
 
   useEffect(() => {
     loadProjects();
-  }, [activeTab, pagination.current]);
+  }, [activeTab, pagination.current, searchText]);
 
   const loadProjects = async () => {
     setLoading(true);
@@ -92,6 +92,8 @@ export default function ProjectValidation() {
   const handleViewDetail = async (id: number) => {
     try {
       const detail = await projectService.getProjectById(id);
+      console.log('Project detail loaded:', detail);
+      console.log('Validated status:', detail.validated);
       setSelectedProject(detail);
       setDetailVisible(true);
     } catch (error: any) {
@@ -197,16 +199,28 @@ export default function ProjectValidation() {
   };
 
   const getStatusTag = (status: string) => {
+    if (!status) return <Tag color="default">Không xác định</Tag>;
+    
+    // Normalize status to uppercase for matching
+    const normalizedStatus = status.toUpperCase();
+    
     const statusMap: Record<string, { color: string; text: string }> = {
+      // Validation statuses
+      PENDING_VALIDATION: { color: 'processing', text: 'Chờ xác thực' },
       PENDING: { color: 'processing', text: 'Chờ xác thực' },
+      VALIDATED: { color: 'success', text: 'Đã phê duyệt' },
       APPROVED: { color: 'success', text: 'Đã phê duyệt' },
       REJECTED: { color: 'error', text: 'Đã từ chối' },
+      // Project lifecycle statuses
       RECRUITING: { color: 'cyan', text: 'Đang tuyển' },
       IN_PROGRESS: { color: 'blue', text: 'Đang thực hiện' },
+      INPROGRESS: { color: 'blue', text: 'Đang thực hiện' },
       COMPLETED: { color: 'green', text: 'Hoàn thành' },
-      CANCELLED: { color: 'default', text: 'Đã hủy' }
+      CANCELLED: { color: 'error', text: 'Đã hủy' },
+      CANCELED: { color: 'error', text: 'Đã hủy' }
     };
-    const config = statusMap[status] || { color: 'default', text: status };
+    
+    const config = statusMap[normalizedStatus] || { color: 'default', text: status };
     return <Tag color={config.color}>{config.text}</Tag>;
   };
 
@@ -220,24 +234,17 @@ export default function ProjectValidation() {
           <Text strong>{text}</Text>
           <br />
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {record.enterprise.name}
+            Enterprise ID: {record.enterpriseId}
           </Text>
         </div>
       ),
     },
     {
-      title: 'Công nghệ',
-      dataIndex: 'technologies',
-      key: 'technologies',
-      width: 200,
-      render: (techs: string[]) => (
-        <>
-          {techs.slice(0, 2).map(tech => (
-            <Tag key={tech} color="blue">{tech}</Tag>
-          ))}
-          {techs.length > 2 && <Tag>+{techs.length - 2}</Tag>}
-        </>
-      ),
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+      width: 250,
+      ellipsis: true,
     },
     {
       title: 'Ngân sách',
@@ -248,9 +255,14 @@ export default function ProjectValidation() {
     },
     {
       title: 'Thời gian',
-      dataIndex: 'duration',
       key: 'duration',
-      width: 120,
+      width: 200,
+      render: (_, record) => (
+        <div>
+          <div>{new Date(record.startDate).toLocaleDateString('vi-VN')}</div>
+          <div>đến {new Date(record.endDate).toLocaleDateString('vi-VN')}</div>
+        </div>
+      ),
     },
     {
       title: 'SV cần',
@@ -260,9 +272,16 @@ export default function ProjectValidation() {
       align: 'center',
     },
     {
-      title: 'Ngày gửi',
-      dataIndex: 'submittedAt',
-      key: 'submittedAt',
+      title: 'Tiến độ',
+      dataIndex: 'progressPercentage',
+      key: 'progressPercentage',
+      width: 100,
+      render: (progress) => `${progress}%`,
+    },
+    {
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       width: 160,
       render: (date) => new Date(date).toLocaleString('vi-VN'),
     },
@@ -343,18 +362,6 @@ export default function ProjectValidation() {
         width={800}
         open={detailVisible}
         onClose={() => setDetailVisible(false)}
-        extra={
-          selectedProject?.status === 'PENDING' && (
-            <Space>
-              <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => setApproveModalVisible(true)}>
-                Phê duyệt
-              </Button>
-              <Button danger icon={<CloseCircleOutlined />} onClick={() => setRejectModalVisible(true)}>
-                Từ chối
-              </Button>
-            </Space>
-          )
-        }
       >
         {selectedProject && (
           <Space direction="vertical" style={{ width: '100%' }} size="large">
@@ -375,9 +382,9 @@ export default function ProjectValidation() {
                 <Card size="small">
                   <Statistic
                     title="Thời gian"
-                    value={selectedProject.duration}
+                    value={`${new Date(selectedProject.startDate).toLocaleDateString('vi-VN')} - ${new Date(selectedProject.endDate).toLocaleDateString('vi-VN')}`}
                     prefix={<CalendarOutlined />}
-                    valueStyle={{ fontSize: 18 }}
+                    valueStyle={{ fontSize: 14 }}
                   />
                 </Card>
               </Col>
@@ -394,104 +401,93 @@ export default function ProjectValidation() {
               </Col>
             </Row>
 
-            {/* Fund Distribution */}
-            {selectedProject.fundDistribution && (
-              <Card title="Phân bổ Quỹ (70/20/10)" size="small">
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <div>
-                    <Text>Team (70%): </Text>
-                    <Text strong>{formatCurrency(selectedProject.fundDistribution.team)}</Text>
-                  </div>
-                  <div>
-                    <Text>Mentor (20%): </Text>
-                    <Text strong>{formatCurrency(selectedProject.fundDistribution.mentor)}</Text>
-                  </div>
-                  <div>
-                    <Text>Lab (10%): </Text>
-                    <Text strong>{formatCurrency(selectedProject.fundDistribution.lab)}</Text>
-                  </div>
-                </Space>
-              </Card>
-            )}
-
             <Descriptions title="Thông tin dự án" column={1} bordered>
               <Descriptions.Item label="Tên dự án"><Text strong>{selectedProject.title}</Text></Descriptions.Item>
-              <Descriptions.Item label="Doanh nghiệp">{selectedProject.enterprise.name}</Descriptions.Item>
+              <Descriptions.Item label="Enterprise ID">{selectedProject.enterpriseId}</Descriptions.Item>
               <Descriptions.Item label="Mô tả">
                 <Paragraph>{selectedProject.description}</Paragraph>
               </Descriptions.Item>
-              <Descriptions.Item label="Mục tiêu">
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
-                  {selectedProject.objectives.map((obj, i) => <li key={i}>{obj}</li>)}
-                </ul>
-              </Descriptions.Item>
-              <Descriptions.Item label="Công nghệ">
-                {selectedProject.technologies.map(tech => <Tag key={tech} color="blue">{tech}</Tag>)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Thời gian">
-                {new Date(selectedProject.startDate).toLocaleDateString('vi-VN')} - {new Date(selectedProject.endDate).toLocaleDateString('vi-VN')}
-              </Descriptions.Item>
+              {selectedProject.objectives && (
+                <Descriptions.Item label="Mục tiêu">
+                  <Paragraph>{selectedProject.objectives}</Paragraph>
+                </Descriptions.Item>
+              )}
+              {selectedProject.requirements && (
+                <Descriptions.Item label="Yêu cầu">
+                  <Paragraph>{selectedProject.requirements}</Paragraph>
+                </Descriptions.Item>
+              )}
+              {selectedProject.technologies && selectedProject.technologies.length > 0 && (
+                <Descriptions.Item label="Công nghệ">
+                  {selectedProject.technologies.map((tech: string) => <Tag key={tech} color="blue">{tech}</Tag>)}
+                </Descriptions.Item>
+              )}
+              {selectedProject.requiredSkills && selectedProject.requiredSkills.length > 0 && (
+                <Descriptions.Item label="Kỹ năng yêu cầu">
+                  {selectedProject.requiredSkills.map((skill: string) => <Tag key={skill} color="green">{skill}</Tag>)}
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Trạng thái">{getStatusTag(selectedProject.status)}</Descriptions.Item>
+              <Descriptions.Item label="Validation">
+                <Tag color={selectedProject.validated === 'approved' ? 'green' : selectedProject.validated === 'rejected' ? 'red' : 'orange'}>
+                  {selectedProject.validated === 'approved' ? 'Đã phê duyệt' : selectedProject.validated === 'rejected' ? 'Đã từ chối' : 'Chờ xác thực'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Tiến độ">
+                <Progress percent={selectedProject.progressPercentage} />
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày tạo">
+                {new Date(selectedProject.createdAt).toLocaleString('vi-VN')}
+              </Descriptions.Item>
+              {selectedProject.updatedAt && (
+                <Descriptions.Item label="Cập nhật">
+                  {new Date(selectedProject.updatedAt).toLocaleString('vi-VN')}
+                </Descriptions.Item>
+              )}
+              {/* Action Buttons for Pending Projects */}
+            {(selectedProject.validated === 'pending' || !selectedProject.validated) && (
+              <Card size="small" style={{ background: '#f0f2f5' }}>
+                <Space style={{ width: '100%', justifyContent: 'center' }}>
+                  <Button 
+                    type="primary" 
+                    size="large"
+                    icon={<CheckCircleOutlined />} 
+                    onClick={() => setApproveModalVisible(true)}
+                  >
+                    Phê duyệt
+                  </Button>
+                  <Button 
+                    danger 
+                    size="large"
+                    icon={<CloseCircleOutlined />} 
+                    onClick={() => setRejectModalVisible(true)}
+                  >
+                    Từ chối
+                  </Button>
+                </Space>
+              </Card>
+            )}
             </Descriptions>
-
-            {/* Skill Requirements */}
-            <Card title="Yêu cầu kỹ năng" size="small">
-              <List
-                dataSource={selectedProject.skillRequirements}
-                renderItem={(skill) => (
-                  <List.Item>
-                    <List.Item.Meta
-                      title={
-                        <Space>
-                          <Text strong>{skill.skill}</Text>
-                          <Tag color={skill.level === 'Advanced' ? 'red' : skill.level === 'Intermediate' ? 'orange' : 'green'}>
-                            {skill.level}
-                          </Tag>
-                          {skill.required && <Tag color="red">Bắt buộc</Tag>}
-                        </Space>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
 
             {/* Attachments */}
             {selectedProject.attachments && selectedProject.attachments.length > 0 && (
               <Card title="Tài liệu đính kèm" size="small">
-                {selectedProject.attachments.map((file, idx) => (
-                  <Button key={idx} icon={<FileTextOutlined />} href={file.url} target="_blank" block style={{ marginBottom: 8 }}>
-                    {file.fileName}
+                {selectedProject.attachments.map((file: string, idx: number) => (
+                  <Button key={idx} icon={<FileTextOutlined />} href={file} target="_blank" block style={{ marginBottom: 8 }}>
+                    File {idx + 1}
                   </Button>
                 ))}
               </Card>
             )}
 
-            {/* Mentor Assignment */}
-            {selectedProject.status === 'APPROVED' && !selectedProject.mentor && (
+            {/* Rejection Reason if rejected */}
+            {selectedProject.validated === 'rejected' && selectedProject.rejectionReason && (
               <Alert
-                message="Dự án đã phê duyệt"
-                description={
-                  <Space direction="vertical">
-                    <Text>Dự án đã được phê duyệt. Vui lòng gán Mentor để bắt đầu tuyển sinh viên.</Text>
-                    <Button type="primary" icon={<UserAddOutlined />} onClick={handleShowMentorModal}>
-                      Gán Mentor
-                    </Button>
-                  </Space>
-                }
-                type="info"
+                type="error"
+                message="Lý do từ chối"
+                description={selectedProject.rejectionReason}
                 showIcon
               />
-            )}
-
-            {selectedProject.mentor && (
-              <Descriptions title="Mentor được gán" column={1} bordered>
-                <Descriptions.Item label="Tên">{selectedProject.mentor.name}</Descriptions.Item>
-                <Descriptions.Item label="Email">{selectedProject.mentor.email}</Descriptions.Item>
-                <Descriptions.Item label="Chuyên môn">
-                  {selectedProject.mentor.expertise.map(exp => <Tag key={exp}>{exp}</Tag>)}
-                </Descriptions.Item>
-              </Descriptions>
             )}
           </Space>
         )}
@@ -512,36 +508,6 @@ export default function ProjectValidation() {
             type="info"
             showIcon
           />
-          
-          <div>
-            <div style={{ marginBottom: 8 }}>Ghi chú *</div>
-            <TextArea rows={3} value={approveNote} onChange={(e) => setApproveNote(e.target.value)} placeholder="Dự án phù hợp với khả năng sinh viên..." />
-          </div>
-
-          <Card title="Điều chỉnh (tùy chọn)" size="small">
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <div>
-                <Text>Số sinh viên:</Text>
-                <InputNumber
-                  min={3}
-                  max={10}
-                  value={adjustStudents}
-                  onChange={setAdjustStudents}
-                  style={{ width: '100%', marginTop: 8 }}
-                  placeholder={`Mặc định: ${selectedProject?.numberOfStudents}`}
-                />
-              </div>
-              <div>
-                <Text>Thời gian:</Text>
-                <Input
-                  value={adjustDuration}
-                  onChange={(e) => setAdjustDuration(e.target.value)}
-                  placeholder={`Mặc định: ${selectedProject?.duration}`}
-                  style={{ marginTop: 8 }}
-                />
-              </div>
-            </Space>
-          </Card>
         </Space>
       </Modal>
 

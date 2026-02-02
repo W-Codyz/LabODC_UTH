@@ -55,8 +55,12 @@ public class ProjectDataService {
                    p.enterprise_id,
                    p.mentor_id,
                    p.created_at,
-                   p.updated_at
+                   p.updated_at,
+                   p.validated,
+                   pr.rejection_reason,
+                   p.progress_percentage
             FROM projects p
+            LEFT JOIN project_rejections pr ON p.id = pr.project_id
             WHERE p.deleted_at IS NULL
             """;
 
@@ -136,8 +140,7 @@ public class ProjectDataService {
         insertTechnologies(projectId, request.getTechnologies());
         insertSkills(projectId, request.getRequiredSkills());
 
-        return getProjectById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dự án vừa tạo"));
+        return getProjectById(projectId);
     }
 
     public List<ProjectResponse> getProjects(String clientStatus) {
@@ -312,10 +315,11 @@ public class ProjectDataService {
                 .collect(Collectors.toList());
     }
 
-    private Optional<ProjectResponse> getProjectById(long projectId) {
+    public ProjectResponse getProjectById(long projectId) {
         String sql = BASE_SELECT + " AND p.id = :projectId";
         List<ProjectResponse> results = mapProjects(sql, Map.of("projectId", projectId));
-        return results.stream().findFirst();
+        return results.stream().findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
     }
 
     private void insertTechnologies(long projectId, List<String> technologies) {
@@ -381,6 +385,9 @@ public class ProjectDataService {
                 .mentorId(row.mentorId())
                 .createdAt(row.createdAt())
                 .updatedAt(row.updatedAt())
+                .validated(row.validated() != null ? row.validated() : "pending")
+                .rejectionReason(row.rejectionReason())
+                .progressPercentage(row.progressPercentage())
                 .build();
     }
 
@@ -440,7 +447,10 @@ public class ProjectDataService {
                     rs.getLong("enterprise_id"),
                     rs.getObject("mentor_id") != null ? rs.getLong("mentor_id") : null,
                     toLocalDateTime(rs.getTimestamp("created_at")),
-                    toLocalDateTime(rs.getTimestamp("updated_at"))
+                    toLocalDateTime(rs.getTimestamp("updated_at")),
+                    rs.getString("validated"),
+                    rs.getString("rejection_reason"),
+                    rs.getObject("progress_percentage") != null ? rs.getInt("progress_percentage") : 0
             );
         }
 
@@ -463,7 +473,10 @@ public class ProjectDataService {
             Long enterpriseId,
             Long mentorId,
             LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            String validated,
+            String rejectionReason,
+            Integer progressPercentage
     ) {
     }
 
