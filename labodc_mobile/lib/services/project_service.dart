@@ -10,10 +10,12 @@ import 'package:logger/logger.dart';
 ///   và thay đổi logic parse response.
 /// - Hiện tại vẫn trả mock data khi gặp lỗi/404 để UI có thể hoạt động.
 class ProjectService {
-  ProjectService({ApiService? apiService}) : _api = apiService ?? ApiService();
+  ProjectService({ApiService? apiService, this.enableMockFallback = false})
+    : _api = apiService ?? ApiService();
 
   final ApiService _api;
   final _logger = Logger();
+  final bool enableMockFallback;
 
   Future<List<ProjectModel>> fetchProjects({
     ProjectStatus? status,
@@ -106,7 +108,7 @@ class ProjectService {
       final response = await _api.post('/projects', data: payload);
       return response.statusCode == 200 || response.statusCode == 201;
     } on DioException catch (e) {
-      _logger.e('ProjectService.createProject error: ${e.message}');
+      _logger.w('ProjectService.createProject error: ${e.message}');
       rethrow;
     }
   }

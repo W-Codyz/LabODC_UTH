@@ -98,6 +98,72 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Forgot password (request reset email/OTP)
+  Future<bool> forgotPassword(String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _authService.forgotPassword(email);
+      _isLoading = false;
+
+      if (response.success) {
+        notifyListeners();
+        return true;
+      } else {
+        final failureMessage = response.message?.trim() ?? '';
+        _error = failureMessage.isEmpty
+            ? 'Gửi yêu cầu đặt lại mật khẩu thất bại'
+            : failureMessage;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Reset password (using token/otp provided by backend)
+  Future<bool> resetPassword({
+    required String token,
+    required String otp,
+    required String newPassword,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _authService.resetPassword(
+        token: token,
+        otp: otp,
+        newPassword: newPassword,
+      );
+
+      _isLoading = false;
+      if (response.success) {
+        notifyListeners();
+        return true;
+      } else {
+        final failureMessage = response.message?.trim() ?? '';
+        _error = failureMessage.isEmpty
+            ? 'Đặt lại mật khẩu thất bại'
+            : failureMessage;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Logout
   Future<void> logout() async {
     _isLoading = true;

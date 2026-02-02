@@ -9,7 +9,7 @@ import 'package:labodc_mobile/providers/auth_provider.dart';
 /// Splash Screen - First screen when app launches
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-  
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -20,16 +20,18 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _navigateToNext();
   }
-  
+
   Future<void> _navigateToNext() async {
     // Wait for splash screen animation
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!mounted) return;
-    
+
     // Check authentication status
     final authProvider = context.read<AuthProvider>();
-    
+    // Ensure auth state initialized (tokens from storage)
+    await authProvider.init();
+
     if (authProvider.isAuthenticated && authProvider.currentAuthData != null) {
       // User is logged in - navigate to appropriate dashboard
       final role = authProvider.userRole;
@@ -56,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> {
       context.go(AppRoutes.login);
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,4 +107,3 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
-
