@@ -7,13 +7,18 @@
 -- Purpose: Track rejection history for enterprise verification requests
 CREATE TABLE IF NOT EXISTS enterprise_rejections (
     id BIGSERIAL PRIMARY KEY,
-    enterprise_id BIGINT NOT NULL,
+    enterprise_id BIGINT,
     rejected_by BIGINT NOT NULL,
     rejection_reason TEXT,
     rejected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
+    -- Store enterprise info before deletion
+    company_name VARCHAR(255),
+    tax_code VARCHAR(50),
+    contact_email VARCHAR(255),
+    
     CONSTRAINT fk_enterprise_rejection_enterprise 
-        FOREIGN KEY (enterprise_id) REFERENCES enterprises(id) ON DELETE CASCADE,
+        FOREIGN KEY (enterprise_id) REFERENCES enterprises(id) ON DELETE SET NULL,
     CONSTRAINT fk_enterprise_rejection_admin 
         FOREIGN KEY (rejected_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -22,13 +27,18 @@ CREATE TABLE IF NOT EXISTS enterprise_rejections (
 -- Purpose: Track rejection history for project validation requests
 CREATE TABLE IF NOT EXISTS project_rejections (
     id BIGSERIAL PRIMARY KEY,
-    project_id BIGINT NOT NULL,
+    project_id BIGINT,
     rejected_by BIGINT NOT NULL,
     rejection_reason TEXT,
     rejected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
+    -- Store project info before deletion
+    title VARCHAR(255),
+    slug VARCHAR(255),
+    enterprise_name VARCHAR(255),
+    
     CONSTRAINT fk_project_rejection_project 
-        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
     CONSTRAINT fk_project_rejection_admin 
         FOREIGN KEY (rejected_by) REFERENCES users(id) ON DELETE SET NULL
 );
