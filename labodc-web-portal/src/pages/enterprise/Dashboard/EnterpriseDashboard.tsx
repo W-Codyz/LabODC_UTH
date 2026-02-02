@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   getEnterpriseDashboardSummary,
   getRecentProjects,
-} from '@/services/enterprise/enterpriseDashboard.service';
+} from '@/services/enterprise/dashboard.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import styles from './EnterpriseDashboard.module.css';
 

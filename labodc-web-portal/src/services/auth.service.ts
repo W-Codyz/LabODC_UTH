@@ -35,6 +35,7 @@ export const authService = {
     await axiosInstance.post(AUTH_ENDPOINTS.REGISTER, {
       email: data.email,
       password: data.password,
+      confirmPassword: data.confirmPassword,
       role: data.role,
     });
 
