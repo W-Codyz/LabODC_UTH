@@ -3,6 +3,7 @@ package com.uth.labodc.service;
 import com.uth.labodc.dto.dashboard.*;
 import com.uth.labodc.model.entity.Enterprise;
 import com.uth.labodc.model.entity.Project;
+import com.uth.labodc.model.enums.EnterpriseStatus;
 import com.uth.labodc.model.enums.ProjectStatus;
 import com.uth.labodc.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +69,7 @@ public class DashboardService {
                 log.warn("Could not count active enterprises: {}", e.getMessage());
                 activeEnterprises = totalEnterprises; // Fallback
             }
-            long verifiedEnterprises = enterpriseRepository.countByVerified(true);
+            long verifiedEnterprises = enterpriseRepository.countByStatus(EnterpriseStatus.APPROVED);
             
             DashboardStatsDTO.EnterpriseStats enterpriseStats = DashboardStatsDTO.EnterpriseStats.builder()
                     .total(totalEnterprises)
@@ -198,7 +199,7 @@ public class DashboardService {
         
         // Get pending enterprises
         List<Enterprise> pendingEnterprises = enterpriseRepository.findAll().stream()
-                .filter(e -> !e.getVerified())
+                .filter(e -> EnterpriseStatus.PENDING.equals(e.getStatus()))
                 .limit(limit / 2)
                 .toList();
         
