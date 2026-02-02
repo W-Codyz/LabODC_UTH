@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -21,16 +21,43 @@ import {
   getProjectSummary,
   getProjects,
   Project,
-} from '@/services/enterprise/project.service.ts';
+} from '@/services/enterprise/project.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import '../enterprise-modern.css';
 
 const ProjectManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<string>('ALL');
 
-  const summary = getProjectSummary();
-  const projects = getProjects(status);
+  const [status, setStatus] = useState<string>('ALL');
+  const [loading, setLoading] = useState(false);
+
+  const [summary, setSummary] = useState({
+    total: 0,
+    inProgress: 0,
+    completed: 0,
+    totalBudget: 0,
+  });
+
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const summaryRes = await getProjectSummary();
+        const projectsRes = await getProjects(status);
+
+        setSummary(summaryRes);
+        setProjects(projectsRes);
+      } catch (err) {
+        console.error('Load project data failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [status]);
 
   const columns = [
     {
@@ -131,7 +158,11 @@ const ProjectManagement: React.FC = () => {
 
       {/* FILTER */}
       <div className="filter-bar">
-        <Select value={status} onChange={setStatus} style={{ width: 220 }}>
+        <Select
+          value={status}
+          onChange={setStatus}
+          style={{ width: 220 }}
+        >
           <Select.Option value="ALL">Tất cả</Select.Option>
           <Select.Option value="IN_PROGRESS">Đang thực hiện</Select.Option>
           <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
@@ -141,7 +172,12 @@ const ProjectManagement: React.FC = () => {
 
       {/* TABLE */}
       <Card className="table-card">
-        <Table columns={columns} dataSource={projects} />
+        <Table
+          columns={columns}
+          dataSource={projects}
+          loading={loading}
+          rowKey="key"
+        />
       </Card>
     </div>
   );

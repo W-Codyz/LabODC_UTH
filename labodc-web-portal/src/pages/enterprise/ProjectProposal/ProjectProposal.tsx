@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -18,15 +18,42 @@ import {
 import {
   getProposalSummary,
   getProposals,
-} from '@/services/enterprise/proposal.service.ts';
+  Proposal,
+} from '@/services/enterprise/proposal.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import '../enterprise-modern.css';
 
 const ProjectProposal: React.FC = () => {
   const [status, setStatus] = useState<string>('ALL');
+  const [loading, setLoading] = useState(false);
 
-  const summary = getProposalSummary();
-  const proposals = getProposals(status);
+  const [summary, setSummary] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    totalBudget: 0,
+  });
+
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const summaryRes = await getProposalSummary();
+        const proposalsRes = await getProposals(status);
+
+        setSummary(summaryRes);
+        setProposals(proposalsRes);
+      } catch (err) {
+        console.error('Load proposal data failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [status]);
 
   const columns = [
     {
@@ -41,11 +68,15 @@ const ProjectProposal: React.FC = () => {
     {
       title: 'Trạng thái',
       dataIndex: 'status',
-      render: (s: string) => (
-        <Tag color={s === 'PENDING' ? 'orange' : s === 'APPROVED' ? 'green' : 'red'}>
-          {s}
-        </Tag>
-      ),
+      render: (s: string) => {
+        const color =
+          s === 'PENDING'
+            ? 'orange'
+            : s === 'APPROVED'
+            ? 'green'
+            : 'red';
+        return <Tag color={color}>{s}</Tag>;
+      },
     },
     {
       title: 'Ngày tạo',
@@ -53,7 +84,11 @@ const ProjectProposal: React.FC = () => {
     },
     {
       title: 'Hành động',
-      render: () => <Button type="link">Xem</Button>,
+      render: (_: any, record: Proposal) => (
+        <Button type="link">
+          Xem
+        </Button>
+      ),
     },
   ];
 
@@ -71,17 +106,29 @@ const ProjectProposal: React.FC = () => {
       <Row gutter={16} className="stat-row">
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Tổng đề xuất" value={summary.total} prefix={<FileAddOutlined />} />
+            <Statistic
+              title="Tổng đề xuất"
+              value={summary.total}
+              prefix={<FileAddOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Chờ duyệt" value={summary.pending} prefix={<ClockCircleOutlined />} />
+            <Statistic
+              title="Chờ duyệt"
+              value={summary.pending}
+              prefix={<ClockCircleOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Đã duyệt" value={summary.approved} prefix={<CheckCircleOutlined />} />
+            <Statistic
+              title="Đã duyệt"
+              value={summary.approved}
+              prefix={<CheckCircleOutlined />}
+            />
           </Card>
         </Col>
         <Col span={6}>
@@ -98,7 +145,11 @@ const ProjectProposal: React.FC = () => {
 
       {/* FILTER */}
       <div className="filter-bar">
-        <Select value={status} onChange={setStatus} style={{ width: 220 }}>
+        <Select
+          value={status}
+          onChange={setStatus}
+          style={{ width: 220 }}
+        >
           <Select.Option value="ALL">Tất cả</Select.Option>
           <Select.Option value="PENDING">Chờ duyệt</Select.Option>
           <Select.Option value="APPROVED">Đã duyệt</Select.Option>
@@ -108,7 +159,12 @@ const ProjectProposal: React.FC = () => {
 
       {/* TABLE */}
       <Card className="table-card">
-        <Table columns={columns} dataSource={proposals} />
+        <Table
+          columns={columns}
+          dataSource={proposals}
+          loading={loading}
+          rowKey="key"
+        />
       </Card>
     </div>
   );

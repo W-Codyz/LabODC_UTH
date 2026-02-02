@@ -1,16 +1,52 @@
-import React from 'react';
-import { Row, Col, Card, Statistic, Table, Progress, Button } from 'antd';
+import React, { useEffect, useState } from 'react';
+import {
+  Row,
+  Col,
+  Card,
+  Statistic,
+  Table,
+  Progress,
+  Button,
+} from 'antd';
 import { BarChartOutlined, DollarOutlined } from '@ant-design/icons';
 import {
   getReportSummary,
   getProjectReports,
-} from '@/services/enterprise/report.service.ts';
+  ProjectReport,
+} from '@/services/enterprise/report.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import '../enterprise-modern.css';
 
 const Reports: React.FC = () => {
-  const summary = getReportSummary();
-  const data = getProjectReports();
+  const [loading, setLoading] = useState(false);
+
+  const [summary, setSummary] = useState({
+    projects: 0,
+    totalCost: 0,
+    performance: 0,
+    completedRate: 0,
+  });
+
+  const [data, setData] = useState<ProjectReport[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const summaryRes = await getReportSummary();
+        const reportRes = await getProjectReports();
+
+        setSummary(summaryRes);
+        setData(reportRes);
+      } catch (err) {
+        console.error('Load report data failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const columns = [
     {
@@ -38,14 +74,19 @@ const Reports: React.FC = () => {
       {/* HEADER */}
       <div className="page-header">
         <h1>Báo cáo & Thống kê</h1>
-        <Button icon={<BarChartOutlined />}>Xuất báo cáo</Button>
+        <Button icon={<BarChartOutlined />}>
+          Xuất báo cáo
+        </Button>
       </div>
 
       {/* SUMMARY */}
       <Row gutter={16} className="stat-row">
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Tổng dự án" value={summary.projects} />
+            <Statistic
+              title="Tổng dự án"
+              value={summary.projects}
+            />
           </Card>
         </Col>
         <Col span={6}>
@@ -60,19 +101,32 @@ const Reports: React.FC = () => {
         </Col>
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Hiệu suất" value={summary.performance} suffix="%" />
+            <Statistic
+              title="Hiệu suất"
+              value={summary.performance}
+              suffix="%"
+            />
           </Card>
         </Col>
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Hoàn thành" value={summary.completedRate} suffix="%" />
+            <Statistic
+              title="Hoàn thành"
+              value={summary.completedRate}
+              suffix="%"
+            />
           </Card>
         </Col>
       </Row>
 
       {/* TABLE */}
       <Card className="table-card">
-        <Table columns={columns} dataSource={data} />
+        <Table
+          columns={columns}
+          dataSource={data}
+          loading={loading}
+          rowKey="key"
+        />
       </Card>
     </div>
   );

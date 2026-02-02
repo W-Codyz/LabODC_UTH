@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Statistic, Progress, Button, Table, Tag } from 'antd';
 import {
   ProjectOutlined,
@@ -10,15 +10,44 @@ import { useNavigate } from 'react-router-dom';
 import {
   getEnterpriseDashboardSummary,
   getRecentProjects,
-} from '@/services/enterprise/dashboard.service.ts';
+} from '@/services/enterprise/dashboard.service';
 import { formatCurrencyVND } from '@/utils/formatters';
-import "../enterprise-modern.css";
+import '../enterprise-modern.css';
 
 const EnterpriseDashboard: React.FC = () => {
   const navigate = useNavigate();
 
-  const summary = getEnterpriseDashboardSummary();
-  const recentProjects = getRecentProjects();
+  // ✅ STATE
+  const [summary, setSummary] = useState<any>({
+    totalProjects: 0,
+    activeProjects: 0,
+    completedProjects: 0,
+    totalSpent: 0,
+  });
+
+  const [recentProjects, setRecentProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ FETCH DATA
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const summaryRes = await getEnterpriseDashboardSummary();
+        const projectsRes = await getRecentProjects();
+
+        setSummary(summaryRes);
+        setRecentProjects(projectsRes);
+      } catch (error) {
+        console.error('Load dashboard failed', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const columns = [
     {
@@ -49,7 +78,10 @@ const EnterpriseDashboard: React.FC = () => {
     {
       title: 'Hành động',
       render: (_: any, record: any) => (
-        <Button type="link" onClick={() => navigate(`/enterprise/projects/${record.key}`)}>
+        <Button
+          type="link"
+          onClick={() => navigate(`/enterprise/projects/${record.id}`)}
+        >
           Xem chi tiết
         </Button>
       ),
@@ -73,6 +105,7 @@ const EnterpriseDashboard: React.FC = () => {
             <Statistic title="Tổng dự án" value={summary.totalProjects} prefix={<ProjectOutlined />} />
           </Card>
         </Col>
+
         <Col span={6}>
           <Card className="modern-card stat-card">
             <Statistic
@@ -83,6 +116,7 @@ const EnterpriseDashboard: React.FC = () => {
             />
           </Card>
         </Col>
+
         <Col span={6}>
           <Card className="modern-card stat-card">
             <Statistic
@@ -93,6 +127,7 @@ const EnterpriseDashboard: React.FC = () => {
             />
           </Card>
         </Col>
+
         <Col span={6}>
           <Card className="modern-card stat-card">
             <Statistic
@@ -109,13 +144,19 @@ const EnterpriseDashboard: React.FC = () => {
       <Card
         title="Dự án gần đây"
         className="table-card"
+        loading={loading}
         extra={
           <Button type="link" onClick={() => navigate('/enterprise/projects')}>
             Xem tất cả
           </Button>
         }
       >
-        <Table columns={columns} dataSource={recentProjects} pagination={false} />
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={recentProjects}
+          pagination={false}
+        />
       </Card>
     </div>
   );
