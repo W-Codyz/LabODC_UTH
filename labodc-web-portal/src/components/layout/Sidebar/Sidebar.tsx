@@ -63,21 +63,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       return [
         ...baseItems,
         {
-          key: 'projects',
+          key: 'projects-list',
           icon: <ProjectOutlined />,
-          label: 'Dự án',
-          children: [
-            {
-              key: 'projects-new',
-              label: 'Đề xuất mới',
-              onClick: () => navigate('/enterprise/projects/new'),
-            },
-            {
-              key: 'projects-list',
-              label: 'Quản lý dự án',
-              onClick: () => navigate('/enterprise/projects'),
-            },
-          ],
+          label: 'Quản lý dự án',
+          onClick: () => navigate('/enterprise/projects'),
         },
         {
           key: 'payment',
@@ -242,7 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     
     // Enterprise routes
     if (path.includes('/projects/new')) return 'projects-new';
-    if (path.includes('/projects')) return 'projects-list';
+    if (path.includes('/projects') && !path.includes('/validate')) return 'projects-list';
     if (path.includes('/payment')) return 'payment';
     
     // Talent routes

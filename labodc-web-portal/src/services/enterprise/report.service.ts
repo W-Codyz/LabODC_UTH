@@ -10,11 +10,11 @@ export interface ProjectReport {
 }
 
 export const getReportSummary = async () => {
-  const res = await axios.get('/api/enterprise/reports/summary');
-  return res.data;
+  const res = await axios.get('/enterprise/reports/summary');
+  return res.data?.data ?? res.data ?? null;
 };
 
 export const getProjectReports = async () => {
-  const res = await axios.get('/api/enterprise/reports/projects');
-  return res.data;
+  const res = await axios.get('/enterprise/reports/projects');
+  return res.data?.data ?? res.data ?? [];
 };

@@ -36,8 +36,13 @@ const Reports: React.FC = () => {
         const summaryRes = await getReportSummary();
         const reportRes = await getProjectReports();
 
-        setSummary(summaryRes);
-        setData(reportRes);
+        setSummary(summaryRes ?? {
+          projects: 0,
+          totalCost: 0,
+          performance: 0,
+          completedRate: 0,
+        });
+        setData(Array.isArray(reportRes) ? reportRes : []);
       } catch (err) {
         console.error('Load report data failed:', err);
       } finally {
@@ -66,6 +71,26 @@ const Reports: React.FC = () => {
     {
       title: 'Trạng thái',
       dataIndex: 'status',
+      render: (s: string) => {
+        switch (s) {
+          case 'PENDING_VALIDATION':
+            return 'Chờ duyệt';
+          case 'VALIDATED':
+            return 'Đã duyệt';
+          case 'RECRUITING':
+            return 'Đang tuyển';
+          case 'IN_PROGRESS':
+            return 'Đang thực hiện';
+          case 'COMPLETED':
+            return 'Hoàn thành';
+          case 'ON_HOLD':
+            return 'Tạm dừng';
+          case 'REJECTED':
+            return 'Từ chối';
+          default:
+            return s || '-';
+        }
+      },
     },
   ];
 
