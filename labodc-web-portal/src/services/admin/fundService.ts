@@ -192,9 +192,9 @@ class FundService {
   // Lấy danh sách phân bổ quỹ
   async getAllocations(status?: string): Promise<FundAllocation[]> {
     console.log('💰 [FundService] API Request - getAllocations, status:', status);
-    console.log('💰 [FundService] URL:', `${API_BASE_URL}/api/lab-admin/fund-allocation/allocations`);
+    console.log('💰 [FundService] URL:', `${API_BASE_URL}/lab-admin/fund-allocation/allocations`);
     try {
-      const response = await api.get('/api/lab-admin/fund-allocation/allocations', {
+      const response = await api.get('/lab-admin/fund-allocation/allocations', {
         params: { status }
       });
       console.log('✅ [FundService] API Response - getAllocations:', response);
@@ -210,7 +210,7 @@ class FundService {
   // Lấy chi tiết phân bổ quỹ
   async getAllocationByProject(projectId: number): Promise<FundAllocationDetail> {
     console.log('💰 [FundService] API Request - getAllocationByProject, projectId:', projectId);
-    const response = await api.get(`/api/lab-admin/fund-allocation/allocations/${projectId}`);
+    const response = await api.get(`/lab-admin/fund-allocation/allocations/${projectId}`);
     console.log('✅ [FundService] API Response - getAllocationByProject:', response.data);
     return response.data.data;
   }
@@ -218,18 +218,18 @@ class FundService {
   // Xác nhận phân bổ quỹ
   async confirmAllocation(projectId: number): Promise<void> {
     console.log('💰 [FundService] API Request - confirmAllocation, projectId:', projectId);
-    await api.post(`/api/lab-admin/projects/${projectId}/fund-allocation/confirm`);
+    await api.post(`/lab-admin/projects/${projectId}/fund-allocation/confirm`);
   }
 
   // Giải ngân cho Mentor
   async disburseMentor(distributionId: number, data: DisburseMentorRequest): Promise<any> {
-    const response = await api.post(`/api/lab-admin/fund-allocation/allocations/${distributionId}/disburse-mentor`, data);
+    const response = await api.post(`/lab-admin/fund-allocation/allocations/${distributionId}/disburse-mentor`, data);
     return response.data.data;
   }
 
   // Giải ngân cho Team
   async disburseTeam(distributionId: number, data: DisburseTeamRequest): Promise<any> {
-    const response = await api.post(`/api/lab-admin/fund-allocation/allocations/${distributionId}/disburse-team`, data);
+    const response = await api.post(`/lab-admin/fund-allocation/allocations/${distributionId}/disburse-team`, data);
     return response.data.data;
   }
 
@@ -237,7 +237,7 @@ class FundService {
   async getDelayedPayments(): Promise<DelayedPayment[]> {
     console.log('💰 [FundService] API Request - getDelayedPayments');
     try {
-      const response = await api.get('/api/lab-admin/payments/delayed');
+      const response = await api.get('/lab-admin/payments/delayed');
       console.log('✅ [FundService] API Response - getDelayedPayments:', response.data);
       return response.data?.data?.delayedPayments || [];
     } catch (error: any) {
@@ -249,7 +249,7 @@ class FundService {
   // Tạo tạm ứng Hybrid Fund
   async createHybridFund(data: CreateHybridFundRequest): Promise<any> {
     console.log('💰 [FundService] API Request - createHybridFund:', data);
-    const response = await api.post('/api/lab-admin/hybrid-funds/advance', data);
+    const response = await api.post('/lab-admin/hybrid-funds/advance', data);
     return response.data.data;
   }
 
@@ -257,7 +257,7 @@ class FundService {
   async getHybridFunds(status?: string): Promise<HybridFundAdvance[]> {
     console.log('💰 [FundService] API Request - getHybridFunds, status:', status);
     try {
-      const response = await api.get('/api/lab-admin/hybrid-funds', {
+      const response = await api.get('/lab-admin/hybrid-funds', {
         params: { status }
       });
       console.log('✅ [FundService] API Response - getHybridFunds:', response.data);
@@ -270,7 +270,7 @@ class FundService {
 
   // Quyết toán Hybrid Fund
   async reconcileHybridFund(advanceId: number, data: ReconcileHybridFundRequest): Promise<any> {
-    const response = await api.put(`/api/lab-admin/hybrid-funds/${advanceId}/reconcile`, data);
+    const response = await api.put(`/lab-admin/hybrid-funds/${advanceId}/reconcile`, data);
     return response.data.data;
   }
 
@@ -278,13 +278,24 @@ class FundService {
   async getFundStatistics(): Promise<any> {
     console.log('💰 [FundService] API Request - getFundStatistics');
     try {
-      const response = await api.get('/api/lab-admin/fund-allocation/stats');
+      const response = await api.get('/lab-admin/fund-allocation/stats');
       console.log('✅ [FundService] API Response - getFundStatistics:', response.data);
       return response.data.data;
     } catch (error: any) {
       console.error('❌ [FundService] API Error - getFundStatistics:', error);
       throw error;
     }
+  }
+
+  // Update fund allocation
+  async updateAllocation(projectId: number, data: any): Promise<any> {
+    const response = await api.put(`/lab-admin/fund-allocation/allocations/${projectId}`, data);
+    return response.data;
+  }
+
+  // Delete fund allocation
+  async deleteAllocation(projectId: number): Promise<void> {
+    await api.delete(`/lab-admin/fund-allocation/allocations/${projectId}`);
   }
 }
 

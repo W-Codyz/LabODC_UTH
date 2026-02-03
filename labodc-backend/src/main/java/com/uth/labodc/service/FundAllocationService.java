@@ -266,4 +266,54 @@ public class FundAllocationService {
             return null;
         }
     }
+    
+    /**
+     * Update fund allocation
+     */
+    @Transactional
+    public FundAllocationDTO updateFundAllocation(Long projectId, FundAllocationDTO dto) {
+        log.info("Updating fund allocation for project: {}", projectId);
+        
+        FundAllocation allocation = fundAllocationRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new RuntimeException("Fund allocation not found for project: " + projectId));
+        
+        // Update status if provided
+        if (dto.getStatus() != null && !dto.getStatus().isEmpty()) {
+            allocation.setStatus(dto.getStatus());
+        }
+        
+        fundAllocationRepository.save(allocation);
+        log.info("Fund allocation updated for project: {}", projectId);
+        
+        return getFundAllocationByProjectId(projectId);
+    }
+    
+    /**
+     * Delete fund allocation
+     */
+    @Transactional
+    public void deleteFundAllocation(Long projectId) {
+        log.info("Deleting fund allocation for project: {}", projectId);
+        
+        FundAllocation allocation = fundAllocationRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new RuntimeException("Fund allocation not found for project: " + projectId));
+        
+        // Delete team distributions first (they reference allocation_id directly)
+        List<TeamFundDistribution> teamDistributions = teamFundDistributionRepository.findByAllocationId(allocation.getId());
+        if (!teamDistributions.isEmpty()) {
+            teamFundDistributionRepository.deleteAll(teamDistributions);
+            log.info("Deleted {} team fund distributions", teamDistributions.size());
+        }
+        
+        // Delete fund distributions
+        List<FundDistribution> distributions = fundDistributionRepository.findByAllocationId(allocation.getId());
+        if (!distributions.isEmpty()) {
+            fundDistributionRepository.deleteAll(distributions);
+            log.info("Deleted {} fund distributions", distributions.size());
+        }
+        
+        // Finally delete the allocation
+        fundAllocationRepository.delete(allocation);
+        log.info("Fund allocation deleted for project: {}", projectId);
+    }
 }
