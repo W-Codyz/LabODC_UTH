@@ -66,7 +66,6 @@ const Header: React.FC = () => {
           <div className={styles.userMenu}>
             <Avatar
               size="large"
-              src={user?.avatar}
               icon={<UserOutlined />}
               className={styles.avatar}
             />

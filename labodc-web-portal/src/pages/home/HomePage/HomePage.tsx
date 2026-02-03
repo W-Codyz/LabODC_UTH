@@ -1,11 +1,12 @@
 // Home Page
 import React from 'react';
-import { Button, Badge } from 'antd';
+import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { CalendarOutlined, EyeOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { CalendarOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
+import { TUserRole } from '@/types/user.types';
 import { getDefaultRoute } from '@/utils/permissions';
-import { getLatestNews, formatNewsDate, getCategoryLabel, getCategoryColor } from '@/services/news.service';
+import { getLatestNews, formatNewsDate } from '@/services/news.service';
 import styles from './HomePage.module.css';
 
 const HomePage: React.FC = () => {
@@ -15,7 +16,7 @@ const HomePage: React.FC = () => {
 
   const handleGetStarted = () => {
     if (isAuthenticated && user) {
-      const defaultRoute = getDefaultRoute(user.role);
+      const defaultRoute = getDefaultRoute(user.role as TUserRole);
       navigate(defaultRoute);
     } else {
       navigate('/login');

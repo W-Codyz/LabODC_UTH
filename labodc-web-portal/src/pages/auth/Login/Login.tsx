@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login } from '@/store/slices/authSlice';
 import { ILoginRequest } from '@/types/auth.types';
+import { TUserRole } from '@/types/user.types';
 import { getDefaultRoute } from '@/utils/permissions';
 import styles from './Login.module.css';
 
@@ -17,7 +18,7 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const defaultRoute = getDefaultRoute(user.role);
+      const defaultRoute = getDefaultRoute(user.role as TUserRole);
       navigate(defaultRoute);
     }
   }, [isAuthenticated, user, navigate]);
@@ -35,7 +36,7 @@ const Login: React.FC = () => {
       console.log('👤 User role:', result.user.role);
       
       message.success('Đăng nhập thành công!');
-      const defaultRoute = getDefaultRoute(result.user.role);
+      const defaultRoute = getDefaultRoute(result.user.role as TUserRole);
       console.log('🚀 Redirecting to:', defaultRoute);
       navigate(defaultRoute);
     } catch (error: any) {

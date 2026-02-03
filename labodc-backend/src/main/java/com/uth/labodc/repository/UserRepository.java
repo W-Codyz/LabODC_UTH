@@ -20,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(UserRole role);
     
     Optional<User> findByVerificationToken(String token);
+    
+    // Search users by email or id for admin
+    List<User> findTop10ByEmailContainingIgnoreCaseAndDeletedAtIsNullOrderByEmailAsc(String email);
 }

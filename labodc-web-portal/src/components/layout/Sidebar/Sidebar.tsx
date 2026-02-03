@@ -1,6 +1,6 @@
 // Sidebar Component
-import React, { useState, useEffect } from 'react';
-import { Layout, Menu, MenuProps, Badge } from 'antd';
+import React from 'react';
+import { Layout, Menu, MenuProps } from 'antd';
 import {
   DashboardOutlined,
   ProjectOutlined,
@@ -143,9 +143,36 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       return [
         ...baseItems,
         {
-          key: 'enterprises',
+          key: 'management',
           icon: <TeamOutlined />,
-          label: 'Doanh nghiệp',
+          label: 'Quản lý',
+          children: [
+            {
+              key: 'enterprises-crud',
+              label: 'Doanh nghiệp',
+              onClick: () => navigate('/admin/enterprises-crud'),
+            },
+            {
+              key: 'talents',
+              label: 'Sinh viên',
+              onClick: () => navigate('/admin/talents'),
+            },
+            {
+              key: 'mentors',
+              label: 'Mentor',
+              onClick: () => navigate('/admin/mentors'),
+            },
+            {
+              key: 'projects',
+              label: 'Dự án',
+              onClick: () => navigate('/admin/projects'),
+            },
+          ],
+        },
+        {
+          key: 'enterprises',
+          icon: <CheckSquareOutlined />,
+          label: 'Duyệt DN',
           onClick: () => navigate('/admin/enterprises'),
         },
         {
@@ -204,9 +231,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     // Dashboard
     if (path.includes('/dashboard')) return 'dashboard';
     
+    // Lab Admin routes (check these BEFORE enterprise routes to avoid conflicts)
+    if (path.includes('/enterprises-crud')) return 'enterprises-crud';
+    if (path.includes('/talents')) return 'talents';
+    if (path.includes('/mentors')) return 'mentors';
+    if (path.includes('/projects/validate')) return 'projects-validate';
+    if (path.includes('/admin/projects')) return 'projects';
+    if (path.includes('/enterprises')) return 'enterprises';
+    if (path.includes('/funds')) return 'funds';
+    
     // Enterprise routes
     if (path.includes('/projects/new')) return 'projects-new';
-    if (path.includes('/projects') && !path.includes('/validate')) return 'projects-list';
+    if (path.includes('/projects')) return 'projects-list';
     if (path.includes('/payment')) return 'payment';
     
     // Talent routes
@@ -216,11 +252,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     
     // Mentor routes
     if (path.includes('/invitations')) return 'invitations';
-    
-    // Lab Admin routes
-    if (path.includes('/enterprises')) return 'enterprises';
-    if (path.includes('/projects/validate')) return 'projects-validate';
-    if (path.includes('/funds')) return 'funds';
     
     // Reports (multiple roles use this)
     if (path.includes('/reports')) return 'reports';
@@ -245,6 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       <Menu
         mode="inline"
         selectedKeys={[getSelectedKey()]}
+        defaultOpenKeys={['management']}
         items={getMenuItems()}
         className={styles.menu}
       />

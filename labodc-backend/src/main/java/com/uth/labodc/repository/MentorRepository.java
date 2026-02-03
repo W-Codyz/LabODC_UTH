@@ -10,6 +10,8 @@ import java.math.BigDecimal;
 @Repository
 public interface MentorRepository extends JpaRepository<Mentor, Long> {
     
+    boolean existsByUserId(Long userId);
+    
     long countByAvailable(Boolean available);
     
     @Query("SELECT AVG(m.ratingAverage) FROM Mentor m WHERE m.ratingAverage > 0")

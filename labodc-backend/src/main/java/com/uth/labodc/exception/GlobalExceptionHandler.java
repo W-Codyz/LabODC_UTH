@@ -50,6 +50,13 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse<>(false, "Validation failed", errors));
     }
     
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
         ex.printStackTrace();
