@@ -109,6 +109,7 @@ public class ProjectDataService {
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("title", request.getName())
+                .addValue("slug", generateSlug(request.getName()))
                 .addValue("description", request.getDescription())
                 .addValue("objectives", objectivesJson)
                 .addValue("requirements", request.getRequirements())
@@ -116,16 +117,16 @@ public class ProjectDataService {
                 .addValue("endDate", request.getEndDate())
                 .addValue("budget", request.getBudget())
                 .addValue("numberOfStudents", request.getRequiredTalents())
-                .addValue("status", "RECRUITING")
+                .addValue("status", "PENDING_VALIDATION")
                 .addValue("enterpriseId", enterpriseId)
                 .addValue("mentorId", request.getMentorId())
                 .addValue("allowApplications", Optional.ofNullable(request.getAllowApplications()).orElse(Boolean.TRUE));
 
         String sql = """
-                INSERT INTO projects (title, description, objectives, requirements, start_date, end_date, budget,
+                INSERT INTO projects (title, slug, description, objectives, requirements, start_date, end_date, budget,
                                      number_of_students, status, enterprise_id, mentor_id, allow_applications,
                                      current_members_count, created_at, updated_at)
-                VALUES (:title, :description, :objectives, :requirements, :startDate, :endDate, :budget,
+                VALUES (:title, :slug, :description, :objectives, :requirements, :startDate, :endDate, :budget,
                         :numberOfStudents, :status, :enterpriseId, :mentorId, :allowApplications,
                         0, NOW(), NOW())
                 """;
@@ -338,7 +339,7 @@ public class ProjectDataService {
         if (skills == null || skills.isEmpty()) {
             return;
         }
-        final String sql = "INSERT INTO project_skill_requirements (project_id, skill_name, priority) VALUES (:projectId, :name, :priority)";
+        final String sql = "INSERT INTO project_skill_requirements (project_id, skill_name, proficiency_level, priority) VALUES (:projectId, :name, :level, :priority)";
         List<String> sorted = skills.stream()
                 .filter(s -> s != null && !s.trim().isEmpty())
                 .map(String::trim)
@@ -349,6 +350,7 @@ public class ProjectDataService {
             jdbcTemplate.update(sql, Map.of(
                     "projectId", projectId,
                     "name", sorted.get(i),
+                    "level", "INTERMEDIATE",
                     "priority", i + 1
             ));
         }
@@ -420,6 +422,20 @@ public class ProjectDataService {
             case "CANCELLED", "ARCHIVED" -> "cancelled";
             default -> "pending";
         };
+    }
+
+    private String generateSlug(String name) {
+        if (name == null) {
+            return "project-" + System.currentTimeMillis();
+        }
+        String base = name.trim().toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-{2,}", "-");
+        if (base.isBlank()) {
+            base = "project";
+        }
+        return base + "-" + System.currentTimeMillis();
     }
 
     private LocalDateTime toDateTime(LocalDate date) {

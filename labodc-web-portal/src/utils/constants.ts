@@ -28,7 +28,6 @@ export const ROUTES = {
   
   // Enterprise Routes
   ENTERPRISE_DASHBOARD: '/enterprise/dashboard',
-  ENTERPRISE_PROJECT_NEW: '/enterprise/projects/new',
   ENTERPRISE_PROJECTS: '/enterprise/projects',
   ENTERPRISE_PROJECT_DETAIL: '/enterprise/projects/:id',
   ENTERPRISE_PROJECT_EDIT: '/enterprise/projects/:id/edit',

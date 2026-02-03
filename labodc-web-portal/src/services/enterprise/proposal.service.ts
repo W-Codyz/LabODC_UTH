@@ -10,13 +10,13 @@ export interface Proposal {
 }
 
 export const getProposalSummary = async () => {
-  const res = await axios.get('/api/enterprise/proposals/summary');
-  return res.data;
+  const res = await axios.get('/enterprise/proposals/summary');
+  return res.data?.data ?? res.data ?? null;
 };
 
 export const getProposals = async (status: string) => {
-  const res = await axios.get('/api/enterprise/proposals', {
+  const res = await axios.get('/enterprise/proposals', {
     params: status !== 'ALL' ? { status } : {},
   });
-  return res.data;
+  return res.data?.data ?? res.data ?? [];
 };
