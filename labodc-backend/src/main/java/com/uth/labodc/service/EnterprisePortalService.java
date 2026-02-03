@@ -121,7 +121,10 @@ public class EnterprisePortalService {
         long enterpriseId = requireEnterpriseId(user);
         String base = """
                 SELECT p.id, p.title, p.budget, p.progress_percentage, p.status,
-                       COALESCE(spent.total_spent, 0) AS spent
+                       COALESCE(spent.total_spent, 0) AS spent,
+                       p.current_members_count,
+                       p.start_date,
+                       p.end_date
                 FROM projects p
                 LEFT JOIN (
                     SELECT project_id, SUM(amount) AS total_spent
@@ -147,6 +150,9 @@ public class EnterprisePortalService {
                 .spent(rs.getDouble("spent"))
                 .progress(rs.getInt("progress_percentage"))
                 .status(rs.getString("status"))
+                .members(rs.getObject("current_members_count") != null ? rs.getInt("current_members_count") : null)
+                .startDate(rs.getDate("start_date") != null ? rs.getDate("start_date").toString() : null)
+                .endDate(rs.getDate("end_date") != null ? rs.getDate("end_date").toString() : null)
                 .build());
     }
 

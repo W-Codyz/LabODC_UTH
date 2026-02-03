@@ -126,7 +126,15 @@ const Payment: React.FC = () => {
             : s === 'OVERDUE'
             ? 'red'
             : 'orange';
-        return <Tag color={color}>{s}</Tag>;
+        const label =
+          s === 'PAID'
+            ? 'Đã thanh toán'
+            : s === 'OVERDUE'
+            ? 'Quá hạn'
+            : s === 'PENDING'
+            ? 'Chờ thanh toán'
+            : s;
+        return <Tag color={color}>{label}</Tag>;
       },
     },
     {

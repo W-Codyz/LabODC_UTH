@@ -16,4 +16,7 @@ public class EnterpriseProjectItemDTO {
     private double spent;
     private int progress;
     private String status;
+    private Integer members;
+    private String startDate;
+    private String endDate;
 }

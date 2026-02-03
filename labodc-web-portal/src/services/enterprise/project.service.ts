@@ -6,6 +6,9 @@ export interface Project {
   budget: number;
   spent: number;
   progress: number;
+  members?: number;
+  startDate?: string;
+  endDate?: string;
   status:
     | 'PENDING_VALIDATION'
     | 'VALIDATED'

@@ -71,6 +71,26 @@ const Reports: React.FC = () => {
     {
       title: 'Trạng thái',
       dataIndex: 'status',
+      render: (s: string) => {
+        switch (s) {
+          case 'PENDING_VALIDATION':
+            return 'Chờ duyệt';
+          case 'VALIDATED':
+            return 'Đã duyệt';
+          case 'RECRUITING':
+            return 'Đang tuyển';
+          case 'IN_PROGRESS':
+            return 'Đang thực hiện';
+          case 'COMPLETED':
+            return 'Hoàn thành';
+          case 'ON_HOLD':
+            return 'Tạm dừng';
+          case 'REJECTED':
+            return 'Từ chối';
+          default:
+            return s || '-';
+        }
+      },
     },
   ];
 

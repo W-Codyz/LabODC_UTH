@@ -15,6 +15,27 @@ import { getProjectById } from '@/services/enterprise/project.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import '../enterprise-modern.css';
 
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'PENDING_VALIDATION':
+      return 'Chờ duyệt';
+    case 'RECRUITING':
+      return 'Đang tuyển';
+    case 'IN_PROGRESS':
+      return 'Đang thực hiện';
+    case 'COMPLETED':
+      return 'Hoàn thành';
+    case 'ON_HOLD':
+      return 'Tạm dừng';
+    case 'VALIDATED':
+      return 'Đã duyệt';
+    case 'REJECTED':
+      return 'Từ chối';
+    default:
+      return status || '-';
+  }
+};
+
 const EnterpriseDashboard: React.FC = () => {
   const navigate = useNavigate();
 
@@ -81,7 +102,9 @@ const EnterpriseDashboard: React.FC = () => {
       title: 'Trạng thái',
       dataIndex: 'status',
       render: (s: string) => (
-        <Tag color={s === 'COMPLETED' ? 'green' : 'blue'}>{s}</Tag>
+        <Tag color={s === 'COMPLETED' ? 'green' : 'blue'}>
+          {getStatusLabel(s)}
+        </Tag>
       ),
     },
     {

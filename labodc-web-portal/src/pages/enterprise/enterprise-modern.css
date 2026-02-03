@@ -507,6 +507,92 @@ body {
 .modern-card:nth-child(5) { animation-delay: 0.4s; }
 .modern-card:nth-child(6) { animation-delay: 0.5s; }
 
+/* Project Cards */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 1200px) {
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.project-card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.project-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.project-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.project-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.metric-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.date-start {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.date-end {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.project-progress {
+  margin-bottom: var(--spacing-md);
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 /* Animations */
 @keyframes fadeInUp {
   from {

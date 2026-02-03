@@ -4,7 +4,6 @@ import {
   Col,
   Card,
   Statistic,
-  Table,
   Tag,
   Button,
   Select,
@@ -103,121 +102,41 @@ const ProjectManagement: React.FC = () => {
       setLoading(false);
     }
   };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'green';
+      case 'IN_PROGRESS':
+        return 'blue';
+      case 'RECRUITING':
+        return 'orange';
+      case 'PENDING_VALIDATION':
+        return 'gold';
+      default:
+        return 'default';
+    }
+  };
 
-  const columns = [
-    {
-      title: 'Tên dự án',
-      dataIndex: 'name',
-    },
-    {
-      title: 'Ngân sách',
-      dataIndex: 'budget',
-      render: (v: number) => formatCurrencyVND(v),
-    },
-    {
-      title: 'Đã chi',
-      dataIndex: 'spent',
-      render: (v: number) => formatCurrencyVND(v),
-    },
-    {
-      title: 'Tiến độ',
-      dataIndex: 'progress',
-      render: (v: number) => <Progress percent={v} />,
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      render: (s: string) => {
-        const color =
-          s === 'COMPLETED'
-            ? 'green'
-            : s === 'IN_PROGRESS'
-            ? 'blue'
-            : 'orange';
-        return <Tag color={color}>{s}</Tag>;
-      },
-    },
-    {
-      title: 'Hành động',
-      render: (_: any, record: Project) => (
-        <Space>
-          <Button
-            type="link"
-            onClick={async () => {
-              try {
-                setDetailLoading(true);
-                const detail = await getProjectById(record.key);
-                setDetailData(detail ?? null);
-                setDetailOpen(true);
-              } catch (err: any) {
-                message.error(err?.message || 'Không thể tải chi tiết dự án');
-              } finally {
-                setDetailLoading(false);
-              }
-            }}
-          >
-            Chi tiết
-          </Button>
-          {record.status === 'PENDING_VALIDATION' && (
-            <>
-              <Button
-                type="link"
-                onClick={async () => {
-                  try {
-                    const detail = await getProjectById(record.key);
-                    setEditId(String(record.key));
-                    form.setFieldsValue({
-                      name: detail?.name ?? record.name,
-                      description: detail?.description ?? '',
-                      objectives: Array.isArray(detail?.objectives)
-                        ? detail.objectives.join('\n')
-                        : detail?.objective ?? '',
-                      requirements: detail?.requirements ?? '',
-                      startDate: detail?.startDate ? dayjs(detail.startDate) : undefined,
-                      endDate: detail?.endDate ? dayjs(detail.endDate) : undefined,
-                      budget: detail?.budget ?? record.budget,
-                      requiredTalents: detail?.requiredTalents ?? undefined,
-                      technologies: Array.isArray(detail?.technologies)
-                        ? detail.technologies.join(', ')
-                        : '',
-                      requiredSkills: Array.isArray(detail?.requiredSkills)
-                        ? detail.requiredSkills.join(', ')
-                        : '',
-                      allowApplications: detail?.allowApplications ?? true,
-                    });
-                    setEditOpen(true);
-                  } catch (err: any) {
-                    message.error(err?.message || 'Không thể tải dự án');
-                  }
-                }}
-              >
-                Sửa
-              </Button>
-              <Popconfirm
-                title="Xóa dự án?"
-                description="Chỉ dự án chờ duyệt mới được xóa."
-                okText="Xóa"
-                cancelText="Hủy"
-                onConfirm={async () => {
-                  try {
-                    await deleteProject(record.key);
-                    message.success('Đã xóa dự án');
-                    await refreshProjects();
-                  } catch (err: any) {
-                    message.error(err?.message || 'Không thể xóa dự án');
-                  }
-                }}
-              >
-                <Button type="link" danger>
-                  Xóa
-                </Button>
-              </Popconfirm>
-            </>
-          )}
-        </Space>
-      ),
-    },
-  ];
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'PENDING_VALIDATION':
+        return 'Chờ duyệt';
+      case 'VALIDATED':
+        return 'Đã duyệt';
+      case 'RECRUITING':
+        return 'Đang tuyển';
+      case 'IN_PROGRESS':
+        return 'Đang thực hiện';
+      case 'COMPLETED':
+        return 'Hoàn thành';
+      case 'ON_HOLD':
+        return 'Tạm dừng';
+      case 'REJECTED':
+        return 'Từ chối';
+      default:
+        return status || '-';
+    }
+  };
 
   return (
     <div className="page-wrapper">
@@ -290,15 +209,124 @@ const ProjectManagement: React.FC = () => {
         </Select>
       </div>
 
-      {/* TABLE */}
-      <Card className="table-card">
-        <Table
-          columns={columns}
-          dataSource={projects}
-          loading={loading}
-          rowKey="key"
-        />
-      </Card>
+      {/* PROJECT CARDS */}
+      <div className="project-grid">
+        {projects.map((record) => (
+          <Card key={record.key} className="project-card">
+            <div className="project-card-header">
+              <div>
+                <div className="project-title">{record.name}</div>
+                <div className="project-subtitle">
+                  Thành viên: {(record as any)?.members ?? '-'}
+                </div>
+              </div>
+              <Tag color={getStatusColor(record.status)}>
+                {getStatusLabel(record.status)}
+              </Tag>
+            </div>
+
+            <div className="project-metrics">
+              <div>
+                <div className="metric-label">Ngân sách</div>
+                <div className="metric-value">{formatCurrencyVND(record.budget)}</div>
+              </div>
+              <div>
+                <div className="metric-label">Đã chi</div>
+                <div className="metric-value">{formatCurrencyVND(record.spent)}</div>
+              </div>
+              <div>
+                <div className="metric-label">Thời gian</div>
+                <div className="metric-value">
+                  <span className="date-start">{(record as any)?.startDate ?? '-'}</span>
+                  <br />
+                  <span className="date-end">{(record as any)?.endDate ?? '-'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="project-progress">
+              <div className="metric-label">Tiến độ</div>
+              <Progress percent={record.progress} />
+            </div>
+
+            <div className="project-actions">
+              <Button
+                type="link"
+                onClick={async () => {
+                  try {
+                    setDetailLoading(true);
+                    const detail = await getProjectById(record.key);
+                    setDetailData(detail ?? null);
+                    setDetailOpen(true);
+                  } catch (err: any) {
+                    message.error(err?.message || 'Không thể tải chi tiết dự án');
+                  } finally {
+                    setDetailLoading(false);
+                  }
+                }}
+              >
+                Chi tiết
+              </Button>
+              {record.status === 'PENDING_VALIDATION' && (
+                <>
+                  <Button
+                    type="link"
+                    onClick={async () => {
+                      try {
+                        const detail = await getProjectById(record.key);
+                        setEditId(String(record.key));
+                        form.setFieldsValue({
+                          name: detail?.name ?? record.name,
+                          description: detail?.description ?? '',
+                          objectives: Array.isArray(detail?.objectives)
+                            ? detail.objectives.join('\n')
+                            : detail?.objective ?? '',
+                          requirements: detail?.requirements ?? '',
+                          startDate: detail?.startDate ? dayjs(detail.startDate) : undefined,
+                          endDate: detail?.endDate ? dayjs(detail.endDate) : undefined,
+                          budget: detail?.budget ?? record.budget,
+                          requiredTalents: detail?.requiredTalents ?? undefined,
+                          technologies: Array.isArray(detail?.technologies)
+                            ? detail.technologies.join(', ')
+                            : '',
+                          requiredSkills: Array.isArray(detail?.requiredSkills)
+                            ? detail.requiredSkills.join(', ')
+                            : '',
+                          allowApplications: detail?.allowApplications ?? true,
+                        });
+                        setEditOpen(true);
+                      } catch (err: any) {
+                        message.error(err?.message || 'Không thể tải dự án');
+                      }
+                    }}
+                  >
+                    Sửa
+                  </Button>
+                  <Popconfirm
+                    title="Xóa dự án?"
+                    description="Chỉ dự án chờ duyệt mới được xóa."
+                    okText="Xóa"
+                    cancelText="Hủy"
+                    onConfirm={async () => {
+                      try {
+                        await deleteProject(record.key);
+                        message.success('Đã xóa dự án');
+                        await refreshProjects();
+                      } catch (err: any) {
+                        message.error(err?.message || 'Không thể xóa dự án');
+                      }
+                    }}
+                  >
+                    <Button type="link" danger>
+                      Xóa
+                    </Button>
+                  </Popconfirm>
+                </>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
 
       
 
