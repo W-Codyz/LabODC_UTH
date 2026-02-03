@@ -54,6 +54,7 @@ export default function ProjectValidation() {
   const [activeTab, setActiveTab] = useState<string>('PENDING');
   const [searchText, setSearchText] = useState('');
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [statistics, setStatistics] = useState<Record<string, number>>({});
 
   // Available mentors
   const [mentors, setMentors] = useState<Mentor[]>([]);
@@ -68,8 +69,21 @@ export default function ProjectValidation() {
   const [mentorMessage, setMentorMessage] = useState('');
 
   useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  useEffect(() => {
     loadProjects();
   }, [activeTab, pagination.current, searchText]);
+
+  const loadStatistics = async () => {
+    try {
+      const stats = await projectService.getValidationStats();
+      setStatistics(stats);
+    } catch (error: any) {
+      console.error('Failed to load statistics:', error);
+    }
+  };
 
   const loadProjects = async () => {
     setLoading(true);
@@ -329,11 +343,26 @@ export default function ProjectValidation() {
               setPagination(prev => ({ ...prev, current: 1 }));
             }}
             items={[
-              { key: 'PENDING', label: <Badge count={8} offset={[10, 0]}><span>Chờ xác thực</span></Badge> },
-              { key: 'APPROVED', label: 'Đã phê duyệt' },
-              { key: 'REJECTED', label: 'Đã từ chối' },
-              { key: 'RECRUITING', label: 'Đang tuyển' },
-              { key: 'IN_PROGRESS', label: 'Đang thực hiện' }
+              { 
+                key: 'PENDING', 
+                label: <Badge count={statistics.pending || 0} offset={[10, 0]}><span>Chờ xác thực</span></Badge> 
+              },
+              { 
+                key: 'APPROVED', 
+                label: <Badge count={statistics.approved || 0} showZero={false} offset={[10, 0]}><span>Đã phê duyệt</span></Badge> 
+              },
+              { 
+                key: 'REJECTED', 
+                label: <Badge count={statistics.rejected || 0} showZero={false} offset={[10, 0]}><span>Đã từ chối</span></Badge> 
+              },
+              { 
+                key: 'RECRUITING', 
+                label: <Badge count={statistics.recruiting || 0} showZero={false} offset={[10, 0]}><span>Đang tuyển</span></Badge> 
+              },
+              { 
+                key: 'IN_PROGRESS', 
+                label: <Badge count={statistics.inProgress || 0} showZero={false} offset={[10, 0]}><span>Đang thực hiện</span></Badge> 
+              }
             ]}
           />
 

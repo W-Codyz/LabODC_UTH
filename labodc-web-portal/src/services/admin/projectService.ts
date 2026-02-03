@@ -187,6 +187,45 @@ class ProjectService {
     }
   }
 
+  // Lấy thống kê validation cho badge counts
+  async getValidationStats(): Promise<Record<string, number>> {
+    try {
+      const response = await api.get('/api/projects/management');
+      const projects = response.data.data || [];
+      
+      const stats = {
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        recruiting: 0,
+        inProgress: 0,
+      };
+      
+      projects.forEach((project: Project) => {
+        // Count by validation status
+        if (project.validated === 'pending') {
+          stats.pending++;
+        } else if (project.validated === 'approved') {
+          stats.approved++;
+        } else if (project.validated === 'rejected') {
+          stats.rejected++;
+        }
+        
+        // Count by project status
+        if (project.status === 'RECRUITING') {
+          stats.recruiting++;
+        } else if (project.status === 'IN_PROGRESS') {
+          stats.inProgress++;
+        }
+      });
+      
+      return stats;
+    } catch (error: any) {
+      console.error('[ProjectService] Error fetching validation stats:', error);
+      return { pending: 0, approved: 0, rejected: 0, recruiting: 0, inProgress: 0 };
+    }
+  }
+
   // Lấy danh sách dự án chờ xác thực
   async getPendingProjects(): Promise<Project[]> {
     const response = await api.get('/lab-admin/projects/pending');
