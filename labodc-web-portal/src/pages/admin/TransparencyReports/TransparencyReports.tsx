@@ -438,7 +438,7 @@ export default function TransparencyReports() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -460,7 +460,7 @@ export default function TransparencyReports() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis tickFormatter={(val) => `${(val / 1000000000).toFixed(1)}B`} />
-                  <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                  <Tooltip formatter={(val: number | undefined) => formatCurrency(val ?? 0)} />
                   <Bar dataKey="amount" fill="#8884d8">
                     {fundDistributionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -686,7 +686,7 @@ export default function TransparencyReports() {
         title="Công bố Báo cáo"
         open={publishModalVisible}
         onCancel={() => { setPublishModalVisible(false); setPublishNote(''); }}
-        onOk={handlePublish}
+        onOk={() => handlePublish(selectedReportId)}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Alert
