@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -14,39 +14,33 @@ import {
   Descriptions,
   Modal,
   InputNumber,
-  Progress,
   Row,
   Col,
   Statistic,
   List,
-  Timeline
+  Input
 } from 'antd';
 import {
   DollarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   TeamOutlined,
   UserOutlined,
   BankOutlined,
-  WarningOutlined,
   EyeOutlined,
-  SendOutlined,
-  SwapOutlined
+  SendOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { fundService } from "@/services/admin/fundService";
-import type { FundAllocation, FundAllocationDetail, DelayedPayment, HybridFundAdvance } from '../../services/admin/fundService';
+import type { FundAllocation, FundAllocationDetail, DelayedPayment, HybridFundAdvance, TeamMemberAllocation } from '@/services/admin/fundService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-import { Input } from 'antd';
 
 export default function FundAllocationPage() {
   const [loading, setLoading] = useState(false);
   const [allocations, setAllocations] = useState<FundAllocation[]>([]);
   const [selectedAllocation, setSelectedAllocation] = useState<FundAllocationDetail | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState('CONFIRMED');
+  const [activeTab, setActiveTab] = useState('ALL');
   
   // Modals
   const [mentorDisburseVisible, setMentorDisburseVisible] = useState(false);
@@ -72,22 +66,37 @@ export default function FundAllocationPage() {
   }, [activeTab]);
 
   const loadData = async () => {
+    console.log('🔄 [FundAllocation] Loading data for tab:', activeTab);
     setLoading(true);
     try {
       if (activeTab === 'DELAYED') {
+        console.log('📊 [FundAllocation] Fetching delayed payments...');
         const delayed = await fundService.getDelayedPayments();
+        console.log('✅ [FundAllocation] Delayed payments:', delayed);
         setDelayedPayments(delayed);
       } else if (activeTab === 'HYBRID') {
+        console.log('📊 [FundAllocation] Fetching hybrid funds...');
         const hybrid = await fundService.getHybridFunds();
+        console.log('✅ [FundAllocation] Hybrid funds:', hybrid);
         setHybridFunds(hybrid);
       } else {
-        const data = await fundService.getAllocations(activeTab);
+        // Pass null/undefined for 'ALL' to get all records
+        const statusFilter = activeTab === 'ALL' ? undefined : activeTab;
+        console.log('📊 [FundAllocation] Fetching allocations with filter:', statusFilter);
+        const data = await fundService.getAllocations(statusFilter);
+        console.log('✅ [FundAllocation] Allocations received:', data);
+        console.log('📈 [FundAllocation] Number of allocations:', data?.length || 0);
         setAllocations(data);
       }
       
+      console.log('📊 [FundAllocation] Fetching statistics...');
       const stats = await fundService.getFundStatistics();
+      console.log('✅ [FundAllocation] Statistics:', stats);
       setStatistics(stats);
     } catch (error: any) {
+      console.error('❌ [FundAllocation] Error loading data:', error);
+      console.error('❌ [FundAllocation] Error response:', error.response);
+      console.error('❌ [FundAllocation] Error message:', error.message);
       message.error(error.response?.data?.message || 'Không thể tải dữ liệu');
     } finally {
       setLoading(false);
@@ -95,11 +104,14 @@ export default function FundAllocationPage() {
   };
 
   const handleViewDetail = async (projectId: number) => {
+    console.log('🔍 [FundAllocation] Loading detail for project:', projectId);
     try {
       const detail = await fundService.getAllocationByProject(projectId);
+      console.log('✅ [FundAllocation] Detail received:', detail);
       setSelectedAllocation(detail);
       setDetailVisible(true);
     } catch (error: any) {
+      console.error('❌ [FundAllocation] Error loading detail:', error);
       message.error('Không thể tải chi tiết phân bổ');
     }
   };
@@ -145,7 +157,7 @@ export default function FundAllocationPage() {
     try {
       await fundService.disburseTeam(selectedAllocation.projectId, {
         distributionId: selectedAllocation.teamDistribution.distributionId,
-        teamDistribution: selectedAllocation.teamDistribution.members.map(m => ({
+        teamDistribution: selectedAllocation.teamDistribution.members.map((m: TeamMemberAllocation) => ({
           talentId: m.talentId,
           amount: m.amount
         })),
@@ -201,6 +213,7 @@ export default function FundAllocationPage() {
 
   const getStatusTag = (status: string) => {
     const statusMap: Record<string, { color: string; text: string }> = {
+      ALLOCATED: { color: 'blue', text: 'Đã phân bổ' },
       CONFIRMED: { color: 'success', text: 'Đã xác nhận' },
       PENDING: { color: 'processing', text: 'Chờ xác nhận' },
       COMPLETED: { color: 'default', text: 'Hoàn tất' },
@@ -433,9 +446,10 @@ export default function FundAllocationPage() {
           activeKey={activeTab}
           onChange={setActiveTab}
           items={[
-            { key: 'CONFIRMED', label: 'Đã xác nhận' },
-            { key: 'PENDING', label: <Badge count={3} offset={[10, 0]}><span>Chờ xác nhận</span></Badge> },
+            { key: 'ALL', label: 'Tất cả' },
+            { key: 'DISTRIBUTED', label: 'Đã phân phối' },
             { key: 'COMPLETED', label: 'Hoàn tất' },
+            { key: 'ALLOCATED', label: 'Đã phân bổ' },
             { key: 'DELAYED', label: <Badge count={5} offset={[10, 0]} status="error"><span>Thanh toán chậm</span></Badge> },
             { key: 'HYBRID', label: 'Hybrid Fund' }
           ]}
@@ -507,7 +521,7 @@ export default function FundAllocationPage() {
                         <List
                           size="small"
                           dataSource={selectedAllocation.teamDistribution.members}
-                          renderItem={(member) => (
+                          renderItem={(member: TeamMemberAllocation) => (
                             <List.Item>
                               <List.Item.Meta
                                 title={
@@ -625,7 +639,7 @@ export default function FundAllocationPage() {
               size="small"
               bordered
               dataSource={selectedAllocation.teamDistribution.members}
-              renderItem={(member) => (
+              renderItem={(member: TeamMemberAllocation) => (
                 <List.Item>
                   <Space style={{ width: '100%', justifyContent: 'space-between' }}>
                     <Text>{member.fullName}</Text>
@@ -665,7 +679,7 @@ export default function FundAllocationPage() {
               value={hybridTeamAmount}
               onChange={(val) => setHybridTeamAmount(val || 0)}
               formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+              parser={value => Number(value!.replace(/\$\s?|(,*)/g, ''))}
             />
           </div>
 
@@ -676,7 +690,7 @@ export default function FundAllocationPage() {
               value={hybridMentorAmount}
               onChange={(val) => setHybridMentorAmount(val || 0)}
               formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+              parser={value => Number(value!.replace(/\$\s?|(,*)/g, ''))}
             />
           </div>
 

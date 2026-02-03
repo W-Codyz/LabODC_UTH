@@ -1,8 +1,11 @@
 // src/services/admin/fundService.ts
 
 import axios from 'axios';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
+console.log('🔧 [FundService] API_BASE_URL configured as:', API_BASE_URL);
 
 // Axios instance
 const api = axios.create({
@@ -14,12 +17,42 @@ const api = axios.create({
 
 // Interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('🚀 [FundService] Request:', {
+    method: config.method?.toUpperCase(),
+    url: config.url,
+    fullUrl: `${config.baseURL}${config.url}`,
+    params: config.params,
+    data: config.data,
+    headers: config.headers
+  });
   return config;
 });
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => {
+    console.log('✅ [FundService] Response:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    console.error('❌ [FundService] Response Error:', {
+      message: error.message,
+      url: error.config?.url,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Types
 export interface FundAllocation {
@@ -158,65 +191,100 @@ export interface DelayedPayment {
 class FundService {
   // Lấy danh sách phân bổ quỹ
   async getAllocations(status?: string): Promise<FundAllocation[]> {
-    const response = await api.get('/lab-admin/fund-allocations', {
-      params: { status }
-    });
-    return response.data.data;
+    console.log('💰 [FundService] API Request - getAllocations, status:', status);
+    console.log('💰 [FundService] URL:', `${API_BASE_URL}/api/lab-admin/fund-allocation/allocations`);
+    try {
+      const response = await api.get('/api/lab-admin/fund-allocation/allocations', {
+        params: { status }
+      });
+      console.log('✅ [FundService] API Response - getAllocations:', response);
+      console.log('✅ [FundService] Data:', response.data);
+      return response.data.data || [];
+    } catch (error: any) {
+      console.error('❌ [FundService] API Error - getAllocations:', error);
+      console.error('❌ [FundService] Error response:', error.response);
+      throw error;
+    }
   }
 
   // Lấy chi tiết phân bổ quỹ
   async getAllocationByProject(projectId: number): Promise<FundAllocationDetail> {
-    const response = await api.get(`/lab-admin/projects/${projectId}/fund-allocation`);
+    console.log('💰 [FundService] API Request - getAllocationByProject, projectId:', projectId);
+    const response = await api.get(`/api/lab-admin/fund-allocation/allocations/${projectId}`);
+    console.log('✅ [FundService] API Response - getAllocationByProject:', response.data);
     return response.data.data;
   }
 
   // Xác nhận phân bổ quỹ
   async confirmAllocation(projectId: number): Promise<void> {
-    await api.post(`/lab-admin/projects/${projectId}/fund-allocation/confirm`);
+    console.log('💰 [FundService] API Request - confirmAllocation, projectId:', projectId);
+    await api.post(`/api/lab-admin/projects/${projectId}/fund-allocation/confirm`);
   }
 
   // Giải ngân cho Mentor
   async disburseMentor(distributionId: number, data: DisburseMentorRequest): Promise<any> {
-    const response = await api.post(`/lab-admin/fund-distributions/${distributionId}/disburse-mentor`, data);
+    const response = await api.post(`/api/lab-admin/fund-allocation/allocations/${distributionId}/disburse-mentor`, data);
     return response.data.data;
   }
 
   // Giải ngân cho Team
   async disburseTeam(distributionId: number, data: DisburseTeamRequest): Promise<any> {
-    const response = await api.post(`/lab-admin/fund-distributions/${distributionId}/disburse-team`, data);
+    const response = await api.post(`/api/lab-admin/fund-allocation/allocations/${distributionId}/disburse-team`, data);
     return response.data.data;
   }
 
   // Lấy danh sách thanh toán chậm
   async getDelayedPayments(): Promise<DelayedPayment[]> {
-    const response = await api.get('/lab-admin/payments/delayed');
-    return response.data.data.delayedPayments;
+    console.log('💰 [FundService] API Request - getDelayedPayments');
+    try {
+      const response = await api.get('/api/lab-admin/payments/delayed');
+      console.log('✅ [FundService] API Response - getDelayedPayments:', response.data);
+      return response.data?.data?.delayedPayments || [];
+    } catch (error: any) {
+      console.warn('⚠️ [FundService] Delayed payments endpoint not yet implemented:', error.message);
+      return []; // Return empty array if endpoint not implemented
+    }
   }
 
   // Tạo tạm ứng Hybrid Fund
   async createHybridFund(data: CreateHybridFundRequest): Promise<any> {
-    const response = await api.post('/lab-admin/hybrid-funds/advance', data);
+    console.log('💰 [FundService] API Request - createHybridFund:', data);
+    const response = await api.post('/api/lab-admin/hybrid-funds/advance', data);
     return response.data.data;
   }
 
   // Lấy danh sách Hybrid Fund
   async getHybridFunds(status?: string): Promise<HybridFundAdvance[]> {
-    const response = await api.get('/lab-admin/hybrid-funds', {
-      params: { status }
-    });
-    return response.data.data;
+    console.log('💰 [FundService] API Request - getHybridFunds, status:', status);
+    try {
+      const response = await api.get('/api/lab-admin/hybrid-funds', {
+        params: { status }
+      });
+      console.log('✅ [FundService] API Response - getHybridFunds:', response.data);
+      return response.data?.data || [];
+    } catch (error: any) {
+      console.warn('⚠️ [FundService] Hybrid funds endpoint not yet implemented:', error.message);
+      return []; // Return empty array if endpoint not implemented
+    }
   }
 
   // Quyết toán Hybrid Fund
   async reconcileHybridFund(advanceId: number, data: ReconcileHybridFundRequest): Promise<any> {
-    const response = await api.put(`/lab-admin/hybrid-funds/${advanceId}/reconcile`, data);
+    const response = await api.put(`/api/lab-admin/hybrid-funds/${advanceId}/reconcile`, data);
     return response.data.data;
   }
 
   // Lấy thống kê fund
   async getFundStatistics(): Promise<any> {
-    const response = await api.get('/lab-admin/fund-statistics');
-    return response.data.data;
+    console.log('💰 [FundService] API Request - getFundStatistics');
+    try {
+      const response = await api.get('/api/lab-admin/fund-allocation/stats');
+      console.log('✅ [FundService] API Response - getFundStatistics:', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('❌ [FundService] API Error - getFundStatistics:', error);
+      throw error;
+    }
   }
 }
 
