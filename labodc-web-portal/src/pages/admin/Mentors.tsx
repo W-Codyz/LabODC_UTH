@@ -20,6 +20,10 @@ const Mentors: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [searchingUsers, setSearchingUsers] = useState(false);
   
+  // Expertise states
+  const [expertiseOptions, setExpertiseOptions] = useState<string[]>([]);
+  const [loadingExpertise, setLoadingExpertise] = useState(false);
+  
   // Filter states
   const [searchText, setSearchText] = useState<string>('');
   const [expertiseFilter, setExpertiseFilter] = useState<string | undefined>(undefined);
@@ -27,6 +31,22 @@ const Mentors: React.FC = () => {
   useEffect(() => {
     fetchMentors(pagination.current - 1, pagination.pageSize);
   }, [searchText, expertiseFilter]);
+
+  useEffect(() => {
+    fetchExpertiseOptions();
+  }, []);
+
+  const fetchExpertiseOptions = async () => {
+    setLoadingExpertise(true);
+    try {
+      const expertise = await mentorAdminService.getAllExpertise();
+      setExpertiseOptions(expertise);
+    } catch (error) {
+      console.error('Error fetching expertise options:', error);
+    } finally {
+      setLoadingExpertise(false);
+    }
+  };
 
   const fetchMentors = async (page: number, size: number) => {
     setLoading(true);
@@ -303,10 +323,6 @@ const Mentors: React.FC = () => {
             <Select.Option value="DevOps">DevOps</Select.Option>
           </Select>
         </div>
-        
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalVisible(true)}>
-          Thêm mới
-        </Button>
       </div>
       
       <Table
@@ -345,7 +361,12 @@ const Mentors: React.FC = () => {
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="expertise" label="Chuyên môn">
-            <Select mode="tags" placeholder="Nhập chuyên môn" />
+            <Select 
+              mode="tags" 
+              placeholder="Chọn hoặc nhập chuyên môn"
+              loading={loadingExpertise}
+              options={expertiseOptions.map(exp => ({ label: exp, value: exp }))}
+            />
           </Form.Item>
           <Form.Item name="hourlyRate" label="Giá theo giờ">
             <InputNumber min={0} style={{ width: '100%' }} />
@@ -422,7 +443,12 @@ const Mentors: React.FC = () => {
             <InputNumber min={0} style={{ width: '100%' }} placeholder="Số năm kinh nghiệm" />
           </Form.Item>
           <Form.Item name="expertise" label="Chuyên môn">
-            <Select mode="tags" placeholder="Nhập chuyên môn (có thể thêm nhiều)" />
+            <Select 
+              mode="tags" 
+              placeholder="Chọn hoặc nhập chuyên môn (có thể thêm nhiều)"
+              loading={loadingExpertise}
+              options={expertiseOptions.map(exp => ({ label: exp, value: exp }))}
+            />
           </Form.Item>
           <Form.Item name="hourlyRate" label="Giá theo giờ">
             <InputNumber min={0} style={{ width: '100%' }} placeholder="Giá theo giờ" />

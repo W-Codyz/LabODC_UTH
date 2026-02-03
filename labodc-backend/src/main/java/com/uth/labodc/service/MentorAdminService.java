@@ -214,4 +214,10 @@ public class MentorAdminService {
                 .updatedAt(mentor.getUpdatedAt())
                 .build();
     }
+    
+    @Transactional(readOnly = true)
+    public List<String> getAllDistinctExpertise() {
+        log.info("Fetching all distinct expertise from mentor_expertise table");
+        return mentorExpertiseRepository.findAllDistinctSkillNames();
+    }
 }
