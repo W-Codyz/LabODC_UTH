@@ -1,6 +1,7 @@
 // src/services/admin/reportService.ts
 
 import axios from 'axios';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -14,7 +15,7 @@ const api = axios.create({
 
 // Interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -91,7 +92,7 @@ export interface PublishReportRequest {
 class ReportService {
   // Lấy danh sách báo cáo
   async getReports(status?: string): Promise<TransparencyReport[]> {
-    const response = await api.get('/lab-admin/transparency-reports', {
+    const response = await api.get('/api/lab-admin/transparency-reports', {
       params: { status }
     });
     return response.data.data;
@@ -99,30 +100,30 @@ class ReportService {
 
   // Lấy chi tiết báo cáo
   async getReportById(id: number): Promise<TransparencyReport> {
-    const response = await api.get(`/lab-admin/transparency-reports/${id}`);
+    const response = await api.get(`/api/lab-admin/transparency-reports/${id}`);
     return response.data.data;
   }
 
   // Tạo báo cáo mới
   async createReport(data: CreateReportRequest): Promise<TransparencyReport> {
-    const response = await api.post('/lab-admin/transparency-reports', data);
+    const response = await api.post('/api/lab-admin/transparency-reports', data);
     return response.data.data;
   }
 
   // Công bố báo cáo
   async publishReport(id: number, data: PublishReportRequest): Promise<any> {
-    const response = await api.put(`/lab-admin/transparency-reports/${id}/publish`, data);
+    const response = await api.post(`/api/lab-admin/transparency-reports/${id}/publish`, data);
     return response.data.data;
   }
 
   // Xóa báo cáo (draft only)
   async deleteReport(id: number): Promise<void> {
-    await api.delete(`/lab-admin/transparency-reports/${id}`);
+    await api.delete(`/api/lab-admin/transparency-reports/${id}`);
   }
 
   // Export PDF
   async exportPDF(id: number): Promise<Blob> {
-    const response = await api.get(`/lab-admin/transparency-reports/${id}/export-pdf`, {
+    const response = await api.get(`/api/lab-admin/transparency-reports/${id}/export-pdf`, {
       responseType: 'blob'
     });
     return response.data;
@@ -130,7 +131,7 @@ class ReportService {
 
   // Lấy thống kê cho một khoảng thời gian
   async getStatisticsForPeriod(period: string): Promise<ReportStatistics> {
-    const response = await api.get('/lab-admin/statistics', {
+    const response = await api.get('/api/lab-admin/statistics', {
       params: { period }
     });
     return response.data.data;

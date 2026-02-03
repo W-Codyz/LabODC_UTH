@@ -31,7 +31,9 @@ import {
   ShopOutlined,
   TeamOutlined,
   DollarOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  FileProtectOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -125,22 +127,52 @@ export default function TransparencyReports() {
     }
   };
 
-  const handlePublish = async () => {
-    if (!selectedReport || !publishNote.trim()) {
-      message.warning('Vui lòng nhập ghi chú công bố');
+  const handlePublish = async (reportId?: number) => {
+    const idToPublish = reportId || selectedReport?.reportId;
+    
+    if (!idToPublish) {
+      message.warning('Không tìm thấy báo cáo');
       return;
     }
 
-    try {
-      await reportService.publishReport(selectedReport.reportId, { publishNote });
-      message.success('Đã công bố báo cáo thành công');
-      setPublishModalVisible(false);
-      setPublishNote('');
-      setDetailVisible(false);
-      loadReports();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || 'Không thể công bố báo cáo');
-    }
+    Modal.confirm({
+      title: 'Xác nhận xuất bản',
+      content: 'Bạn có chắc chắn muốn xuất bản báo cáo này?',
+      okText: 'Xuất bản',
+      okType: 'primary',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await reportService.publishReport(idToPublish, { publishNote: 'Báo cáo đã được xuất bản' });
+          message.success('Đã xuất bản báo cáo thành công');
+          setDetailVisible(false);
+          loadReports();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Không thể xuất bản báo cáo');
+        }
+      }
+    });
+  };
+
+  const handleArchive = async (reportId: number) => {
+    Modal.confirm({
+      title: 'Xác nhận lưu trữ',
+      content: 'Báo cáo sẽ được lưu trữ và upload lên Cloudinary. Tiếp tục?',
+      okText: 'Lưu trữ',
+      okType: 'primary',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          // TODO: Implement archive logic with Cloudinary upload
+          message.info('Chức năng lưu trữ đang được phát triển');
+          // await reportService.archiveReport(reportId);
+          // message.success('Đã lưu trữ báo cáo thành công');
+          // loadReports();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Không thể lưu trữ báo cáo');
+        }
+      }
+    });
   };
 
   const handleDelete = async (id: number) => {
@@ -209,10 +241,10 @@ export default function TransparencyReports() {
       key: 'projects',
       render: (_, record) => (
         <div>
-          <Text>{record.statistics.projects.total} dự án</Text>
+          <Text>{record.statistics?.projects?.total || 0} dự án</Text>
           <br />
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {record.statistics.projects.completed} hoàn thành
+            {record.statistics?.projects?.completed || 0} hoàn thành
           </Text>
         </div>
       ),
@@ -221,7 +253,7 @@ export default function TransparencyReports() {
       title: 'Doanh thu',
       dataIndex: ['statistics', 'financials', 'totalRevenue'],
       key: 'revenue',
-      render: (revenue) => <Text strong>{formatCurrency(revenue)}</Text>,
+      render: (revenue) => <Text strong>{formatCurrency(revenue || 0)}</Text>,
     },
     {
       title: 'Tỷ lệ thành công',
@@ -229,7 +261,7 @@ export default function TransparencyReports() {
       key: 'successRate',
       render: (rate) => (
         <div style={{ width: 100 }}>
-          <Progress percent={rate} size="small" />
+          <Progress percent={rate || 0} size="small" />
         </div>
       ),
     },
@@ -248,15 +280,34 @@ export default function TransparencyReports() {
     {
       title: 'Hành động',
       key: 'action',
-      width: 200,
+      width: 250,
       render: (_, record) => (
         <Space>
           <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.reportId)}>
             Xem
           </Button>
           {record.status === 'DRAFT' && (
-            <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.reportId)}>
-              Xóa
+            <>
+              <Button 
+                type="link" 
+                icon={<FileProtectOutlined />} 
+                onClick={() => handlePublish(record.reportId)}
+                style={{ color: '#52c41a' }}
+              >
+                Xuất bản
+              </Button>
+              <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.reportId)}>
+                Xóa
+              </Button>
+            </>
+          )}
+          {record.status === 'PUBLISHED' && (
+            <Button 
+              type="link" 
+              icon={<InboxOutlined />} 
+              onClick={() => handleArchive(record.reportId)}
+            >
+              Lưu trữ
             </Button>
           )}
         </Space>
@@ -265,17 +316,36 @@ export default function TransparencyReports() {
   ];
 
   const renderStatistics = (stats: ReportStatistics) => {
+    // Null checks for all statistics
+    const projects = stats?.projects || { total: 0, new: 0, ongoing: 0, completed: 0, cancelled: 0, successRate: 0 };
+    const enterprises = stats?.enterprises || { total: 0, new: 0, active: 0, verified: 0 };
+    const talents = stats?.talents || { total: 0, new: 0, active: 0, averageRating: 0 };
+    const mentors = stats?.mentors || { total: 0, active: 0, averageRating: 0 };
+    const financials = stats?.financials || {
+      totalRevenue: 0,
+      teamDisbursed: 0,
+      mentorDisbursed: 0,
+      labRevenue: 0,
+      hybridFundAdvanced: 0,
+      hybridFundRepaid: 0,
+    };
+    const performance = stats?.performance || {
+      avgProjectCompletion: 0,
+      onTimeDelivery: 0,
+      customerSatisfaction: 0,
+    };
+
     // Data for charts
     const projectStatusData = [
-      { name: 'Hoàn thành', value: stats.projects.completed },
-      { name: 'Đang thực hiện', value: stats.projects.ongoing },
-      { name: 'Hủy', value: stats.projects.cancelled },
+      { name: 'Hoàn thành', value: projects.completed },
+      { name: 'Đang thực hiện', value: projects.ongoing },
+      { name: 'Hủy', value: projects.cancelled },
     ];
 
     const fundDistributionData = [
-      { name: 'Team (70%)', amount: stats.financials.teamDisbursed },
-      { name: 'Mentor (20%)', amount: stats.financials.mentorDisbursed },
-      { name: 'Lab (10%)', amount: stats.financials.labRevenue },
+      { name: 'Team (70%)', amount: financials.teamDisbursed },
+      { name: 'Mentor (20%)', amount: financials.mentorDisbursed },
+      { name: 'Lab (10%)', amount: financials.labRevenue },
     ];
 
     return (
@@ -286,12 +356,12 @@ export default function TransparencyReports() {
             <Card>
               <Statistic
                 title="Tổng Dự án"
-                value={stats.projects.total}
+                value={projects.total}
                 prefix={<ProjectOutlined />}
                 valueStyle={{ color: '#3f8600' }}
                 suffix={
                   <Text type="secondary" style={{ fontSize: 14 }}>
-                    +{stats.projects.new}
+                    +{projects.new}
                   </Text>
                 }
               />
@@ -301,7 +371,7 @@ export default function TransparencyReports() {
             <Card>
               <Statistic
                 title="Doanh nghiệp"
-                value={stats.enterprises.total}
+                value={enterprises.total}
                 prefix={<ShopOutlined />}
                 valueStyle={{ color: '#1890ff' }}
               />
@@ -311,7 +381,7 @@ export default function TransparencyReports() {
             <Card>
               <Statistic
                 title="Sinh viên"
-                value={stats.talents.total}
+                value={talents.total}
                 prefix={<TeamOutlined />}
                 valueStyle={{ color: '#722ed1' }}
               />
@@ -321,7 +391,7 @@ export default function TransparencyReports() {
             <Card>
               <Statistic
                 title="Doanh thu"
-                value={stats.financials.totalRevenue}
+                value={financials.totalRevenue}
                 prefix={<DollarOutlined />}
                 formatter={(val) => formatCurrency(val as number)}
                 valueStyle={{ color: '#cf1322' }}
@@ -380,13 +450,13 @@ export default function TransparencyReports() {
           <Row gutter={[16, 16]}>
             <Col xs={24} md={8}>
               <Descriptions title="Dự án" column={1} size="small">
-                <Descriptions.Item label="Tổng số">{stats.projects.total}</Descriptions.Item>
-                <Descriptions.Item label="Mới">{stats.projects.new}</Descriptions.Item>
-                <Descriptions.Item label="Đang thực hiện">{stats.projects.ongoing}</Descriptions.Item>
-                <Descriptions.Item label="Hoàn thành">{stats.projects.completed}</Descriptions.Item>
-                <Descriptions.Item label="Hủy">{stats.projects.cancelled}</Descriptions.Item>
+                <Descriptions.Item label="Tổng số">{projects.total}</Descriptions.Item>
+                <Descriptions.Item label="Mới">{projects.new}</Descriptions.Item>
+                <Descriptions.Item label="Đang thực hiện">{projects.ongoing}</Descriptions.Item>
+                <Descriptions.Item label="Hoàn thành">{projects.completed}</Descriptions.Item>
+                <Descriptions.Item label="Hủy">{projects.cancelled}</Descriptions.Item>
                 <Descriptions.Item label="Tỷ lệ thành công">
-                  <Progress percent={stats.projects.successRate} size="small" />
+                  <Progress percent={projects.successRate} size="small" />
                 </Descriptions.Item>
               </Descriptions>
             </Col>
@@ -394,19 +464,19 @@ export default function TransparencyReports() {
             <Col xs={24} md={8}>
               <Descriptions title="Tài chính" column={1} size="small">
                 <Descriptions.Item label="Tổng doanh thu">
-                  {formatCurrency(stats.financials.totalRevenue)}
+                  {formatCurrency(financials.totalRevenue)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Giải ngân Team">
-                  {formatCurrency(stats.financials.teamDisbursed)}
+                  {formatCurrency(financials.teamDisbursed)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Giải ngân Mentor">
-                  {formatCurrency(stats.financials.mentorDisbursed)}
+                  {formatCurrency(financials.mentorDisbursed)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Quỹ Lab">
-                  {formatCurrency(stats.financials.labRevenue)}
+                  {formatCurrency(financials.labRevenue)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Hybrid Fund tạm ứng">
-                  {formatCurrency(stats.financials.hybridFundAdvanced)}
+                  {formatCurrency(financials.hybridFundAdvanced)}
                 </Descriptions.Item>
               </Descriptions>
             </Col>
@@ -414,15 +484,15 @@ export default function TransparencyReports() {
             <Col xs={24} md={8}>
               <Descriptions title="Hiệu suất" column={1} size="small">
                 <Descriptions.Item label="Hoàn thành TB">
-                  <Progress percent={stats.performance.avgProjectCompletion} size="small" />
+                  <Progress percent={performance.avgProjectCompletion} size="small" />
                 </Descriptions.Item>
                 <Descriptions.Item label="Đúng hạn">
-                  <Progress percent={stats.performance.onTimeDelivery} size="small" status="active" />
+                  <Progress percent={performance.onTimeDelivery} size="small" status="active" />
                 </Descriptions.Item>
                 <Descriptions.Item label="Hài lòng KH">
                   <div>
-                    <Progress percent={(stats.performance.customerSatisfaction / 5) * 100} size="small" strokeColor="#52c41a" />
-                    <Text type="secondary">{stats.performance.customerSatisfaction}/5.0</Text>
+                    <Progress percent={(performance.customerSatisfaction / 5) * 100} size="small" strokeColor="#52c41a" />
+                    <Text type="secondary">{performance.customerSatisfaction}/5.0</Text>
                   </div>
                 </Descriptions.Item>
               </Descriptions>
@@ -435,10 +505,10 @@ export default function TransparencyReports() {
           <Col xs={24} md={12}>
             <Card title="Doanh nghiệp" size="small">
               <Descriptions column={1} size="small">
-                <Descriptions.Item label="Tổng số">{stats.enterprises.total}</Descriptions.Item>
-                <Descriptions.Item label="Mới">{stats.enterprises.new}</Descriptions.Item>
-                <Descriptions.Item label="Đang hoạt động">{stats.enterprises.active}</Descriptions.Item>
-                <Descriptions.Item label="Đã xác thực">{stats.enterprises.verified}</Descriptions.Item>
+                <Descriptions.Item label="Tổng số">{enterprises.total}</Descriptions.Item>
+                <Descriptions.Item label="Mới">{enterprises.new}</Descriptions.Item>
+                <Descriptions.Item label="Đang hoạt động">{enterprises.active}</Descriptions.Item>
+                <Descriptions.Item label="Đã xác thực">{enterprises.verified}</Descriptions.Item>
               </Descriptions>
             </Card>
           </Col>
@@ -446,21 +516,21 @@ export default function TransparencyReports() {
           <Col xs={24} md={12}>
             <Card title="Sinh viên & Mentor" size="small">
               <Descriptions column={1} size="small">
-                <Descriptions.Item label="Tổng sinh viên">{stats.talents.total}</Descriptions.Item>
-                <Descriptions.Item label="Sinh viên mới">{stats.talents.new}</Descriptions.Item>
-                <Descriptions.Item label="SV đang hoạt động">{stats.talents.active}</Descriptions.Item>
+                <Descriptions.Item label="Tổng sinh viên">{talents.total}</Descriptions.Item>
+                <Descriptions.Item label="Sinh viên mới">{talents.new}</Descriptions.Item>
+                <Descriptions.Item label="SV đang hoạt động">{talents.active}</Descriptions.Item>
                 <Descriptions.Item label="Đánh giá TB SV">
                   <Space>
                     <TrophyOutlined style={{ color: '#faad14' }} />
-                    <Text strong>{stats.talents.averageRating}/10</Text>
+                    <Text strong>{talents.averageRating}/10</Text>
                   </Space>
                 </Descriptions.Item>
-                <Descriptions.Item label="Tổng Mentor">{stats.mentors.total}</Descriptions.Item>
-                <Descriptions.Item label="Mentor hoạt động">{stats.mentors.active}</Descriptions.Item>
+                <Descriptions.Item label="Tổng Mentor">{mentors.total}</Descriptions.Item>
+                <Descriptions.Item label="Mentor hoạt động">{mentors.active}</Descriptions.Item>
                 <Descriptions.Item label="Đánh giá TB Mentor">
                   <Space>
                     <TrophyOutlined style={{ color: '#faad14' }} />
-                    <Text strong>{stats.mentors.averageRating}/5.0</Text>
+                    <Text strong>{mentors.averageRating}/5.0</Text>
                   </Space>
                 </Descriptions.Item>
               </Descriptions>
