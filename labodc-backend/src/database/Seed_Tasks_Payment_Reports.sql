@@ -937,21 +937,44 @@ VALUES
     -- Report 1: January 2026 Monthly Report
     ('MONTHLY', '2026-01',
     '{
-        "totalProjects": 5,
-        "activeProjects": 2,
-        "completedProjects": 1,
-        "totalStudents": 10,
-        "activeStudents": 8,
-        "totalMentors": 4,
-        "activeMentors": 3,
-        "totalEnterprises": 4,
-        "totalRevenue": 165000000,
-        "totalDisbursed": 120000000,
-        "teamFundDisbursed": 84000000,
-        "mentorFundDisbursed": 28000000,
-        "labFundDisbursed": 16500000,
-        "averageProjectRating": 4.65,
-        "averageStudentRating": 8.3
+        "projects": {
+            "total": 5,
+            "newProjects": 1,
+            "ongoing": 2,
+            "completed": 1,
+            "cancelled": 0,
+            "successRate": 20.0
+        },
+        "enterprises": {
+            "total": 4,
+            "newEnterprises": 0,
+            "active": 4,
+            "verified": 4
+        },
+        "talents": {
+            "total": 10,
+            "newTalents": 2,
+            "active": 8,
+            "averageRating": 4.5
+        },
+        "mentors": {
+            "total": 4,
+            "active": 3,
+            "averageRating": 4.7
+        },
+        "financials": {
+            "totalRevenue": 165000000,
+            "teamDisbursed": 115500000,
+            "mentorDisbursed": 33000000,
+            "labRevenue": 16500000,
+            "hybridFundAdvanced": 0,
+            "hybridFundRepaid": 0
+        },
+        "performance": {
+            "avgProjectCompletion": 85.5,
+            "onTimeDelivery": 78.3,
+            "customerSatisfaction": 4.6
+        }
     }'::jsonb,
     '{
         "projectsByStatus": [
@@ -983,21 +1006,44 @@ VALUES
     -- Report 2: December 2025 Monthly Report
     ('MONTHLY', '2025-12',
     '{
-        "totalProjects": 5,
-        "activeProjects": 2,
-        "completedProjects": 0,
-        "totalStudents": 10,
-        "activeStudents": 4,
-        "totalMentors": 4,
-        "activeMentors": 2,
-        "totalEnterprises": 4,
-        "totalRevenue": 0,
-        "totalDisbursed": 0,
-        "teamFundDisbursed": 0,
-        "mentorFundDisbursed": 0,
-        "labFundDisbursed": 0,
-        "averageProjectRating": 0,
-        "averageStudentRating": 0
+        "projects": {
+            "total": 5,
+            "newProjects": 0,
+            "ongoing": 1,
+            "completed": 0,
+            "cancelled": 0,
+            "successRate": 0.0
+        },
+        "enterprises": {
+            "total": 4,
+            "newEnterprises": 0,
+            "active": 4,
+            "verified": 4
+        },
+        "talents": {
+            "total": 10,
+            "newTalents": 0,
+            "active": 4,
+            "averageRating": 0.0
+        },
+        "mentors": {
+            "total": 4,
+            "active": 2,
+            "averageRating": 0.0
+        },
+        "financials": {
+            "totalRevenue": 0,
+            "teamDisbursed": 0,
+            "mentorDisbursed": 0,
+            "labRevenue": 0,
+            "hybridFundAdvanced": 0,
+            "hybridFundRepaid": 0
+        },
+        "performance": {
+            "avgProjectCompletion": 0.0,
+            "onTimeDelivery": 0.0,
+            "customerSatisfaction": 0.0
+        }
     }'::jsonb,
     '{
         "projectsByStatus": [
