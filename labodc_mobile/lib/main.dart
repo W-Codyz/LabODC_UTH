@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:labodc_mobile/core/theme/app_theme.dart';
 import 'package:labodc_mobile/core/routes/app_router.dart';
 import 'package:labodc_mobile/providers/auth_provider.dart';
+import 'package:labodc_mobile/providers/admin_provider.dart';
 import 'package:labodc_mobile/services/storage_service.dart';
 import 'package:labodc_mobile/providers/project_provider.dart';
 
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: MaterialApp.router(
         title: 'LabOdc',

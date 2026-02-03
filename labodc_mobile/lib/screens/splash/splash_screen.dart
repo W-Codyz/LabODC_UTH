@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Káº¿t ná»‘i Doanh nghiá»‡p - Sinh viÃªn UTH',
+              'Kết nối doanh nghiệp - Tài năng UTH',
               style: AppTextStyles.body2.copyWith(
                 color: AppColors.white.withValues(alpha: 0.9),
               ),

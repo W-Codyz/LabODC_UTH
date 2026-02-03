@@ -30,7 +30,7 @@ import 'package:labodc_mobile/screens/mentor/report_submission_screen.dart';
 import 'package:labodc_mobile/screens/admin/dashboard_screen.dart';
 import 'package:labodc_mobile/screens/admin/enterprise_management_screen.dart';
 import 'package:labodc_mobile/screens/admin/project_validation_screen.dart';
-import 'package:labodc_mobile/screens/admin/fund_allocation_screen.dart';
+import 'package:labodc_mobile/screens/admin/fund_management_screen.dart';
 
 /// App Route Names
 class AppRoutes {
@@ -184,7 +184,7 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.adminFundAllocation,
-        builder: (context, state) => const FundAllocationScreen(),
+        builder: (context, state) => const FundManagementScreen(),
       ),
     ],
   );

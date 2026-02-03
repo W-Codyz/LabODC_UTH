@@ -46,10 +46,7 @@ const Projects = lazy(() => import('@/pages/admin/Projects'));
 
 // System Admin pages
 const SystemAdminDashboard = lazy(() => import('@/pages/system-admin/Dashboard'));
-const SystemConfiguration = lazy(() => import('@/pages/system-admin/SystemConfiguration'));
-const RoleManagement = lazy(() => import('@/pages/system-admin/RoleManagement'));
 const UserManagement = lazy(() => import('@/pages/system-admin/UserManagement'));
-const TemplateManagement = lazy(() => import('@/pages/system-admin/TemplateManagement'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -155,24 +152,6 @@ const AppRoutes: React.FC = () => {
           <Route path="funds" element={<FundAllocation />} />
           <Route path="reports" element={<TransparencyReports />} />
         </Route>
-
-        {/* System Admin Routes */}
-        <Route
-          path="/system/*"
-          element={
-            <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="dashboard" element={<SystemAdminDashboard />} />
-          <Route path="config" element={<SystemConfiguration />} />
-          <Route path="roles" element={<RoleManagement />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="templates" element={<TemplateManagement />} />
-        </Route>
-
-        {/* 404 Not Found */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

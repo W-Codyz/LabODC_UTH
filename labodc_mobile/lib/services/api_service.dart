@@ -47,18 +47,22 @@ class ApiService {
             }
           }
           
-          _logger.d('Request: ${options.method} ${options.path}');
+          _logger.d('📤 Request: ${options.method} ${options.baseUrl}${options.path}');
           _logger.d('Headers: ${options.headers}');
-          _logger.d('Data: ${options.data}');
+          if (options.data != null) {
+            _logger.d('Data: ${options.data}');
+          }
           
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          _logger.d('Response: ${response.statusCode} ${response.data}');
+          _logger.d('✅ Response: ${response.statusCode}');
+          _logger.d('Data: ${response.data}');
           return handler.next(response);
         },
         onError: (error, handler) async {
-          _logger.e('Error: ${error.message}');
+          _logger.e('❌ Error: ${error.type} - ${error.message}');
+          _logger.e('Status: ${error.response?.statusCode}');
           _logger.e('Response: ${error.response?.data}');
           
           // Handle 401 - Token expired
@@ -256,7 +260,7 @@ class ApiService {
   }
 
   String _resolveBaseUrl() {
-    // Nếu chạy trên Android emulator và dùng localhost thì chuyển sang 10.0.2.2:8085.
+    // Nếu chạy trên Android emulator và dùng localhost thì chuyển sang 10.0.2.2:8080/api.
     final raw = AppConstants.baseUrl;
     final isLocal = raw.contains('localhost') || raw.contains('127.0.0.1');
     if (isLocal && Platform.isAndroid) {
