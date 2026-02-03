@@ -16,6 +16,7 @@ const EnterpriseDashboard = lazy(() => import('@/pages/enterprise/Dashboard'));
 const ProjectManagement = lazy(() => import('@/pages/enterprise/ProjectManagement'));
 const Payment = lazy(() => import('@/pages/enterprise/Payment'));
 const Reports = lazy(() => import('@/pages/enterprise/Reports'));
+const Feedback = lazy(() => import('@/pages/enterprise/Feedback'));
 
 // Talent pages
 const TalentDashboard = lazy(() => import('@/pages/talent/Dashboard'));
@@ -95,6 +96,7 @@ const AppRoutes: React.FC = () => {
           <Route path="projects" element={<ProjectManagement />} />
           <Route path="payment" element={<Payment />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="feedback" element={<Feedback />} />
         </Route>
 
         {/* Talent Routes */}

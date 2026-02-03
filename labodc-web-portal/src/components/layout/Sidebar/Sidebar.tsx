@@ -10,6 +10,7 @@ import {
   SettingOutlined,
   CheckSquareOutlined,
   FundOutlined,
+  MessageOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -73,6 +74,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           icon: <DollarOutlined />,
           label: 'Thanh toán',
           onClick: () => navigate('/enterprise/payment'),
+        },
+        {
+          key: 'feedback',
+          icon: <MessageOutlined />,
+          label: 'Đánh giá dự án',
+          onClick: () => navigate('/enterprise/feedback'),
         },
         {
           key: 'reports',
@@ -196,6 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     // Enterprise routes
     if (path.includes('/projects') && !path.includes('/validate')) return 'projects-list';
     if (path.includes('/payment')) return 'payment';
+    if (path.includes('/feedback')) return 'feedback';
     
     // Talent routes
     if (path.includes('/projects/browse')) return 'browse-projects';
