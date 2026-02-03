@@ -316,7 +316,6 @@ const ProjectManagement: React.FC = () => {
           size="small"
           column={1}
           labelStyle={{ width: 160 }}
-          loading={detailLoading}
         >
           <Descriptions.Item label="Tên dự án">
             {detailData?.name ?? '-'}

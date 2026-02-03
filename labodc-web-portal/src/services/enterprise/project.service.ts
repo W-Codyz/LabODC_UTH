@@ -6,7 +6,14 @@ export interface Project {
   budget: number;
   spent: number;
   progress: number;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
+  status:
+    | 'PENDING_VALIDATION'
+    | 'VALIDATED'
+    | 'RECRUITING'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'ON_HOLD'
+    | string;
 }
 
 export interface CreateProjectRequest {
