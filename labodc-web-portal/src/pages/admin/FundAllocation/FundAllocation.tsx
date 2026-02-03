@@ -18,7 +18,8 @@ import {
   Col,
   Statistic,
   List,
-  Input
+  Input,
+  Form
 } from 'antd';
 import {
   DollarOutlined,
@@ -26,7 +27,11 @@ import {
   UserOutlined,
   BankOutlined,
   EyeOutlined,
-  SendOutlined
+  SendOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { fundService } from "@/services/admin/fundService";
@@ -38,6 +43,8 @@ const { TextArea } = Input;
 export default function FundAllocationPage() {
   const [loading, setLoading] = useState(false);
   const [allocations, setAllocations] = useState<FundAllocation[]>([]);
+  const [filteredAllocations, setFilteredAllocations] = useState<FundAllocation[]>([]);
+  const [searchText, setSearchText] = useState('');
   const [selectedAllocation, setSelectedAllocation] = useState<FundAllocationDetail | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('ALL');
@@ -46,6 +53,8 @@ export default function FundAllocationPage() {
   const [mentorDisburseVisible, setMentorDisburseVisible] = useState(false);
   const [teamDisburseVisible, setTeamDisburseVisible] = useState(false);
   const [hybridFundVisible, setHybridFundVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingAllocation, setEditingAllocation] = useState<FundAllocation | null>(null);
   
   // Delayed payments & Hybrid funds
   const [delayedPayments, setDelayedPayments] = useState<DelayedPayment[]>([]);
@@ -61,9 +70,41 @@ export default function FundAllocationPage() {
   // Statistics
   const [statistics, setStatistics] = useState<any>(null);
 
+  // Filter allocations when search changes
+  useEffect(() => {
+    if (!searchText.trim()) {
+      setFilteredAllocations(allocations);
+      return;
+    }
+
+    const filtered = allocations.filter(allocation => {
+      const searchLower = searchText.toLowerCase();
+      return (
+        allocation.projectTitle?.toLowerCase().includes(searchLower) ||
+        allocation.enterpriseName?.toLowerCase().includes(searchLower) ||
+        allocation.status?.toLowerCase().includes(searchLower)
+      );
+    });
+    setFilteredAllocations(filtered);
+  }, [searchText, allocations]);
+
+  // Load delayed payments count on mount for badge display
+  useEffect(() => {
+    loadDelayedCount();
+  }, []);
+
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  const loadDelayedCount = async () => {
+    try {
+      const delayed = await fundService.getDelayedPayments();
+      setDelayedPayments(delayed);
+    } catch (error) {
+      console.error('Error loading delayed payments count:', error);
+    }
+  };
 
   const loadData = async () => {
     console.log('🔄 [FundAllocation] Loading data for tab:', activeTab);
@@ -207,6 +248,44 @@ export default function FundAllocationPage() {
     }
   };
 
+  const handleEdit = (record: FundAllocation) => {
+    setEditingAllocation(record);
+    setEditModalVisible(true);
+  };
+
+  const handleDelete = (projectId: number) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa phân bổ quỹ này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await fundService.deleteAllocation(projectId);
+          message.success('Xóa phân bổ quỹ thành công');
+          loadData();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Không thể xóa phân bổ quỹ');
+        }
+      }
+    });
+  };
+
+  const handleUpdateAllocation = async (values: any) => {
+    if (!editingAllocation) return;
+
+    try {
+      await fundService.updateAllocation(editingAllocation.projectId, values);
+      message.success('Cập nhật phân bổ quỹ thành công');
+      setEditModalVisible(false);
+      setEditingAllocation(null);
+      loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Không thể cập nhật phân bổ quỹ');
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   };
@@ -291,12 +370,33 @@ export default function FundAllocationPage() {
     {
       title: 'Hành động',
       key: 'action',
-      width: 120,
+      width: 180,
       fixed: 'right',
       render: (_, record) => (
-        <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.projectId)}>
-          Chi tiết
-        </Button>
+        <Space size="small">
+          <Button 
+            type="link" 
+            icon={<EyeOutlined />} 
+            onClick={() => handleViewDetail(record.projectId)}
+          >
+            Chi tiết
+          </Button>
+          <Button 
+            type="link" 
+            icon={<EditOutlined />} 
+            onClick={() => handleEdit(record)}
+          >
+            Sửa
+          </Button>
+          <Button 
+            type="link" 
+            danger
+            icon={<DeleteOutlined />} 
+            onClick={() => handleDelete(record.projectId)}
+          >
+            Xóa
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -392,6 +492,22 @@ export default function FundAllocationPage() {
         <DollarOutlined /> Phân bổ Quỹ
       </Title>
 
+      {/* Search and Actions */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16} align="middle">
+          <Col flex="auto">
+            <Input
+              placeholder="Tìm kiếm theo tên dự án, doanh nghiệp..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+              size="large"
+            />
+          </Col>
+        </Row>
+      </Card>
+
       {/* Statistics */}
       {statistics && (
         <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -450,7 +566,7 @@ export default function FundAllocationPage() {
             { key: 'DISTRIBUTED', label: 'Đã phân phối' },
             { key: 'COMPLETED', label: 'Hoàn tất' },
             { key: 'ALLOCATED', label: 'Đã phân bổ' },
-            { key: 'DELAYED', label: <Badge count={5} offset={[10, 0]} status="error"><span>Thanh toán chậm</span></Badge> },
+            { key: 'DELAYED', label: <Badge count={delayedPayments.length} offset={[10, 0]} status="error"><span>Thanh toán chậm</span></Badge> },
             { key: 'HYBRID', label: 'Hybrid Fund' }
           ]}
         />
@@ -472,7 +588,7 @@ export default function FundAllocationPage() {
         ) : (
           <Table
             columns={columns}
-            dataSource={allocations}
+            dataSource={filteredAllocations}
             rowKey="projectId"
             loading={loading}
             scroll={{ x: 1200 }}
@@ -703,6 +819,80 @@ export default function FundAllocationPage() {
             <TextArea rows={3} value={hybridReason} onChange={(e) => setHybridReason(e.target.value)} placeholder="Doanh nghiệp chậm thanh toán 14 ngày, team cần thanh toán để tiếp tục dự án" />
           </div>
         </Space>
+      </Modal>
+
+      {/* Edit Allocation Modal */}
+      <Modal
+        title="Chỉnh sửa Phân bổ Quỹ"
+        open={editModalVisible}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setEditingAllocation(null);
+        }}
+        onOk={() => {
+          const form = document.getElementById('edit-form') as HTMLFormElement;
+          if (form) {
+            const formData = new FormData(form);
+            const status = formData.get('status') as string;
+            handleUpdateAllocation({ status });
+          }
+        }}
+        okText="Lưu"
+        cancelText="Hủy"
+        width={800}
+      >
+        {editingAllocation && (
+          <>
+            <Descriptions bordered column={2} size="small" style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="Dự án" span={2}>
+                <Text strong>{editingAllocation.projectTitle}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Doanh nghiệp" span={2}>
+                {editingAllocation.enterpriseName}
+              </Descriptions.Item>
+              <Descriptions.Item label="Tổng quỹ">
+                <Text strong>{formatCurrency(editingAllocation.allocation.total)}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái hiện tại">
+                {getStatusTag(editingAllocation.status)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Team (70%)">
+                {formatCurrency(editingAllocation.allocation.team.amount)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái Team">
+                {getStatusTag(editingAllocation.allocation.team.status)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Mentor (20%)">
+                {formatCurrency(editingAllocation.allocation.mentor.amount)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái Mentor">
+                {getStatusTag(editingAllocation.allocation.mentor.status)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lab (10%)">
+                {formatCurrency(editingAllocation.allocation.lab.amount)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái Lab">
+                {getStatusTag(editingAllocation.allocation.lab.status)}
+              </Descriptions.Item>
+            </Descriptions>
+            
+            <Form id="edit-form" layout="vertical">
+              <Form.Item label="Cập nhật Trạng thái">
+                <Input.Group compact>
+                  <select 
+                    name="status" 
+                    defaultValue={editingAllocation.status}
+                    style={{ width: '100%', padding: '4px 11px', border: '1px solid #d9d9d9', borderRadius: '6px' }}
+                  >
+                    <option value="ALLOCATED">Đã phân bổ</option>
+                    <option value="DISTRIBUTED">Đã phân phối</option>
+                    <option value="COMPLETED">Hoàn tất</option>
+                  </select>
+                </Input.Group>
+              </Form.Item>
+            </Form>
+          </>
+        )}
       </Modal>
     </div>
   );

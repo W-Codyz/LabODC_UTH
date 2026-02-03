@@ -55,9 +55,10 @@ export const login = createAsyncThunk(
     try {
       const response = await authService.login(credentials);
       console.log('🔍 Backend login response:', response);
+      console.log('📋 Response structure:', JSON.stringify(response, null, 2));
       
-      // Backend returns { token, email, role, ... }
-      const responseData = response;
+      // Backend returns { success, message, data: { token, email, role, ... } }
+      const responseData = response.data; // Access the data object
       const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)
@@ -72,6 +73,7 @@ export const login = createAsyncThunk(
         refreshToken: responseData.refreshToken || '',
       };
       console.log('✅ Transformed user data:', userData);
+      console.log('🎭 Role extracted:', responseData.role);
       return userData;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
@@ -85,8 +87,8 @@ export const register = createAsyncThunk(
     try {
       const response = await authService.register(data);
       
-      // Backend returns { token, email, role, ... }
-      const responseData = response;
+      // Backend returns { success, message, data: { token, email, role, ... } }
+      const responseData = response.data; // Access the data object
       const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)

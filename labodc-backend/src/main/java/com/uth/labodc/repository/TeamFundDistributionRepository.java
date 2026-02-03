@@ -15,4 +15,6 @@ public interface TeamFundDistributionRepository extends JpaRepository<TeamFundDi
     List<TeamFundDistribution> findByStatus(String status);
     
     List<TeamFundDistribution> findBySubmittedBy(Long submittedBy);
+    
+    List<TeamFundDistribution> findByAllocationId(Long allocationId);
 }

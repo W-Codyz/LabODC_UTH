@@ -163,7 +163,7 @@ class ProjectService {
       }
       // For 'ALL' or other statuses, don't send validated param (get all)
       
-      const response = await api.get('/api/projects/management', { params: backendParams });
+      const response = await api.get('/projects/management', { params: backendParams });
       
       // Backend returns List<ProjectListDTO>, wrap in pagination structure
       let projects = response.data.data || [];
@@ -190,7 +190,7 @@ class ProjectService {
   // Lấy thống kê validation cho badge counts
   async getValidationStats(): Promise<Record<string, number>> {
     try {
-      const response = await api.get('/api/projects/management');
+      const response = await api.get('/projects/management');
       const projects = response.data.data || [];
       
       const stats = {
@@ -234,7 +234,7 @@ class ProjectService {
 
   // Lấy chi tiết dự án
   async getProjectById(id: number): Promise<ProjectDetail> {
-    const response = await api.get(`/api/projects/${id}`);
+    const response = await api.get(`/projects/${id}`);
     const data = response.data.data;
     
     // Map backend response to frontend interface
@@ -251,12 +251,12 @@ class ProjectService {
   
   // Phê duyệt dự án (approve)
   async approveProject(id: number, data: ApproveProjectRequest): Promise<void> {
-    await api.put(`/api/projects/${id}/approve`);
+    await api.put(`/projects/${id}/approve`);
   }
   
   // Từ chối dự án (reject)
   async rejectProject(id: number, data: RejectProjectRequest): Promise<void> {
-    await api.put(`/api/projects/${id}/reject`, {
+    await api.put(`/projects/${id}/reject`, {
       reason: data.reason + ': ' + data.details
     });
   }

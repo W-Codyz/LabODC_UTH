@@ -33,12 +33,12 @@ const Login: React.FC = () => {
       
       const result = await dispatch(login(loginData)).unwrap();
       console.log('🎯 Login result:', result);
-      console.log('👤 User role:', result.user.role);
+      console.log('� Result structure:', JSON.stringify(result, null, 2));
+      console.log('👤 User object:', result.user);
+      console.log('🎭 User role:', result.user?.role);
       
       message.success('Đăng nhập thành công!');
-      const defaultRoute = getDefaultRoute(result.user.role as TUserRole);
-      console.log('🚀 Redirecting to:', defaultRoute);
-      navigate(defaultRoute);
+      // useEffect will handle navigation automatically
     } catch (error: any) {
       console.error('❌ Login error:', error);
       message.error(error || 'Đăng nhập thất bại!');

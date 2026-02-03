@@ -80,4 +80,28 @@ public class FundAllocationController {
         fundAllocationService.disburseTeamFunds(projectId, request);
         return ResponseEntity.ok(ApiResponse.success("Team funds disbursed successfully", null));
     }
+    
+    /**
+     * Update fund allocation
+     */
+    @PutMapping("/allocations/{projectId}")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<FundAllocationDTO>> updateFundAllocation(
+            @PathVariable Long projectId,
+            @RequestBody FundAllocationDTO dto) {
+        log.info("Updating fund allocation for project: {}", projectId);
+        FundAllocationDTO updated = fundAllocationService.updateFundAllocation(projectId, dto);
+        return ResponseEntity.ok(ApiResponse.success("Fund allocation updated successfully", updated));
+    }
+    
+    /**
+     * Delete fund allocation
+     */
+    @DeleteMapping("/allocations/{projectId}")
+    @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> deleteFundAllocation(@PathVariable Long projectId) {
+        log.info("Deleting fund allocation for project: {}", projectId);
+        fundAllocationService.deleteFundAllocation(projectId);
+        return ResponseEntity.ok(ApiResponse.success("Fund allocation deleted successfully", null));
+    }
 }
