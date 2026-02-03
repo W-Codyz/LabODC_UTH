@@ -144,6 +144,23 @@ public class EnterprisePortalController {
         return ResponseEntity.ok(ApiResponse.success(enterprisePortalService.getProjectReports(user)));
     }
 
+    @GetMapping("/feedback")
+    @PreAuthorize("hasRole('ENTERPRISE')")
+    public ResponseEntity<ApiResponse<List<EnterpriseFeedbackDTO>>> getFeedbacks(Authentication authentication) {
+        User user = currentUser(authentication);
+        return ResponseEntity.ok(ApiResponse.success(enterprisePortalService.getFeedbacks(user)));
+    }
+
+    @PostMapping("/feedback")
+    @PreAuthorize("hasRole('ENTERPRISE')")
+    public ResponseEntity<ApiResponse<EnterpriseFeedbackDTO>> createFeedback(
+            Authentication authentication,
+            @RequestBody CreateEnterpriseFeedbackRequest request
+    ) {
+        User user = currentUser(authentication);
+        return ResponseEntity.ok(ApiResponse.success(enterprisePortalService.createFeedback(user, request)));
+    }
+
     private User currentUser(Authentication authentication) {
         String email = authentication.getName();
         return userRepository.findByEmailAndDeletedAtIsNull(email)

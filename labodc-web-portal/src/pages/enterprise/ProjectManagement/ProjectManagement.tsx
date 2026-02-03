@@ -33,11 +33,14 @@ import {
   updateProject,
   deleteProject,
 } from '@/services/enterprise/project.service';
+import { getFeedbacks, EnterpriseFeedback } from '@/services/enterprise/feedback.service';
 import { formatCurrencyVND } from '@/utils/formatters';
+import { useNavigate } from 'react-router-dom';
 import '../enterprise-modern.css';
 import dayjs from 'dayjs';
 
 const ProjectManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
 
   const [status, setStatus] = useState<string>('ALL');
@@ -50,6 +53,8 @@ const ProjectManagement: React.FC = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState<any>(null);
+  const [detailProjectId, setDetailProjectId] = useState<string | null>(null);
+  const [detailFeedback, setDetailFeedback] = useState<EnterpriseFeedback | null>(null);
 
   const [summary, setSummary] = useState({
     total: 0,
@@ -253,16 +258,22 @@ const ProjectManagement: React.FC = () => {
               <Button
                 type="link"
                 onClick={async () => {
-                  try {
-                    setDetailLoading(true);
-                    const detail = await getProjectById(record.key);
-                    setDetailData(detail ?? null);
-                    setDetailOpen(true);
-                  } catch (err: any) {
-                    message.error(err?.message || 'Không thể tải chi tiết dự án');
-                  } finally {
-                    setDetailLoading(false);
-                  }
+              try {
+                setDetailLoading(true);
+                const detail = await getProjectById(record.key);
+                setDetailData(detail ?? null);
+                setDetailProjectId(String(record.key));
+                const feedbackList = await getFeedbacks();
+                const feedback = Array.isArray(feedbackList)
+                  ? feedbackList.find((f: any) => Number(f.projectId) === Number(record.key))
+                  : null;
+                setDetailFeedback(feedback ?? null);
+                setDetailOpen(true);
+              } catch (err: any) {
+                message.error(err?.message || 'Không thể tải chi tiết dự án');
+              } finally {
+                setDetailLoading(false);
+              }
                 }}
               >
                 Chi tiết
@@ -336,6 +347,8 @@ const ProjectManagement: React.FC = () => {
         onCancel={() => {
           setDetailOpen(false);
           setDetailData(null);
+          setDetailProjectId(null);
+          setDetailFeedback(null);
         }}
         footer={null}
       >
@@ -382,6 +395,24 @@ const ProjectManagement: React.FC = () => {
           </Descriptions.Item>
           <Descriptions.Item label="Kết thúc">
             {detailData?.endDate ?? '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Đánh giá">
+            {detailFeedback ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Tag color="blue">{detailFeedback.overallRating ?? '-'} / 5</Tag>
+                <Button
+                  type="link"
+                  onClick={() =>
+                    detailProjectId &&
+                    navigate(`/enterprise/feedback?projectId=${detailProjectId}`)
+                  }
+                >
+                  Đã đánh giá
+                </Button>
+              </div>
+            ) : (
+              <span>Chưa đánh giá</span>
+            )}
           </Descriptions.Item>
         </Descriptions>
       </Modal>

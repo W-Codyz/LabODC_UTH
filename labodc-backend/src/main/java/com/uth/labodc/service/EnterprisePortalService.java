@@ -427,6 +427,132 @@ public class EnterprisePortalService {
                 .build());
     }
 
+    public List<EnterpriseFeedbackDTO> getFeedbacks(User user) {
+        long enterpriseId = requireEnterpriseId(user);
+        String sql = """
+                SELECT f.id, f.project_id, p.title,
+                       f.overall_rating, f.quality_rating, f.communication_rating, f.timeline_rating, f.professionalism_rating,
+                       f.positive_feedback, f.negative_feedback, f.suggestions,
+                       f.would_recommend, f.would_work_again,
+                       f.status, f.submitted_at, f.created_at
+                FROM enterprise_feedback f
+                JOIN projects p ON p.id = f.project_id
+                WHERE f.enterprise_id = :enterpriseId
+                ORDER BY f.created_at DESC
+                """;
+        return jdbcTemplate.query(sql, Map.of("enterpriseId", enterpriseId), (rs, rowNum) -> EnterpriseFeedbackDTO.builder()
+                .id(rs.getLong("id"))
+                .projectId(rs.getLong("project_id"))
+                .projectName(rs.getString("title"))
+                .overallRating(rs.getObject("overall_rating") != null ? rs.getDouble("overall_rating") : null)
+                .qualityRating(rs.getObject("quality_rating") != null ? rs.getDouble("quality_rating") : null)
+                .communicationRating(rs.getObject("communication_rating") != null ? rs.getDouble("communication_rating") : null)
+                .timelineRating(rs.getObject("timeline_rating") != null ? rs.getDouble("timeline_rating") : null)
+                .professionalismRating(rs.getObject("professionalism_rating") != null ? rs.getDouble("professionalism_rating") : null)
+                .positiveFeedback(rs.getString("positive_feedback"))
+                .negativeFeedback(rs.getString("negative_feedback"))
+                .suggestions(rs.getString("suggestions"))
+                .wouldRecommend(rs.getObject("would_recommend") != null ? rs.getBoolean("would_recommend") : null)
+                .wouldWorkAgain(rs.getObject("would_work_again") != null ? rs.getBoolean("would_work_again") : null)
+                .status(rs.getString("status"))
+                .submittedAt(rs.getTimestamp("submitted_at") != null ? rs.getTimestamp("submitted_at").toString() : null)
+                .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toString() : null)
+                .build());
+    }
+
+    public EnterpriseFeedbackDTO createFeedback(User user, CreateEnterpriseFeedbackRequest request) {
+        long enterpriseId = requireEnterpriseId(user);
+        validateProjectOwnership(request.getProjectId(), enterpriseId);
+        ensureProjectCompleted(request.getProjectId(), enterpriseId);
+        if (request.getOverallRating() == null || request.getOverallRating() < 1 || request.getOverallRating() > 5) {
+            throw new IllegalArgumentException("Điểm đánh giá phải từ 1 đến 5");
+        }
+        if (request.getPositiveFeedback() == null || request.getPositiveFeedback().trim().isEmpty()) {
+            throw new IllegalArgumentException("Thiếu nội dung phản hồi");
+        }
+
+        String insertSql = """
+                INSERT INTO enterprise_feedback (
+                    enterprise_id, project_id,
+                    overall_rating, quality_rating, communication_rating, timeline_rating, professionalism_rating,
+                    positive_feedback, negative_feedback, suggestions,
+                    would_recommend, would_work_again,
+                    status, submitted_at, created_at
+                )
+                VALUES (
+                    :enterpriseId, :projectId,
+                    :overallRating, :qualityRating, :communicationRating, :timelineRating, :professionalismRating,
+                    :positiveFeedback, :negativeFeedback, :suggestions,
+                    :wouldRecommend, :wouldWorkAgain,
+                    :status, NOW(), NOW()
+                )
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("enterpriseId", enterpriseId)
+                .addValue("projectId", request.getProjectId())
+                .addValue("overallRating", request.getOverallRating())
+                .addValue("qualityRating", request.getQualityRating())
+                .addValue("communicationRating", request.getCommunicationRating())
+                .addValue("timelineRating", request.getTimelineRating())
+                .addValue("professionalismRating", request.getProfessionalismRating())
+                .addValue("positiveFeedback", request.getPositiveFeedback().trim())
+                .addValue("negativeFeedback", request.getNegativeFeedback())
+                .addValue("suggestions", request.getSuggestions())
+                .addValue("wouldRecommend", request.getWouldRecommend())
+                .addValue("wouldWorkAgain", request.getWouldWorkAgain())
+                .addValue("status", "SUBMITTED");
+        jdbcTemplate.update(insertSql, params);
+
+        String fetchSql = """
+                SELECT f.id, f.project_id, p.title,
+                       f.overall_rating, f.quality_rating, f.communication_rating, f.timeline_rating, f.professionalism_rating,
+                       f.positive_feedback, f.negative_feedback, f.suggestions,
+                       f.would_recommend, f.would_work_again,
+                       f.status, f.submitted_at, f.created_at
+                FROM enterprise_feedback f
+                JOIN projects p ON p.id = f.project_id
+                WHERE f.enterprise_id = :enterpriseId
+                ORDER BY f.id DESC
+                LIMIT 1
+                """;
+        List<EnterpriseFeedbackDTO> rows = jdbcTemplate.query(fetchSql, Map.of("enterpriseId", enterpriseId),
+                (rs, rowNum) -> EnterpriseFeedbackDTO.builder()
+                        .id(rs.getLong("id"))
+                        .projectId(rs.getLong("project_id"))
+                        .projectName(rs.getString("title"))
+                        .overallRating(rs.getObject("overall_rating") != null ? rs.getDouble("overall_rating") : null)
+                        .qualityRating(rs.getObject("quality_rating") != null ? rs.getDouble("quality_rating") : null)
+                        .communicationRating(rs.getObject("communication_rating") != null ? rs.getDouble("communication_rating") : null)
+                        .timelineRating(rs.getObject("timeline_rating") != null ? rs.getDouble("timeline_rating") : null)
+                        .professionalismRating(rs.getObject("professionalism_rating") != null ? rs.getDouble("professionalism_rating") : null)
+                        .positiveFeedback(rs.getString("positive_feedback"))
+                        .negativeFeedback(rs.getString("negative_feedback"))
+                        .suggestions(rs.getString("suggestions"))
+                        .wouldRecommend(rs.getObject("would_recommend") != null ? rs.getBoolean("would_recommend") : null)
+                        .wouldWorkAgain(rs.getObject("would_work_again") != null ? rs.getBoolean("would_work_again") : null)
+                        .status(rs.getString("status"))
+                        .submittedAt(rs.getTimestamp("submitted_at") != null ? rs.getTimestamp("submitted_at").toString() : null)
+                        .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toString() : null)
+                        .build());
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private void ensureProjectCompleted(Long projectId, long enterpriseId) {
+        Integer progress = jdbcTemplate.query("""
+                        SELECT progress_percentage
+                        FROM projects
+                        WHERE id = :projectId AND enterprise_id = :enterpriseId AND deleted_at IS NULL
+                        """,
+                Map.of("projectId", projectId, "enterpriseId", enterpriseId),
+                rs -> rs.next() ? rs.getInt("progress_percentage") : null);
+        if (progress == null) {
+            throw new ResourceNotFoundException("Project not found for enterprise");
+        }
+        if (progress < 100) {
+            throw new IllegalStateException("Chỉ dự án hoàn thành 100% mới được đánh giá");
+        }
+    }
+
     private long requireEnterpriseId(User user) {
         Optional<Long> enterpriseId = jdbcTemplate.query(
                 "SELECT id FROM enterprises WHERE user_id = :userId AND deleted_at IS NULL",
