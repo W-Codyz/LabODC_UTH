@@ -83,5 +83,12 @@ export const mentorAdminService = {
       `/lab-admin/enterprises/search-users?query=${encodeURIComponent(query)}`
     );
     return response.data;
+  },
+
+  getAllExpertise: async () => {
+    const response = await axiosInstance.get<string[]>(
+      `/lab-admin/mentors/expertise/all`
+    );
+    return response.data;
   }
 };

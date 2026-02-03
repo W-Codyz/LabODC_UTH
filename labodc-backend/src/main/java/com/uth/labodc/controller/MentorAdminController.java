@@ -33,6 +33,13 @@ public class MentorAdminController {
         return ResponseEntity.ok(mentor);
     }
     
+    @GetMapping("/expertise/all")
+    public ResponseEntity<java.util.List<String>> getAllExpertise() {
+        log.info("Fetching all distinct expertise from mentor_expertise table");
+        java.util.List<String> expertise = mentorAdminService.getAllDistinctExpertise();
+        return ResponseEntity.ok(expertise);
+    }
+    
     @PostMapping
     public ResponseEntity<MentorDTO> createMentor(
             @RequestBody MentorDTO dto) {
