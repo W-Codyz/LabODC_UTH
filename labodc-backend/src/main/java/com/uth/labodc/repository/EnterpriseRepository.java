@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface EnterpriseRepository extends JpaRepository<Enterprise, Long> {
     
+    boolean existsByTaxCode(String taxCode);
+    
+    boolean existsByUserId(Long userId);
+    
     long countByStatus(EnterpriseStatus status);
     
     @Query("SELECT COUNT(e) FROM Enterprise e WHERE e.createdAt >= :since")

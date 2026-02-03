@@ -99,8 +99,8 @@ export const hasPermission = (
   userRole: TUserRole,
   permission: keyof typeof PERMISSIONS
 ): boolean => {
-  const allowedRoles = PERMISSIONS[permission];
-  return allowedRoles.includes(userRole as any);
+  const allowedRoles = [...PERMISSIONS[permission]] as TUserRole[];
+  return allowedRoles.includes(userRole);
 };
 
 /**

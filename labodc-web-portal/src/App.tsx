@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App as AntdApp } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import { store } from './store';
 import AppRoutes from './routes';
@@ -27,9 +27,11 @@ const App: React.FC = () => {
           },
         }}
       >
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <AntdApp>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AntdApp>
       </ConfigProvider>
     </Provider>
   );

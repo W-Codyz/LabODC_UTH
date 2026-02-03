@@ -52,7 +52,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { reportService } from "@/services/admin/reportService";
-import type { TransparencyReport, ReportStatistics, CreateReportRequest } from '../../services/admin/reportService';
+import type { TransparencyReport, ReportStatistics } from '@/services/admin/reportService';
 import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
@@ -686,7 +686,7 @@ export default function TransparencyReports() {
         title="Công bố Báo cáo"
         open={publishModalVisible}
         onCancel={() => { setPublishModalVisible(false); setPublishNote(''); }}
-        onOk={() => handlePublish(selectedReportId)}
+        onOk={() => selectedReport && handlePublish(selectedReport.reportId)}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Alert

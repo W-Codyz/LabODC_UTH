@@ -1,11 +1,15 @@
-// Axios Configuration
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { API_BASE_URL, API_TIMEOUT, STORAGE_KEYS } from '@/utils/constants';
+// Axios Configuration for Lab Admin (Monolith Backend)
+import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import { STORAGE_KEYS } from '@/utils/constants';
 import { IApiResponse, IApiError } from '@/types/api.types';
 
-// Create axios instance
-const axiosInstance: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+// Lab Admin uses the monolith backend on port 8080
+const ADMIN_API_BASE_URL = 'http://localhost:8080/api';
+const API_TIMEOUT = 30000;
+
+// Create axios instance for admin endpoints
+const axiosAdminInstance: AxiosInstance = axios.create({
+  baseURL: ADMIN_API_BASE_URL,
   timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
@@ -13,7 +17,7 @@ const axiosInstance: AxiosInstance = axios.create({
 });
 
 // Request interceptor
-axiosInstance.interceptors.request.use(
+axiosAdminInstance.interceptors.request.use(
   (config: any) => {
     // Add access token to request headers
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -32,33 +36,25 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response interceptor
-axiosInstance.interceptors.response.use(
+axiosAdminInstance.interceptors.response.use(
   (response: AxiosResponse<IApiResponse>) => {
     // Calculate request duration
     const duration = new Date().getTime() - (response.config as any).metadata.startTime;
-    console.log(`Request to ${response.config.url} took ${duration}ms`);
+    console.log(`Admin API request to ${response.config.url} took ${duration}ms`);
 
     return response;
   },
   async (error: AxiosError<IApiError>) => {
-    // Phase1/2 microservices do not implement refresh-token yet.
-    // If we get 401, clear tokens and let the caller handle UI.
+    // Handle authentication errors
     if (error.response?.status === 401) {
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER_INFO);
+      window.location.href = '/login';
     }
 
-    // Handle other errors
-    const errorResponse: IApiError = {
-      success: false,
-      message: error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại!',
-      errors: error.response?.data?.errors,
-      timestamp: new Date().toISOString(),
-    };
-
-    return Promise.reject(errorResponse);
+    return Promise.reject(error);
   }
 );
 
-export default axiosInstance;
+export default axiosAdminInstance;

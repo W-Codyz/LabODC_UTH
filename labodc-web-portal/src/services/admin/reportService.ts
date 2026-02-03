@@ -29,7 +29,7 @@ export interface TransparencyReport {
   period: string; // YYYY-MM format
   statistics: ReportStatistics;
   chartsData?: any;
-  status: 'DRAFT' | 'PUBLISHED';
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   createdBy: number;
   publishedAt?: string;
   publicUrl?: string;

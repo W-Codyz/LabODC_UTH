@@ -39,6 +39,10 @@ const EnterpriseManagement = lazy(() => import('@/pages/admin/EnterpriseManageme
 const ProjectValidation = lazy(() => import('@/pages/admin/ProjectValidation'));
 const FundAllocation = lazy(() => import('@/pages/admin/FundAllocation'));
 const TransparencyReports = lazy(() => import('@/pages/admin/TransparencyReports'));
+const Enterprises = lazy(() => import('@/pages/admin/Enterprises'));
+const Talents = lazy(() => import('@/pages/admin/Talents'));
+const Mentors = lazy(() => import('@/pages/admin/Mentors'));
+const Projects = lazy(() => import('@/pages/admin/Projects'));
 
 // System Admin pages
 const SystemAdminDashboard = lazy(() => import('@/pages/system-admin/Dashboard'));
@@ -143,6 +147,10 @@ const AppRoutes: React.FC = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="approvals" element={<PendingApprovals />} />
           <Route path="enterprises" element={<EnterpriseManagement />} />
+          <Route path="enterprises-crud" element={<Enterprises />} />
+          <Route path="talents" element={<Talents />} />
+          <Route path="mentors" element={<Mentors />} />
+          <Route path="projects" element={<Projects />} />
           <Route path="projects/validate" element={<ProjectValidation />} />
           <Route path="funds" element={<FundAllocation />} />
           <Route path="reports" element={<TransparencyReports />} />

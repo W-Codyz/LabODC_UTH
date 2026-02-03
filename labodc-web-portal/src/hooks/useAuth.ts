@@ -3,7 +3,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { IUser, TUserRole } from '@/types/user.types';
+import { TUserRole } from '@/types/user.types';
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
@@ -28,7 +28,7 @@ export const useAuth = () => {
   };
 
   const hasAnyRole = (roles: TUserRole[]): boolean => {
-    return user ? roles.includes(user.role) : false;
+    return user ? roles.includes(user.role as TUserRole) : false;
   };
 
   return {

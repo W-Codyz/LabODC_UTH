@@ -56,8 +56,8 @@ export const login = createAsyncThunk(
       const response = await authService.login(credentials);
       console.log('🔍 Backend login response:', response);
       
-      // Backend returns { data: { token, email, role, ... }, message, success }
-      const responseData = response.data || response;
+      // Backend returns { token, email, role, ... }
+      const responseData = response;
       const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)
@@ -85,8 +85,8 @@ export const register = createAsyncThunk(
     try {
       const response = await authService.register(data);
       
-      // Backend returns { data: { token, email, role, ... }, message, success }
-      const responseData = response.data || response;
+      // Backend returns { token, email, role, ... }
+      const responseData = response;
       const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)
@@ -108,7 +108,7 @@ export const register = createAsyncThunk(
   }
 );
 
-export const logout = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
+export const logout = createAsyncThunk('auth/logout', async () => {
   try {
     await authService.logout();
   } catch (error: any) {

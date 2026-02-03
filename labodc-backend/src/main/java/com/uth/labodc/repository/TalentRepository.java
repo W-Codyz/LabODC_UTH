@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 @Repository
 public interface TalentRepository extends JpaRepository<Talent, Long> {
     
+    boolean existsByUserId(Long userId);
+    
+    boolean existsByStudentId(String studentId);
+    
     @Query("SELECT COUNT(t) FROM Talent t WHERE t.createdAt >= :since")
     long countNewTalents(LocalDateTime since);
     

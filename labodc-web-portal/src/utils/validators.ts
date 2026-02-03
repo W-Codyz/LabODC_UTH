@@ -91,7 +91,7 @@ export const isValidFileSize = (file: File, maxSize: number = FILE_UPLOAD.MAX_SI
  * Validate image file
  */
 export const isValidImage = (file: File): boolean => {
-  return isValidFileType(file, FILE_UPLOAD.ALLOWED_IMAGE_TYPES) &&
+  return isValidFileType(file, [...FILE_UPLOAD.ALLOWED_IMAGE_TYPES]) &&
          isValidFileSize(file);
 };
 
@@ -99,7 +99,7 @@ export const isValidImage = (file: File): boolean => {
  * Validate document file
  */
 export const isValidDocument = (file: File): boolean => {
-  return isValidFileType(file, FILE_UPLOAD.ALLOWED_DOCUMENT_TYPES) &&
+  return isValidFileType(file, [...FILE_UPLOAD.ALLOWED_DOCUMENT_TYPES]) &&
          isValidFileSize(file);
 };
 

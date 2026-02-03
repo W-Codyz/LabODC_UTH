@@ -70,4 +70,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "ORDER BY p.created_at DESC",
            nativeQuery = true)
     List<Object[]> findAllWithStats();
+    
+    // LAB ADMIN CRUD methods
+    Integer countByEnterpriseId(Long enterpriseId);
+    Integer countByEnterpriseIdAndStatus(Long enterpriseId, ProjectStatus status);
+    Integer countByMentorId(Long mentorId);
 }

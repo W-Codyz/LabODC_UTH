@@ -52,8 +52,8 @@ export interface IProjectDetail extends IProject {
   expectedOutcomes: string;
   attachments: string[];
   teamMembers: ITeamMember[];
-  tasks: ITask[];
-  reports: IReport[];
+  tasks: any[];
+  reports: any[];
 }
 
 export interface ITeamMember {
