@@ -116,8 +116,8 @@ export default function ProjectValidation() {
   };
 
   const handleApprove = async () => {
-    if (!selectedProject || !approveNote.trim()) {
-      message.warning('Vui lòng nhập ghi chú');
+    if (!selectedProject) {
+      message.warning('Không tìm thấy dự án');
       return;
     }
     
