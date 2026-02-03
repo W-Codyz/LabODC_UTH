@@ -133,4 +133,33 @@ public class TransparencyReportController {
             throw new RuntimeException("Failed to archive report: " + e.getMessage());
         }
     }
+    
+    /**
+     * Download PDF report
+     */
+    @GetMapping("/{reportId}/download")
+    @org.springframework.web.bind.annotation.CrossOrigin(origins = "*")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadPDF(@PathVariable Long reportId) {
+        log.info("Downloading PDF for report: {}", reportId);
+        
+        try {
+            byte[] pdfBytes = transparencyReportService.downloadPDF(reportId);
+            TransparencyReportDTO report = transparencyReportService.getReportById(reportId);
+            
+            String filename = String.format("report_%d_%s.pdf", reportId, report.getPeriod());
+            
+            org.springframework.core.io.ByteArrayResource resource = 
+                new org.springframework.core.io.ByteArrayResource(pdfBytes);
+            
+            return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, 
+                    "attachment; filename=\"" + filename + "\"")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .contentLength(pdfBytes.length)
+                .body(resource);
+        } catch (Exception e) {
+            log.error("Error downloading PDF", e);
+            throw new RuntimeException("Failed to download PDF: " + e.getMessage());
+        }
+    }
 }

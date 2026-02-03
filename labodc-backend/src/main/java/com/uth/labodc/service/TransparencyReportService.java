@@ -157,16 +157,23 @@ public class TransparencyReportService {
         TransparencyReport report = transparencyReportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Report not found with id: " + reportId));
         
-        // TODO: Generate PDF and upload to Cloudinary
-        // String cloudinaryUrl = cloudinaryService.uploadPDF(pdfBytes, "transparency-reports/" + reportId);
+        // Convert to DTO for PDF generation
+        TransparencyReportDTO reportDTO = convertToDTO(report);
         
+        // Generate PDF
+        byte[] pdfBytes = pdfGeneratorService.generateReportPDF(reportDTO);
+        
+        // Upload to Cloudinary
+        String fileName = "report_" + reportId + "_" + report.getPeriod();
+        String cloudinaryUrl = cloudinaryService.uploadPDF(pdfBytes, fileName);
+        
+        // Update report status and PDF URL
         report.setStatus(ReportStatus.ARCHIVED);
-        // report.setPdfUrl(cloudinaryUrl);
-        report.setPdfUrl("https://res.cloudinary.com/demo/image/upload/transparency-reports/" + reportId + ".pdf");
+        report.setPdfUrl(cloudinaryUrl);
         
         report = transparencyReportRepository.save(report);
         
-        log.info("Report {} archived successfully", reportId);
+        log.info("Report {} archived successfully with PDF: {}", reportId, cloudinaryUrl);
         return convertToDTO(report);
     }
     
@@ -597,5 +604,34 @@ public class TransparencyReportService {
                 .financials(financialStats)
                 .performance(performanceStats)
                 .build();
+    }
+    
+    /**
+     * Download PDF from Cloudinary
+     */
+    public byte[] downloadPDF(Long reportId) {
+        log.info("Downloading PDF for report: {}", reportId);
+        
+        TransparencyReport report = transparencyReportRepository.findById(reportId)
+            .orElseThrow(() -> new RuntimeException("Report not found: " + reportId));
+        
+        if (report.getPdfUrl() == null || report.getPdfUrl().isEmpty()) {
+            throw new RuntimeException("PDF not available for report: " + reportId);
+        }
+        
+        try {
+            // Fetch PDF from Cloudinary URL
+            java.net.URL url = new java.net.URL(report.getPdfUrl());
+            java.io.InputStream in = url.openStream();
+            byte[] pdfBytes = in.readAllBytes();
+            in.close();
+            
+            log.info("PDF downloaded successfully for report: {}", reportId);
+            return pdfBytes;
+            
+        } catch (Exception e) {
+            log.error("Failed to download PDF from Cloudinary", e);
+            throw new RuntimeException("Failed to download PDF: " + e.getMessage());
+        }
     }
 }

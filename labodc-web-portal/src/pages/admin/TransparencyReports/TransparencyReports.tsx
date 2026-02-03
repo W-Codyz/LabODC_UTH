@@ -157,22 +157,40 @@ export default function TransparencyReports() {
   const handleArchive = async (reportId: number) => {
     Modal.confirm({
       title: 'Xác nhận lưu trữ',
-      content: 'Báo cáo sẽ được lưu trữ và upload lên Cloudinary. Tiếp tục?',
+      content: 'Báo cáo sẽ được tạo PDF và lưu trữ lên Cloudinary. Quá trình này có thể mất vài giây. Tiếp tục?',
       okText: 'Lưu trữ',
       okType: 'primary',
       cancelText: 'Hủy',
       onOk: async () => {
+        const hide = message.loading('Đang tạo PDF và upload lên Cloudinary...', 0);
         try {
-          // TODO: Implement archive logic with Cloudinary upload
-          message.info('Chức năng lưu trữ đang được phát triển');
-          // await reportService.archiveReport(reportId);
-          // message.success('Đã lưu trữ báo cáo thành công');
-          // loadReports();
+          await reportService.archiveReport(reportId);
+          hide();
+          message.success('Đã lưu trữ báo cáo thành công!');
+          loadReports();
         } catch (error: any) {
+          hide();
           message.error(error.response?.data?.message || 'Không thể lưu trữ báo cáo');
         }
       }
     });
+  };
+
+  const downloadPDF = (reportId: number, filename: string) => {
+    // Simple navigation - let browser handle download
+    // This avoids IDM/CORS issues
+    const downloadUrl = `http://localhost:8080/api/lab-admin/transparency-reports/${reportId}/download`;
+    
+    // Create temporary link and click it
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    message.success('Đang tải xuống PDF...');
   };
 
   const handleDelete = async (id: number) => {
@@ -308,6 +326,15 @@ export default function TransparencyReports() {
               onClick={() => handleArchive(record.reportId)}
             >
               Lưu trữ
+            </Button>
+          )}
+          {record.status === 'ARCHIVED' && record.pdfUrl && (
+            <Button 
+              type="link" 
+              icon={<DownloadOutlined />} 
+              onClick={() => downloadPDF(record.reportId, `report_${record.reportId}_${record.period}.pdf`)}
+            >
+              Tải PDF
             </Button>
           )}
         </Space>

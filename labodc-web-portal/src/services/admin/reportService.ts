@@ -116,6 +116,12 @@ class ReportService {
     return response.data.data;
   }
 
+  // Lưu trữ báo cáo (published only)
+  async archiveReport(id: number): Promise<any> {
+    const response = await api.post(`/api/lab-admin/transparency-reports/${id}/archive`);
+    return response.data.data;
+  }
+
   // Xóa báo cáo (draft only)
   async deleteReport(id: number): Promise<void> {
     await api.delete(`/api/lab-admin/transparency-reports/${id}`);
