@@ -1,14 +1,17 @@
 // Routes Configuration
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useAuth } from '@/hooks/useAuth';
 import MainLayout from '@/components/layout/MainLayout';
 import { ROUTES } from '@/utils/constants';
+import { getDefaultRoute } from '@/utils/permissions';
 
 // Lazy load pages
 const Login = lazy(() => import('@/pages/auth/Login'));
 const Register = lazy(() => import('@/pages/auth/Register'));
+const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/auth/ResetPassword'));
 const HomePage = lazy(() => import('@/pages/home/HomePage'));
 
 // Enterprise pages
@@ -23,6 +26,7 @@ const BrowseProjects = lazy(() => import('@/pages/talent/BrowseProjects'));
 const MyProjects = lazy(() => import('@/pages/talent/MyProjects'));
 const Tasks = lazy(() => import('@/pages/talent/Tasks'));
 const Profile = lazy(() => import('@/pages/talent/Profile'));
+const TalentProjectDetail = lazy(() => import('@/pages/talent/ProjectDetail'));
 
 // Mentor pages
 const MentorDashboard = lazy(() => import('@/pages/mentor/Dashboard'));
@@ -53,17 +57,18 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Protected Route Component
+// Protected Route: redirect to login with returnUrl
 interface ProtectedRouteProps {
   children: React.ReactElement;
   allowedRoles?: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+  const location = useLocation();
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location.pathname + location.search }} replace />;
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
@@ -73,14 +78,35 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   return children;
 };
 
+// Guest Route: redirect if already logged in. Sau đăng ký → về trang chủ, không vào dashboard.
+const GuestRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
+  const from = (location.state as any)?.from as string | undefined;
+
+  if (isAuthenticated && user) {
+    const isRegisterPage = location.pathname === ROUTES.REGISTER;
+    const isLoginPage = location.pathname === ROUTES.LOGIN;
+    const target = isRegisterPage
+      ? ROUTES.HOME
+      : isLoginPage
+        ? (from || ROUTES.HOME)
+        : (from || getDefaultRoute(user.role as any));
+    return <Navigate to={target} replace />;
+  }
+  return children;
+};
+
 const AppRoutes: React.FC = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         {/* Public Routes */}
         <Route path={ROUTES.HOME} element={<HomePage />} />
-        <Route path={ROUTES.LOGIN} element={<Login />} />
-        <Route path={ROUTES.REGISTER} element={<Register />} />
+        <Route path={ROUTES.LOGIN} element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path={ROUTES.REGISTER} element={<GuestRoute><Register /></GuestRoute>} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Enterprise Routes */}
         <Route
@@ -108,6 +134,7 @@ const AppRoutes: React.FC = () => {
         >
           <Route path="dashboard" element={<TalentDashboard />} />
           <Route path="projects/browse" element={<BrowseProjects />} />
+          <Route path="projects/:id" element={<TalentProjectDetail />} />
           <Route path="my-projects" element={<MyProjects />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="profile" element={<Profile />} />
