@@ -2,45 +2,38 @@
 import React, { useEffect } from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login } from '@/store/slices/authSlice';
 import { ILoginRequest } from '@/types/auth.types';
-import { getDefaultRoute } from '@/utils/permissions';
+import { ROUTES } from '@/utils/constants';
 import styles from './Login.module.css';
 
 const Login: React.FC = () => {
   const [form] = Form.useForm();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const from = (location.state as { from?: string })?.from;
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const defaultRoute = getDefaultRoute(user.role);
-      navigate(defaultRoute);
+      navigate(from || ROUTES.HOME, { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, from]);
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: { username: string; password: string }) => {
     try {
-      // Transform username field to email for backend
       const loginData: ILoginRequest = {
-        email: values.username,  // Form field is 'username' but backend expects 'email'
+        email: values.username,
         password: values.password,
       };
-      
-      const result = await dispatch(login(loginData)).unwrap();
-      console.log('🎯 Login result:', result);
-      console.log('👤 User role:', result.user.role);
-      
+      await dispatch(login(loginData)).unwrap();
       message.success('Đăng nhập thành công!');
-      const defaultRoute = getDefaultRoute(result.user.role);
-      console.log('🚀 Redirecting to:', defaultRoute);
-      navigate(defaultRoute);
+      navigate(from || ROUTES.HOME, { replace: true });
     } catch (error: any) {
-      console.error('❌ Login error:', error);
-      message.error(error || 'Đăng nhập thất bại!');
+      message.error(error?.message ?? error ?? 'Đăng nhập thất bại!');
     }
   };
 
@@ -64,12 +57,16 @@ const Login: React.FC = () => {
           >
             <Form.Item
               name="username"
-              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+              rules={[
+                { required: true, message: 'Vui lòng nhập email!' },
+                { type: 'email', message: 'Email không hợp lệ!' },
+              ]}
             >
               <Input
                 prefix={<UserOutlined />}
-                placeholder="Tên đăng nhập"
+                placeholder="Email"
                 size="large"
+                type="email"
               />
             </Form.Item>
 

@@ -1,10 +1,11 @@
 // Header Component
 import React from 'react';
 import { Layout, Avatar, Dropdown, Badge, MenuProps, Button } from 'antd';
-import { BellOutlined, UserOutlined, LogoutOutlined, SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { BellOutlined, UserOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { formatRoleLabel } from '@/utils/formatters';
+import { getProfileRoute } from '@/utils/permissions';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toggleSidebar } from '@/store/slices/uiSlice';
 import styles from './Header.module.css';
@@ -17,18 +18,14 @@ const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const sidebarCollapsed = useAppSelector((state) => state.ui.sidebarCollapsed);
 
+  const profileRoute = user ? getProfileRoute(user.role as any) : '/';
+
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
       label: 'Hồ sơ cá nhân',
-      onClick: () => navigate('/profile'),
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-      onClick: () => navigate('/settings'),
+      onClick: () => navigate(profileRoute),
     },
     {
       type: 'divider',
@@ -71,7 +68,7 @@ const Header: React.FC = () => {
               className={styles.avatar}
             />
             <div className={styles.userInfo}>
-              <div className={styles.userName}>{user?.fullName}</div>
+              <div className={styles.userName}>{user?.fullName || user?.email || 'Người dùng'}</div>
               <div className={styles.userRole}>{user && formatRoleLabel(user.role)}</div>
             </div>
           </div>

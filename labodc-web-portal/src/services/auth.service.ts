@@ -1,5 +1,6 @@
 // Authentication Service
 import axiosInstance from './api/axios.config';
+import { IApiResponse } from '@/types/api.types';
 import {
   ILoginRequest,
   IRegisterRequest,
@@ -18,28 +19,31 @@ const AUTH_ENDPOINTS = {
   VERIFY_EMAIL: '/auth/verify-email',
 };
 
+/** Backend wraps auth in ApiResponse: { success, message, data: IAuthResponse } */
 export const authService = {
   /**
-   * Login
+   * Login - returns full API body { success, message, data }; slice uses .data
    */
-  login: async (data: ILoginRequest): Promise<IAuthResponse> => {
-    const response = await axiosInstance.post<IAuthResponse>(AUTH_ENDPOINTS.LOGIN, data);
+  login: async (data: ILoginRequest): Promise<IApiResponse<IAuthResponse>> => {
+    const response = await axiosInstance.post<IApiResponse<IAuthResponse>>(AUTH_ENDPOINTS.LOGIN, data);
     return response.data;
   },
 
   /**
-   * Register
+   * Register - backend returns AuthResponse in .data; we then login and return login body
    */
-  register: async (data: IRegisterRequest): Promise<IAuthResponse> => {
-    // Phase1/2 backend returns empty body for register, so we auto-login right after.
-    await axiosInstance.post(AUTH_ENDPOINTS.REGISTER, {
+  register: async (data: IRegisterRequest): Promise<IApiResponse<IAuthResponse>> => {
+    const regRes = await axiosInstance.post<IApiResponse<IAuthResponse>>(AUTH_ENDPOINTS.REGISTER, {
       email: data.email,
       password: data.password,
       confirmPassword: data.confirmPassword,
       role: data.role,
     });
-
-    const loginResponse = await axiosInstance.post<IAuthResponse>(AUTH_ENDPOINTS.LOGIN, {
+    // Backend register already returns token in regRes.data.data; we can use it or re-login
+    if (regRes.data?.data?.token) {
+      return regRes.data;
+    }
+    const loginResponse = await axiosInstance.post<IApiResponse<IAuthResponse>>(AUTH_ENDPOINTS.LOGIN, {
       email: data.email,
       password: data.password,
     });

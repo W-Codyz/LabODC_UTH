@@ -34,10 +34,11 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<IApiResponse>) => {
-    // Calculate request duration
-    const duration = new Date().getTime() - response.config.metadata.startTime;
-    console.log(`Request to ${response.config.url} took ${duration}ms`);
-
+    const start = (response.config as any).metadata?.startTime;
+    if (start != null) {
+      const duration = new Date().getTime() - start;
+      console.log(`Request to ${response.config.url} took ${duration}ms`);
+    }
     return response;
   },
   async (error: AxiosError<IApiError>) => {

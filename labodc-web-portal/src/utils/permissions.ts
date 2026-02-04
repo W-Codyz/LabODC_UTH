@@ -148,6 +148,21 @@ export const getDefaultRoute = (userRole: TUserRole): string => {
 };
 
 /**
+ * Get profile/settings route for user role (for header menu)
+ */
+export const getProfileRoute = (userRole: TUserRole): string => {
+  const profileRoutes: Record<TUserRole, string> = {
+    SYSTEM_ADMIN: '/system/dashboard',
+    LAB_ADMIN: '/admin/dashboard',
+    ENTERPRISE: '/enterprise/dashboard',
+    MENTOR: '/mentor/dashboard',
+    TALENT: '/talent/profile',
+    TALENT_LEADER: '/talent/profile',
+  };
+  return profileRoutes[userRole] || '/';
+};
+
+/**
  * Check if user can view project
  */
 export const canViewProject = (userRole: TUserRole, projectOwnerId: string, userId: string): boolean => {

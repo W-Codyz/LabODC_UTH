@@ -5,19 +5,29 @@ import { IApiResponse } from '@/types/api.types';
 
 const USER_ENDPOINTS = {
   BASE: '/users',
-  PROFILE: '/users/profile',
+  PROFILE: '/user/profile', // backend: GET /api/user/profile
   AVATAR: '/users/avatar',
 };
 
 export const userService = {
   /**
-   * Get current user profile
+   * Get current user profile (backend: id, email, role, status, emailVerified, createdAt, lastLoginAt)
    */
   getProfile: async (): Promise<IUserProfile> => {
     const response = await axiosInstance.get<IApiResponse<IUserProfile>>(
       USER_ENDPOINTS.PROFILE
     );
-    return response.data.data;
+    const data = response.data?.data ?? response.data;
+    return {
+      id: String(data?.id ?? ''),
+      username: data?.email ?? '',
+      email: data?.email ?? '',
+      fullName: (data as any)?.fullName ?? data?.email ?? '',
+      role: data?.role ?? 'TALENT',
+      status: data?.status ?? 'ACTIVE',
+      createdAt: (data as any)?.createdAt ?? '',
+      updatedAt: (data as any)?.updatedAt ?? '',
+    };
   },
 
   /**

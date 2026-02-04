@@ -2,6 +2,7 @@
   "name": "labodc-web-portal",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "LabOdc Web Portal - Enterprise-Student Collaboration System",
   "scripts": {
     "dev": "vite",

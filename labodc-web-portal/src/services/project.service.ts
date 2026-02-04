@@ -2,41 +2,52 @@
 import axiosInstance from './api/axios.config';
 import {
   IProject,
+  IProjectBackend,
   IProjectProposal,
   IProjectDetail,
+  mapBackendProject,
 } from '@/types/project.types';
-import { IApiResponse, IPaginatedResponse, IPaginationParams, IFilterParams } from '@/types/api.types';
+import { IApiResponse } from '@/types/api.types';
 
 const PROJECT_ENDPOINTS = {
   BASE: '/projects',
   PROPOSALS: '/projects/proposals',
   VALIDATE: '/projects/validate',
-  JOIN: '/projects/join',
-  LEAVE: '/projects/leave',
 };
 
 export const projectService = {
   /**
-   * Get all projects with pagination and filters
+   * Get all projects (backend returns list, optional status filter)
    */
-  getProjects: async (
-    params: IPaginationParams & IFilterParams
-  ): Promise<IPaginatedResponse<IProject>> => {
-    const response = await axiosInstance.get<IApiResponse<IPaginatedResponse<IProject>>>(
+  getProjects: async (params?: { status?: string }): Promise<IProject[]> => {
+    const response = await axiosInstance.get<IApiResponse<IProjectBackend[]>>(
       PROJECT_ENDPOINTS.BASE,
       { params }
     );
-    return response.data.data;
+    const list = response.data?.data ?? response.data ?? [];
+    return Array.isArray(list) ? list.map(mapBackendProject) : [];
   },
 
   /**
-   * Get project by ID
+   * Get project by ID (backend returns ProjectResponse)
    */
   getProjectById: async (id: string): Promise<IProjectDetail> => {
-    const response = await axiosInstance.get<IApiResponse<IProjectDetail>>(
+    const response = await axiosInstance.get<IApiResponse<IProjectBackend>>(
       `${PROJECT_ENDPOINTS.BASE}/${id}`
     );
-    return response.data.data;
+    const data = response.data?.data ?? response.data;
+    if (!data) throw new Error('Project not found');
+    const base = mapBackendProject(data);
+    return {
+      ...base,
+      objectives: data.objective ?? '',
+      scope: '',
+      expectedOutcomes: '',
+      attachments: data.attachments ?? [],
+      teamMembers: [],
+      tasks: [],
+      reports: [],
+    };
   },
 
   /**
@@ -83,27 +94,31 @@ export const projectService = {
   },
 
   /**
-   * Join project (Talent)
+   * Join project (Talent) - backend: POST /api/projects/{projectId}/join
    */
-  joinProject: async (projectId: string): Promise<void> => {
-    await axiosInstance.post(`${PROJECT_ENDPOINTS.JOIN}/${projectId}`);
+  joinProject: async (projectId: string, motivationLetter?: string): Promise<void> => {
+    await axiosInstance.post<IApiResponse<null>>(
+      `${PROJECT_ENDPOINTS.BASE}/${projectId}/join`,
+      motivationLetter != null ? { motivationLetter } : {}
+    );
   },
 
   /**
-   * Leave project (Talent)
+   * Leave project (Talent) - backend: POST /api/projects/{projectId}/leave
    */
   leaveProject: async (projectId: string): Promise<void> => {
-    await axiosInstance.post(`${PROJECT_ENDPOINTS.LEAVE}/${projectId}`);
+    await axiosInstance.post(`${PROJECT_ENDPOINTS.BASE}/${projectId}/leave`);
   },
 
   /**
-   * Get my projects
+   * Get my projects - backend: GET /api/projects/my
    */
   getMyProjects: async (): Promise<IProject[]> => {
-    const response = await axiosInstance.get<IApiResponse<IProject[]>>(
-      `${PROJECT_ENDPOINTS.BASE}/my-projects`
+    const response = await axiosInstance.get<IApiResponse<IProjectBackend[]>>(
+      `${PROJECT_ENDPOINTS.BASE}/my`
     );
-    return response.data.data;
+    const list = response.data?.data ?? response.data ?? [];
+    return Array.isArray(list) ? list.map(mapBackendProject) : [];
   },
 
   /**

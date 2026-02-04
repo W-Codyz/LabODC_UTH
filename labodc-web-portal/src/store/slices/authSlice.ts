@@ -54,27 +54,26 @@ export const login = createAsyncThunk(
   async (credentials: ILoginRequest, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
-      console.log('🔍 Backend login response:', response);
-      
-      // Backend returns { data: { token, email, role, ... }, message, success }
-      const responseData = response.data || response;
-      const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
+      // Backend returns ApiResponse<AuthResponse>: { success, message, data: { token, userId, email, role, ... } }
+      const payload = response && typeof response === 'object' && 'data' in response && response.data != null
+        ? response.data
+        : response;
+      const userId = parseUserIdFromJwt(payload.token) ?? payload.userId ?? 0;
 
-      // Transform backend response to frontend format (Phase1/2 microservices)
       const userData = {
         user: {
           userId,
-          email: responseData.email,
-          role: responseData.role,
-          status: 'ACTIVE',
+          email: payload.email,
+          role: payload.role,
+          status: payload.status ?? 'ACTIVE',
         },
-        accessToken: responseData.token,
-        refreshToken: responseData.refreshToken || '',
+        accessToken: payload.token,
+        refreshToken: payload.refreshToken || '',
       };
-      console.log('✅ Transformed user data:', userData);
       return userData;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || 'Login failed');
+      const message = error?.message ?? error?.response?.data?.message ?? 'Đăng nhập thất bại';
+      return rejectWithValue(message);
     }
   }
 );
@@ -84,26 +83,25 @@ export const register = createAsyncThunk(
   async (data: IRegisterRequest, { rejectWithValue }) => {
     try {
       const response = await authService.register(data);
-      
-      // Backend returns { data: { token, email, role, ... }, message, success }
-      const responseData = response.data || response;
-      const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
+      // Backend returns ApiResponse<AuthResponse>: { success, message, data: { token, ... } }
+      const payload = response && typeof response === 'object' && 'data' in response && response.data != null
+        ? response.data
+        : response;
+      const userId = parseUserIdFromJwt(payload.token) ?? payload.userId ?? 0;
 
-      // Transform backend response to frontend format (Phase1/2 microservices)
       return {
         user: {
           userId,
-          email: responseData.email,
-          role: responseData.role,
-          status: 'ACTIVE',
+          email: payload.email,
+          role: payload.role,
+          status: payload.status ?? 'ACTIVE',
         },
-        accessToken: responseData.token,
-        refreshToken: responseData.refreshToken || '',
+        accessToken: payload.token,
+        refreshToken: payload.refreshToken || '',
       };
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || 'Registration failed'
-      );
+      const message = error?.message ?? error?.response?.data?.message ?? 'Đăng ký thất bại';
+      return rejectWithValue(message);
     }
   }
 );

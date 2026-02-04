@@ -34,18 +34,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/api/public/**",
-                                "/api/lab-admin/transparency-reports/*/download",
-                                "/error",
-                                "/actuator/health"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+               .authorizeHttpRequests(auth -> auth
+    .requestMatchers(
+        "/api/auth/**",
+        "/api/users/register",
+        "/api/users/login",
+        "/api/public/**",
+        "/error",
+        "/actuator/health"
+    ).permitAll()
+    .anyRequest().authenticated()
+)
+        
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -69,3 +71,5 @@ public class SecurityConfig {
         return source;
     }
 }
+
+

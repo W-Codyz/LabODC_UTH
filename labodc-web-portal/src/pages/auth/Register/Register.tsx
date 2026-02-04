@@ -20,8 +20,8 @@ const Register: React.FC = () => {
   const onFinish = async (values: IRegisterRequest) => {
     try {
       await dispatch(register(values)).unwrap();
-      message.success('Đăng ký thành công! Vui lòng chờ xác thực.');
-      navigate('/login');
+      message.success('Đăng ký thành công! Chào mừng bạn đến với LabOdc.');
+      navigate('/');
     } catch (error: any) {
       message.error(error || 'Đăng ký thất bại!');
     }
@@ -73,7 +73,7 @@ const Register: React.FC = () => {
               name="password"
               rules={[
                 { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' },
+                { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự!' },
               ]}
             >
               <Input.Password
