@@ -1,9 +1,13 @@
 package com.uth.labodc.service;
 
 import com.uth.labodc.dto.project.*;
+import com.uth.labodc.model.entity.Enterprise;
+import com.uth.labodc.model.entity.MentorInvitation;
 import com.uth.labodc.model.entity.Project;
 import com.uth.labodc.model.entity.User;
 import com.uth.labodc.model.enums.ProjectStatus;
+import com.uth.labodc.repository.EnterpriseRepository;
+import com.uth.labodc.repository.MentorInvitationRepository;
 import com.uth.labodc.repository.ProjectRepository;
 import com.uth.labodc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,8 @@ public class ProjectValidationService {
     
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final MentorInvitationRepository mentorInvitationRepository;
+    private final EnterpriseRepository enterpriseRepository;
     
     /**
      * Get validation statistics
@@ -151,9 +157,51 @@ public class ProjectValidationService {
         project.setUpdatedAt(LocalDateTime.now());
         
         Project saved = projectRepository.save(project);
+        upsertMentorInvitation(saved, mentorId, message);
         log.info("Mentor {} assigned to project {} successfully", mentorId, projectId);
         
         return saved;
+    }
+
+    private void upsertMentorInvitation(Project project, Long mentorId, String message) {
+        if (project == null || mentorId == null) {
+            return;
+        }
+
+        MentorInvitation invitation = mentorInvitationRepository
+                .findByMentorIdAndProjectId(mentorId, project.getId())
+                .orElseGet(MentorInvitation::new);
+
+        Long invitedBy = 1L;
+        if (project.getEnterpriseId() != null) {
+            Enterprise enterprise = enterpriseRepository.findById(project.getEnterpriseId()).orElse(null);
+            if (enterprise != null && enterprise.getUserId() != null) {
+                invitedBy = enterprise.getUserId();
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        invitation.setMentorId(mentorId);
+        invitation.setProjectId(project.getId());
+        invitation.setInvitedBy(invitedBy);
+        invitation.setGroupName(project.getTitle() != null ? project.getTitle() : "Project #" + project.getId());
+        invitation.setStudentCount(project.getNumberOfStudents() != null ? project.getNumberOfStudents() : 0);
+        invitation.setDescription(project.getDescription());
+        invitation.setDeadline(project.getStartDate());
+        invitation.setExpiresAt(now.plusDays(7));
+        invitation.setSkills("[]");
+        invitation.setReceivedDate(LocalDate.now());
+        invitation.setPriority("medium");
+        invitation.setStatus("PENDING");
+        if (invitation.getCreatedAt() == null) {
+            invitation.setCreatedAt(now);
+        }
+        invitation.setUpdatedAt(now);
+
+        mentorInvitationRepository.save(invitation);
+        if (message != null && !message.isBlank()) {
+            log.info("Mentor invitation message: {}", message);
+        }
     }
     
     /**

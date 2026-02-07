@@ -2,6 +2,7 @@ package com.uth.labodc.controller;
 
 import com.uth.labodc.dto.ApiResponse;
 import com.uth.labodc.dto.enterprise.*;
+import com.uth.labodc.dto.project.AssignMentorRequest;
 import com.uth.labodc.exception.ResourceNotFoundException;
 import com.uth.labodc.model.entity.User;
 import com.uth.labodc.repository.UserRepository;
@@ -66,6 +67,13 @@ public class EnterprisePortalController {
         return ResponseEntity.ok(ApiResponse.success(enterprisePortalService.getProjects(user, status)));
     }
 
+    @GetMapping("/mentors")
+    @PreAuthorize("hasRole('ENTERPRISE')")
+    public ResponseEntity<ApiResponse<List<EnterpriseMentorOptionDTO>>> getMentors(Authentication authentication) {
+        User user = currentUser(authentication);
+        return ResponseEntity.ok(ApiResponse.success(enterprisePortalService.getMentors(user)));
+    }
+
     @GetMapping("/proposals/summary")
     @PreAuthorize("hasRole('ENTERPRISE')")
     public ResponseEntity<ApiResponse<EnterpriseProposalSummaryDTO>> getProposalSummary(Authentication authentication) {
@@ -117,6 +125,29 @@ public class EnterprisePortalController {
         User user = currentUser(authentication);
         enterprisePortalService.updateProject(user, id, request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật dự án thành công", null));
+    }
+
+    @PostMapping("/projects/{id}/assign-mentor")
+    @PreAuthorize("hasRole('ENTERPRISE')")
+    public ResponseEntity<ApiResponse<String>> assignMentor(
+            Authentication authentication,
+            @PathVariable long id,
+            @RequestBody AssignMentorRequest request
+    ) {
+        User user = currentUser(authentication);
+        enterprisePortalService.assignMentor(user, id, request.getMentorId(), request.getMessage());
+        return ResponseEntity.ok(ApiResponse.success("Đã gửi lời mời mentor", null));
+    }
+
+    @PostMapping("/projects/{id}/start")
+    @PreAuthorize("hasRole('ENTERPRISE')")
+    public ResponseEntity<ApiResponse<String>> startProject(
+            Authentication authentication,
+            @PathVariable long id
+    ) {
+        User user = currentUser(authentication);
+        enterprisePortalService.startProject(user, id);
+        return ResponseEntity.ok(ApiResponse.success("Đã chuyển dự án sang trạng thái đang thực hiện", null));
     }
 
     @DeleteMapping("/projects/{id}")

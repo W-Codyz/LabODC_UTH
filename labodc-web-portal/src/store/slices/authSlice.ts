@@ -1,7 +1,7 @@
 // Auth Slice
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authService } from '@/services/auth.service';
-import { ILoginRequest, IRegisterRequest, IAuthResponse } from '@/types/auth.types';
+import { ILoginRequest, IRegisterRequest } from '@/types/auth.types';
 import { STORAGE_KEYS } from '@/utils/constants';
 
 interface IUser {
@@ -57,8 +57,8 @@ export const login = createAsyncThunk(
       console.log('🔍 Backend login response:', response);
       console.log('📋 Response structure:', JSON.stringify(response, null, 2));
       
-      // Backend returns { success, message, data: { token, email, role, ... } }
-      const responseData = response.data; // Access the data object
+      // Backend may return ApiResponse { data: { token, email, role, ... } }
+      const responseData: any = (response as any)?.data ?? response;
       const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)
@@ -87,8 +87,8 @@ export const register = createAsyncThunk(
     try {
       const response = await authService.register(data);
       
-      // Backend returns { success, message, data: { token, email, role, ... } }
-      const responseData = response.data; // Access the data object
+      // Backend may return ApiResponse { data: { token, email, role, ... } }
+      const responseData: any = (response as any)?.data ?? response;
       const userId = parseUserIdFromJwt(responseData.token) ?? responseData.userId ?? 0;
 
       // Transform backend response to frontend format (Phase1/2 microservices)

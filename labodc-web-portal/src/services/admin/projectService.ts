@@ -28,7 +28,7 @@ export interface Project {
   enterpriseId: number;
   title: string;
   description: string;
-  status: 'DRAFT' | 'PENDING_VALIDATION' | 'RECRUITING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'DRAFT' | 'PENDING_VALIDATION' | 'VALIDATED' | 'RECRUITING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   validated: 'pending' | 'approved' | 'rejected';
   validatedAt?: string;
   budget: number;

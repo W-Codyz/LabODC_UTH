@@ -29,6 +29,7 @@ public class ProjectResponse {
     private String status;
     private Long enterpriseId;
     private Long mentorId;
+    private String mentorName;
     @Builder.Default
     private List<String> attachments = new ArrayList<>();
     private LocalDateTime createdAt;

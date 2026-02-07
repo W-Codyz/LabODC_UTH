@@ -50,9 +50,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     long countByValidated(String validated);
     
     long countByCreatedAtAfter(LocalDateTime dateTime);
-    
+
     List<Project> findByStatus(ProjectStatus status);
-    
+
+    List<Project> findByStatusAndAllowApplicationsTrueAndIsPublicTrue(ProjectStatus status);
+
     List<Project> findByValidatedAndStatusNot(String validated, ProjectStatus status);
     
     // Management query with ALL columns + technologies array + rejection data
@@ -75,4 +77,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Integer countByEnterpriseId(Long enterpriseId);
     Integer countByEnterpriseIdAndStatus(Long enterpriseId, ProjectStatus status);
     Integer countByMentorId(Long mentorId);
+
+    List<Project> findByMentorId(Long mentorId);
 }

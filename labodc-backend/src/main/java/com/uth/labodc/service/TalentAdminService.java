@@ -5,6 +5,8 @@ import com.uth.labodc.model.entity.Talent;
 import com.uth.labodc.model.entity.TalentSkill;
 import com.uth.labodc.model.entity.User;
 import java.math.BigDecimal;
+import com.uth.labodc.model.enums.ProjectStatus;
+import com.uth.labodc.repository.ProjectMemberRepository;
 import com.uth.labodc.repository.TalentRepository;
 import com.uth.labodc.repository.TalentSkillRepository;
 import com.uth.labodc.repository.UserRepository;
@@ -26,6 +28,7 @@ public class TalentAdminService {
     
     private final TalentRepository talentRepository;
     private final TalentSkillRepository talentSkillRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     
     public User findUserByEmail(String email) {
@@ -87,7 +90,7 @@ public class TalentAdminService {
                 TalentSkill skill = new TalentSkill();
                 skill.setTalentId(saved.getId());
                 skill.setSkillName(skillName);
-                skill.setProficiencyLevel("INTERMEDIATE"); // Default proficiency level
+                skill.setProficiencyLevel(TalentSkill.SkillLevel.INTERMEDIATE); // Default proficiency level
                 skill.setCreatedAt(LocalDateTime.now());
                 talentSkillRepository.save(skill);
             }
@@ -145,7 +148,7 @@ public class TalentAdminService {
                 TalentSkill skill = new TalentSkill();
                 skill.setTalentId(id);
                 skill.setSkillName(skillName);
-                skill.setProficiencyLevel("INTERMEDIATE"); // Default proficiency level
+                skill.setProficiencyLevel(TalentSkill.SkillLevel.INTERMEDIATE); // Default proficiency level
                 skill.setCreatedAt(LocalDateTime.now());
                 talentSkillRepository.save(skill);
             }
@@ -181,10 +184,11 @@ public class TalentAdminService {
                 .map(TalentSkill::getSkillName)
                 .collect(Collectors.toList());
         
-        // Get project stats (TODO: implement project member counts)
-        Integer totalProjects = 0; // talentProjectRepository.countByTalentId(talent.getId());
-        Integer completedProjects = 0;
-        Integer ongoingProjects = 0;
+        Integer totalProjects = projectMemberRepository.countDistinctProjectIdByTalentId(talent.getId());
+        Integer completedProjects = projectMemberRepository.countDistinctProjectIdByTalentIdAndProjectStatus(
+                talent.getId(), ProjectStatus.COMPLETED);
+        Integer ongoingProjects = projectMemberRepository.countDistinctProjectIdByTalentIdAndProjectStatus(
+                talent.getId(), ProjectStatus.IN_PROGRESS);
         
         return TalentDTO.builder()
                 .id(talent.getId())

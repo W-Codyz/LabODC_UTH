@@ -2,6 +2,8 @@ package com.uth.labodc.controller;
 
 import com.uth.labodc.dto.ApiResponse;
 import com.uth.labodc.dto.report.*;
+import com.uth.labodc.model.entity.User;
+import com.uth.labodc.repository.UserRepository;
 import com.uth.labodc.service.ExcelExportService;
 import com.uth.labodc.service.TransparencyReportService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class TransparencyReportController {
     
     private final TransparencyReportService transparencyReportService;
     private final ExcelExportService excelExportService;
+    private final UserRepository userRepository;
     
     /**
      * Get all transparency reports
@@ -60,7 +63,7 @@ public class TransparencyReportController {
             Authentication authentication) {
         log.info("Creating transparency report for period: {}", request.getPeriod());
         
-        Long adminId = 1L; // TODO: Extract from authentication
+        Long adminId = currentUser(authentication).getId();
         TransparencyReportDTO report = transparencyReportService.createReport(request, adminId);
         
         return ResponseEntity.ok(ApiResponse.success("Report created successfully", report));
@@ -161,5 +164,11 @@ public class TransparencyReportController {
             log.error("Error downloading PDF", e);
             throw new RuntimeException("Failed to download PDF: " + e.getMessage());
         }
+    }
+
+    private User currentUser(Authentication authentication) {
+        String email = authentication.getName();
+        return userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

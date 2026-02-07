@@ -2,7 +2,12 @@ package com.uth.labodc.service;
 
 import com.uth.labodc.dto.enterprise.*;
 import com.uth.labodc.exception.ResourceNotFoundException;
+import com.uth.labodc.model.entity.Mentor;
+import com.uth.labodc.model.entity.Project;
 import com.uth.labodc.model.entity.User;
+import com.uth.labodc.model.enums.ProjectStatus;
+import com.uth.labodc.repository.MentorRepository;
+import com.uth.labodc.repository.ProjectRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +35,9 @@ public class EnterprisePortalService {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final MentorRepository mentorRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectValidationService projectValidationService;
 
     public EnterpriseDashboardSummaryDTO getDashboardSummary(User user) {
         long enterpriseId = requireEnterpriseId(user);
@@ -68,8 +76,32 @@ public class EnterprisePortalService {
                 """;
         Double totalSpent = jdbcTemplate.query(spentSql, params, rs -> rs.next() ? rs.getDouble("total_spent") : 0d);
         summary.setTotalSpent(totalSpent != null ? totalSpent : 0d);
+        summary.setNotifications(loadMentorNotifications(enterpriseId));
 
         return summary;
+    }
+
+    private List<String> loadMentorNotifications(long enterpriseId) {
+        String sql = """
+                SELECT mi.updated_at, mi.status, m.full_name, p.title
+                FROM mentor_invitations mi
+                JOIN projects p ON p.id = mi.project_id
+                JOIN mentors m ON m.id = mi.mentor_id
+                WHERE p.enterprise_id = :enterpriseId
+                  AND p.deleted_at IS NULL
+                  AND mi.status IN ('ACCEPTED', 'REJECTED')
+                ORDER BY mi.updated_at DESC
+                LIMIT 5
+                """;
+        return jdbcTemplate.query(sql, Map.of("enterpriseId", enterpriseId), (rs, rowNum) -> {
+            String mentorName = rs.getString("full_name");
+            String title = rs.getString("title");
+            String status = rs.getString("status");
+            if ("REJECTED".equalsIgnoreCase(status)) {
+                return "Mentor " + mentorName + " đã từ chối lời mời cho dự án \"" + title + "\".";
+            }
+            return "Mentor " + mentorName + " đã chấp nhận lời mời cho dự án \"" + title + "\".";
+        });
     }
 
     public List<EnterpriseRecentProjectDTO> getRecentProjects(User user, int limit) {
@@ -156,6 +188,65 @@ public class EnterprisePortalService {
                 .build());
     }
 
+    public List<EnterpriseMentorOptionDTO> getMentors(User user) {
+        requireEnterpriseId(user);
+        return mentorRepository.findAll().stream()
+                .filter(m -> m.getAvailable() == null || m.getAvailable())
+                .map(this::toMentorOption)
+                .toList();
+    }
+
+    public void assignMentor(User user, long projectId, Long mentorId, String message) {
+        long enterpriseId = requireEnterpriseId(user);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        if (!project.getEnterpriseId().equals(enterpriseId)) {
+            throw new ResourceNotFoundException("Project not found for enterprise");
+        }
+        if (project.getMentorId() != null) {
+            throw new IllegalStateException("Project already has a mentor");
+        }
+        if (project.getStatus() != ProjectStatus.RECRUITING) {
+            throw new IllegalStateException("Project is not recruiting yet");
+        }
+        if (mentorId == null) {
+            throw new IllegalArgumentException("Missing mentorId");
+        }
+
+        projectValidationService.assignMentor(projectId, mentorId, message);
+    }
+
+    public void startProject(User user, long projectId) {
+        long enterpriseId = requireEnterpriseId(user);
+        String sql = """
+                SELECT status, current_members_count
+                FROM projects
+                WHERE id = :projectId AND enterprise_id = :enterpriseId AND deleted_at IS NULL
+                """;
+        List<ProjectStartMeta> rows = jdbcTemplate.query(sql, Map.of("projectId", projectId, "enterpriseId", enterpriseId),
+                (rs, rowNum) -> new ProjectStartMeta(rs.getString("status"),
+                        rs.getObject("current_members_count") != null ? rs.getInt("current_members_count") : 0));
+        if (rows.isEmpty()) {
+            throw new ResourceNotFoundException("Project not found for enterprise");
+        }
+        ProjectStartMeta meta = rows.get(0);
+        if (!"RECRUITING".equalsIgnoreCase(meta.status())) {
+            throw new IllegalStateException("Chỉ dự án đang tuyển mới có thể bắt đầu");
+        }
+        if (meta.members() < 1) {
+            throw new IllegalStateException("Cần ít nhất 1 thành viên để bắt đầu dự án");
+        }
+
+        jdbcTemplate.update("""
+                        UPDATE projects
+                        SET status = 'IN_PROGRESS',
+                            actual_start_date = COALESCE(actual_start_date, CURRENT_DATE),
+                            updated_at = NOW()
+                        WHERE id = :projectId AND enterprise_id = :enterpriseId
+                        """,
+                Map.of("projectId", projectId, "enterpriseId", enterpriseId));
+    }
+
     public void updateProject(User user, long projectId, UpdateEnterpriseProjectRequest request) {
         long enterpriseId = requireEnterpriseId(user);
         ProjectMeta meta = requireEnterpriseProject(projectId, enterpriseId);
@@ -238,11 +329,11 @@ public class EnterprisePortalService {
                   COALESCE(SUM(budget), 0) AS total_budget
                 FROM (
                   SELECT budget,
-                         CASE
-                           WHEN status = 'REJECTED' THEN 'REJECTED'
-                           WHEN validated = TRUE OR status IN ('VALIDATED', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED') THEN 'APPROVED'
-                           ELSE 'PENDING'
-                         END AS proposal_status
+                           CASE
+                             WHEN status = 'REJECTED' THEN 'REJECTED'
+                             WHEN validated = 'approved' OR status IN ('VALIDATED', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED') THEN 'APPROVED'
+                             ELSE 'PENDING'
+                           END AS proposal_status
                   FROM projects
                   WHERE enterprise_id = :enterpriseId AND deleted_at IS NULL
                 ) t
@@ -266,11 +357,11 @@ public class EnterprisePortalService {
         long enterpriseId = requireEnterpriseId(user);
         String sql = """
                 SELECT id, title, budget, created_at,
-                       CASE
-                         WHEN status = 'REJECTED' THEN 'REJECTED'
-                         WHEN validated = TRUE OR status IN ('VALIDATED', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED') THEN 'APPROVED'
-                         ELSE 'PENDING'
-                       END AS proposal_status
+                         CASE
+                           WHEN status = 'REJECTED' THEN 'REJECTED'
+                           WHEN validated = 'approved' OR status IN ('VALIDATED', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED') THEN 'APPROVED'
+                           ELSE 'PENDING'
+                         END AS proposal_status
                 FROM projects
                 WHERE enterprise_id = :enterpriseId AND deleted_at IS NULL
                 """;
@@ -280,7 +371,7 @@ public class EnterprisePortalService {
         if (status != null && !status.equalsIgnoreCase("ALL")) {
             sb.append(" AND (");
             sb.append("CASE WHEN status = 'REJECTED' THEN 'REJECTED' ");
-            sb.append("WHEN validated = TRUE OR status IN ('VALIDATED', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED') THEN 'APPROVED' ");
+            sb.append("WHEN validated = 'approved' OR status IN ('VALIDATED', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED') THEN 'APPROVED' ");
             sb.append("ELSE 'PENDING' END) = :status");
             params.put("status", status);
         }
@@ -629,6 +720,17 @@ public class EnterprisePortalService {
         return ts != null ? ts.toLocalDateTime() : null;
     }
 
+    private EnterpriseMentorOptionDTO toMentorOption(Mentor mentor) {
+        return EnterpriseMentorOptionDTO.builder()
+                .id(mentor.getId())
+                .fullName(mentor.getFullName())
+                .title(mentor.getTitle())
+                .currentCompany(mentor.getCurrentCompany())
+                .ratingAverage(mentor.getRatingAverage())
+                .available(mentor.getAvailable())
+                .build();
+    }
+
     private static class PaymentRowMapper implements RowMapper<EnterprisePaymentDTO> {
         @Override
         public EnterprisePaymentDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -654,5 +756,8 @@ public class EnterprisePortalService {
     }
 
     private record ProjectMeta(long id, String status) {
+    }
+
+    private record ProjectStartMeta(String status, int members) {
     }
 }

@@ -23,6 +23,7 @@ public class FundAllocationService {
     private final FundAllocationRepository fundAllocationRepository;
     private final FundDistributionRepository fundDistributionRepository;
     private final TeamFundDistributionRepository teamFundDistributionRepository;
+    private final TeamMemberAllocationRepository teamMemberAllocationRepository;
     private final EnterpriseRepository enterpriseRepository;
     
     // Fund allocation percentages (70% team, 20% mentor, 10% lab)
@@ -128,9 +129,34 @@ public class FundAllocationService {
         
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
-        
-        // TODO: Create mentor payment record
-        // For now, just log
+
+        FundAllocation allocation = fundAllocationRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new RuntimeException("Fund allocation not found for project: " + projectId));
+
+        BigDecimal amount = request.getAmount() != null ? request.getAmount() : allocation.getMentorAmount();
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid mentor disbursement amount");
+        }
+        if (amount.compareTo(allocation.getMentorAmount()) > 0) {
+            throw new RuntimeException("Mentor disbursement exceeds allocated mentor amount");
+        }
+
+        Long mentorId = request.getMentorId() != null ? request.getMentorId() : project.getMentorId();
+        if (mentorId == null) {
+            throw new RuntimeException("Mentor ID is required for disbursement");
+        }
+
+        FundDistribution distribution = FundDistribution.builder()
+                .allocationId(allocation.getId())
+                .recipientType("MENTOR")
+                .recipientId(mentorId)
+                .amount(amount)
+                .status("COMPLETED")
+                .disbursedAt(java.time.LocalDateTime.now())
+                .disbursedBy(allocation.getValidatedBy())
+                .build();
+
+        fundDistributionRepository.save(distribution);
         log.info("Mentor funds disbursed successfully. Note: {}", request.getNote());
     }
     
@@ -143,13 +169,87 @@ public class FundAllocationService {
         
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
-        
-        // TODO: Create team payment records
-        // For now, just log
+
+        FundAllocation allocation = fundAllocationRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new RuntimeException("Fund allocation not found for project: " + projectId));
+
+        if (request.getTeamDistribution() == null || request.getTeamDistribution().isEmpty()) {
+            throw new RuntimeException("Team distribution list is required");
+        }
+
+        BigDecimal totalRequested = request.getTeamDistribution().stream()
+                .map(DisburseTeamRequest.TeamMemberDisbursement::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalRequested.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Total team disbursement amount must be positive");
+        }
+        if (totalRequested.compareTo(allocation.getTeamAmount()) > 0) {
+            throw new RuntimeException("Team disbursement exceeds allocated team amount");
+        }
+
+        TeamFundDistribution teamDistribution;
+        if (request.getDistributionId() != null) {
+            teamDistribution = teamFundDistributionRepository.findById(request.getDistributionId())
+                    .orElseThrow(() -> new RuntimeException("Team distribution not found: " + request.getDistributionId()));
+            teamDistribution.setTotalTeamAmount(totalRequested);
+            teamDistribution.setStatus("DISBURSED");
+            teamDistribution.setApprovedByLab(allocation.getValidatedBy());
+            teamDistribution.setApprovedByLabAt(java.time.LocalDateTime.now());
+            teamDistribution = teamFundDistributionRepository.save(teamDistribution);
+        } else {
+            Long submittedBy = request.getTeamDistribution().get(0).getTalentId();
+            if (submittedBy == null) {
+                throw new RuntimeException("SubmittedBy talentId is required for team distribution");
+            }
+
+            teamDistribution = TeamFundDistribution.builder()
+                    .projectId(projectId)
+                    .allocationId(allocation.getId())
+                    .submittedBy(submittedBy)
+                    .totalTeamAmount(totalRequested)
+                    .status("DISBURSED")
+                    .approvedByLab(allocation.getValidatedBy())
+                    .approvedByLabAt(java.time.LocalDateTime.now())
+                    .build();
+            teamDistribution = teamFundDistributionRepository.save(teamDistribution);
+        }
+
         for (DisburseTeamRequest.TeamMemberDisbursement member : request.getTeamDistribution()) {
+            if (member.getTalentId() == null) {
+                throw new RuntimeException("Talent ID is required for team disbursement");
+            }
+            if (member.getAmount() == null || member.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Invalid disbursement amount for talent " + member.getTalentId());
+            }
+
+            BigDecimal percentage = member.getAmount()
+                    .multiply(HUNDRED)
+                    .divide(totalRequested, 2, RoundingMode.HALF_UP);
+
+            TeamMemberAllocation allocationMember = TeamMemberAllocation.builder()
+                    .distributionId(teamDistribution.getId())
+                    .talentId(member.getTalentId())
+                    .amount(member.getAmount())
+                    .percentage(percentage)
+                    .reason(request.getNote())
+                    .build();
+            teamMemberAllocationRepository.save(allocationMember);
+
+            FundDistribution distribution = FundDistribution.builder()
+                    .allocationId(allocation.getId())
+                    .recipientType("TALENT")
+                    .recipientId(member.getTalentId())
+                    .amount(member.getAmount())
+                    .status("COMPLETED")
+                    .disbursedAt(java.time.LocalDateTime.now())
+                    .disbursedBy(allocation.getValidatedBy())
+                    .build();
+            fundDistributionRepository.save(distribution);
+
             log.info("Disbursing {} to talent {}", member.getAmount(), member.getTalentId());
         }
-        
+
         log.info("Team funds disbursed successfully. Note: {}", request.getNote());
     }
     

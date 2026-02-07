@@ -3,6 +3,8 @@ package com.uth.labodc.controller;
 import com.uth.labodc.dto.ApiResponse;
 import com.uth.labodc.dto.project.*;
 import com.uth.labodc.model.entity.Project;
+import com.uth.labodc.model.entity.User;
+import com.uth.labodc.repository.UserRepository;
 import com.uth.labodc.service.ProjectValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import java.util.List;
 public class ProjectValidationController {
     
     private final ProjectValidationService projectValidationService;
+    private final UserRepository userRepository;
     
     /**
      * Get validation statistics
@@ -67,7 +70,7 @@ public class ProjectValidationController {
             Authentication authentication) {
         log.info("Admin {} approving project {}", authentication.getName(), id);
         
-        Long adminId = 1L; // TODO: Extract from authentication
+        Long adminId = currentUser(authentication).getId();
         Project approved = projectValidationService.approveProject(id, adminId, request);
         
         return ResponseEntity.ok(ApiResponse.success("Project approved successfully", approved));
@@ -84,7 +87,7 @@ public class ProjectValidationController {
             Authentication authentication) {
         log.info("Admin {} rejecting project {}", authentication.getName(), id);
         
-        Long adminId = 1L; // TODO: Extract from authentication
+        Long adminId = currentUser(authentication).getId();
         projectValidationService.rejectProject(id, adminId, request);
         
         return ResponseEntity.ok(ApiResponse.success("Project rejected successfully", null));
@@ -103,5 +106,11 @@ public class ProjectValidationController {
         Project updated = projectValidationService.assignMentor(id, request.getMentorId(), request.getMessage());
         
         return ResponseEntity.ok(ApiResponse.success("Mentor assigned successfully", updated));
+    }
+
+    private User currentUser(Authentication authentication) {
+        String email = authentication.getName();
+        return userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

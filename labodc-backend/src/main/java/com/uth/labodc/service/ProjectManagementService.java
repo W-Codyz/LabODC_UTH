@@ -4,13 +4,16 @@ import com.uth.labodc.dto.project.ProjectListDTO;
 import com.uth.labodc.dto.project.ProjectStatsDTO;
 import com.uth.labodc.model.entity.Project;
 import com.uth.labodc.model.entity.ProjectRejection;
+import com.uth.labodc.model.entity.ProjectMember;
 import com.uth.labodc.model.enums.ProjectStatus;
+import com.uth.labodc.repository.ProjectMemberRepository;
 import com.uth.labodc.repository.ProjectRepository;
 import com.uth.labodc.repository.ProjectRejectionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -25,6 +28,7 @@ public class ProjectManagementService {
     
     private final ProjectRepository projectRepository;
     private final ProjectRejectionRepository projectRejectionRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     
     @Transactional(readOnly = true)
     public ProjectStatsDTO getProjectStats() {
@@ -46,7 +50,7 @@ public class ProjectManagementService {
                 .build();
     }
     
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     public List<ProjectListDTO> getAllProjectsWithStats(String validatedFilter, String searchText) {
         log.info("Fetching projects with stats, validatedFilter: {}, searchText: {}", validatedFilter, searchText);
         
@@ -75,9 +79,8 @@ public class ProjectManagementService {
                         }
                     }
                     
-                    // No aggregated data for now (will add later when tables exist)
-                    int totalTeamMembers = 0;
-                    int totalApplications = 0;
+                    int totalTeamMembers = safeCountMembers(p.getId());
+                    int totalApplications = safeCountApplications(p.getId());
                     
                     ProjectListDTO dto = ProjectListDTO.builder()
                             .id(p.getId())
@@ -112,8 +115,13 @@ public class ProjectManagementService {
             log.info("Found {} projects after filtering", projects.size());
             return projects;
         } catch (Exception e) {
-            log.error("Error fetching projects with stats: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch projects: " + e.getMessage(), e);
+            log.error("Error fetching projects with stats, falling back to basic query: {}", e.getMessage(), e);
+            try {
+                return fallbackProjects(validatedFilter, searchText);
+            } catch (Exception fallbackError) {
+                log.error("Fallback query failed for projects: {}", fallbackError.getMessage(), fallbackError);
+                return new ArrayList<>();
+            }
         }
     }
     
@@ -126,6 +134,76 @@ public class ProjectManagementService {
         // 23: is_public, 24: allow_applications, 25: created_at, 26: updated_at, 27: published_at, 28: deleted_at,
         // 29: technologies (array), 30: pr_rejection_reason, 31: pr_rejected_at, 32: pr_rejected_by
         return 31; // 0-based index of last column
+    }
+
+    private int safeCountMembers(Long projectId) {
+        try {
+            Integer approved = projectMemberRepository.countByProjectIdAndStatus(
+                    projectId, ProjectMember.MemberStatus.APPROVED);
+            Integer active = projectMemberRepository.countByProjectIdAndStatus(
+                    projectId, ProjectMember.MemberStatus.ACTIVE);
+            return (approved != null ? approved : 0) + (active != null ? active : 0);
+        } catch (Exception e) {
+            log.warn("Failed to count team members for project {}: {}", projectId, e.getMessage());
+            return 0;
+        }
+    }
+
+    private int safeCountApplications(Long projectId) {
+        try {
+            Integer pending = projectMemberRepository.countByProjectIdAndStatus(
+                    projectId, ProjectMember.MemberStatus.PENDING);
+            return pending != null ? pending : 0;
+        } catch (Exception e) {
+            log.warn("Failed to count applications for project {}: {}", projectId, e.getMessage());
+            return 0;
+        }
+    }
+
+    private List<ProjectListDTO> fallbackProjects(String validatedFilter, String searchText) {
+        List<Project> projects = projectRepository.findAll();
+        List<ProjectListDTO> result = new ArrayList<>();
+
+        for (Project p : projects) {
+            if (validatedFilter != null && !validatedFilter.equals(p.getValidated())) {
+                continue;
+            }
+            if (searchText != null && !searchText.trim().isEmpty()) {
+                String search = searchText.toLowerCase();
+                boolean matches = (p.getTitle() != null && p.getTitle().toLowerCase().contains(search)) ||
+                        (p.getDescription() != null && p.getDescription().toLowerCase().contains(search));
+                if (!matches) {
+                    continue;
+                }
+            }
+
+            int totalTeamMembers = safeCountMembers(p.getId());
+            int totalApplications = safeCountApplications(p.getId());
+
+            ProjectListDTO dto = ProjectListDTO.builder()
+                    .id(p.getId())
+                    .enterpriseId(p.getEnterpriseId())
+                    .title(p.getTitle())
+                    .description(p.getDescription())
+                    .status(p.getStatus())
+                    .validated(p.getValidated())
+                    .validatedAt(p.getValidatedAt())
+                    .budget(p.getBudget())
+                    .numberOfStudents(p.getNumberOfStudents())
+                    .currentMembersCount(p.getCurrentMembersCount())
+                    .progressPercentage(p.getProgressPercentage())
+                    .startDate(p.getStartDate())
+                    .endDate(p.getEndDate())
+                    .createdAt(p.getCreatedAt())
+                    .totalTeamMembers(totalTeamMembers)
+                    .totalApplications(totalApplications)
+                    .technologies(new ArrayList<>())
+                    .build();
+            result.add(dto);
+        }
+
+        log.info("Fallback query returned {} projects after filtering", result.size());
+        return result;
     }
     
     private Project mapToProject(Object[] row) {

@@ -7,12 +7,15 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface TalentRepository extends JpaRepository<Talent, Long> {
     
+    Optional<Talent> findByUserId(Long userId);
+
     boolean existsByUserId(Long userId);
-    
+
     boolean existsByStudentId(String studentId);
     
     @Query("SELECT COUNT(t) FROM Talent t WHERE t.createdAt >= :since")

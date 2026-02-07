@@ -48,6 +48,15 @@ export interface UpdateProjectRequest {
   allowApplications?: boolean;
 }
 
+export interface MentorOption {
+  id: number;
+  fullName: string;
+  title?: string;
+  currentCompany?: string;
+  ratingAverage?: number;
+  available?: boolean;
+}
+
 export const getProjectSummary = async () => {
   const res = await axios.get('/enterprise/projects/summary');
   return res.data?.data ?? res.data ?? null;
@@ -77,5 +86,27 @@ export const updateProject = async (id: string | number, payload: UpdateProjectR
 
 export const deleteProject = async (id: string | number) => {
   const res = await axios.delete(`/enterprise/projects/${id}`);
+  return res.data?.data ?? res.data ?? null;
+};
+
+export const getMentors = async (): Promise<MentorOption[]> => {
+  const res = await axios.get('/enterprise/mentors');
+  return res.data?.data ?? res.data ?? [];
+};
+
+export const assignMentor = async (
+  projectId: string | number,
+  mentorId: number,
+  message?: string
+) => {
+  const res = await axios.post(`/enterprise/projects/${projectId}/assign-mentor`, {
+    mentorId,
+    message,
+  });
+  return res.data?.data ?? res.data ?? null;
+};
+
+export const startProject = async (projectId: string | number) => {
+  const res = await axios.post(`/enterprise/projects/${projectId}/start`);
   return res.data?.data ?? res.data ?? null;
 };

@@ -8,6 +8,7 @@ import com.uth.labodc.model.enums.ProjectStatus;
 import com.uth.labodc.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,9 @@ public class DashboardService {
     private final TalentRepository talentRepository;
     private final MentorRepository mentorRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
+    private final FundDistributionRepository fundDistributionRepository;
+    private final JdbcTemplate jdbcTemplate;
     
     @Transactional(readOnly = true)
     public DashboardStatsDTO getDashboardStats() {
@@ -115,21 +119,23 @@ public class DashboardService {
                     .build();
             
             // Financial Stats
-            Long totalBudget = projectRepository.getTotalBudget();
-            Long completedBudget = projectRepository.getTotalCompletedBudget();
-            
-            // Calculate disbursement (assuming 70% to team, 20% to mentor, 10% to lab)
-            long teamDisbursed = completedBudget != null ? (long)(completedBudget * 0.70) : 0L;
-            long mentorDisbursed = completedBudget != null ? (long)(completedBudget * 0.20) : 0L;
-            long labRevenue = completedBudget != null ? (long)(completedBudget * 0.10) : 0L;
+            BigDecimal totalRevenueAmount = safeSumPayments("COMPLETED");
+            BigDecimal teamDisbursedAmount = safeSumDistributions(List.of("TEAM", "TALENT"), "COMPLETED");
+            BigDecimal mentorDisbursedAmount = safeSumDistributions(List.of("MENTOR"), "COMPLETED");
+            BigDecimal labRevenueAmount = safeSumDistributions(List.of("LAB"), "COMPLETED");
+
+            BigDecimal hybridAdvancedAmount = queryBigDecimal(
+                    "SELECT COALESCE(SUM(advance_amount), 0) FROM hybrid_fund_advances");
+            BigDecimal hybridRepaidAmount = queryBigDecimal(
+                    "SELECT COALESCE(SUM(repaid_amount), 0) FROM hybrid_fund_advances");
             
             DashboardStatsDTO.FinancialStats financialStats = DashboardStatsDTO.FinancialStats.builder()
-                    .totalRevenue(completedBudget != null ? completedBudget : 0L)
-                    .teamDisbursed(teamDisbursed)
-                    .mentorDisbursed(mentorDisbursed)
-                    .labRevenue(labRevenue)
-                    .hybridFundAdvanced(0L) // TODO: Implement when fund tables ready
-                    .hybridFundRepaid(0L) // TODO: Implement when fund tables ready
+                    .totalRevenue(toLong(totalRevenueAmount))
+                    .teamDisbursed(toLong(teamDisbursedAmount))
+                    .mentorDisbursed(toLong(mentorDisbursedAmount))
+                    .labRevenue(toLong(labRevenueAmount))
+                    .hybridFundAdvanced(toLong(hybridAdvancedAmount))
+                    .hybridFundRepaid(toLong(hybridRepaidAmount))
                     .build();
             
             // Performance Stats (placeholder)
@@ -326,5 +332,42 @@ public class DashboardService {
         }
         
         return chartData;
+    }
+
+    private BigDecimal queryBigDecimal(String sql) {
+        try {
+            BigDecimal value = jdbcTemplate.queryForObject(sql, BigDecimal.class);
+            return value != null ? value : BigDecimal.ZERO;
+        } catch (Exception e) {
+            log.warn("Failed to query financial value: {}", e.getMessage());
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private long toLong(BigDecimal value) {
+        if (value == null) {
+            return 0L;
+        }
+        return value.setScale(0, RoundingMode.HALF_UP).longValue();
+    }
+
+    private BigDecimal safeSumPayments(String status) {
+        try {
+            BigDecimal value = paymentRepository.sumAmountByStatus(status);
+            return value != null ? value : BigDecimal.ZERO;
+        } catch (Exception e) {
+            log.warn("Failed to sum payments with status {}: {}", status, e.getMessage());
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private BigDecimal safeSumDistributions(List<String> recipientTypes, String status) {
+        try {
+            BigDecimal value = fundDistributionRepository.sumAmountByRecipientTypesAndStatus(recipientTypes, status);
+            return value != null ? value : BigDecimal.ZERO;
+        } catch (Exception e) {
+            log.warn("Failed to sum distributions {} with status {}: {}", recipientTypes, status, e.getMessage());
+            return BigDecimal.ZERO;
+        }
     }
 }

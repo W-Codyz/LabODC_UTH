@@ -189,6 +189,9 @@ public class ProjectAdminService {
         project.setValidatedAt(LocalDateTime.now());
         project.setValidatedBy(validatedBy);
         project.setRejectionReason(null); // Clear any previous rejection reason
+        if (project.getStatus() == null || project.getStatus() == ProjectStatus.PENDING_VALIDATION) {
+            project.setStatus(ProjectStatus.RECRUITING);
+        }
         
         Project saved = projectRepository.save(project);
         log.info("Project {} validated successfully", id);

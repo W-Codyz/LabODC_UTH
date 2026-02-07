@@ -19,11 +19,11 @@ const Reports = lazy(() => import('@/pages/enterprise/Reports'));
 const Feedback = lazy(() => import('@/pages/enterprise/Feedback'));
 
 // Talent pages
-const TalentDashboard = lazy(() => import('@/pages/talent/Dashboard'));
-const BrowseProjects = lazy(() => import('@/pages/talent/BrowseProjects'));
+const TalentDashboard = lazy(() => import('@/pages/talent/TalentDashboard'));
+const BrowseProjects = lazy(() => import('@/pages/talent/ProjectsBrowse'));
 const MyProjects = lazy(() => import('@/pages/talent/MyProjects'));
 const Tasks = lazy(() => import('@/pages/talent/Tasks'));
-const Profile = lazy(() => import('@/pages/talent/Profile'));
+const Profile = lazy(() => import('@/pages/talent/TalentProfile'));
 
 // Mentor pages
 const MentorDashboard = lazy(() => import('@/pages/mentor/Dashboard'));
@@ -31,6 +31,8 @@ const ProjectInvitations = lazy(() => import('@/pages/mentor/ProjectInvitations'
 const TaskManagement = lazy(() => import('@/pages/mentor/TaskManagement'));
 const Evaluation = lazy(() => import('@/pages/mentor/Evaluation'));
 const ReportSubmission = lazy(() => import('@/pages/mentor/ReportSubmission'));
+const MentorReports = lazy(() => import('@/pages/mentor/Reports'));
+const MentorApplications = lazy(() => import('@/pages/mentor/Applications'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
@@ -111,6 +113,7 @@ const AppRoutes: React.FC = () => {
         >
           <Route path="dashboard" element={<TalentDashboard />} />
           <Route path="projects/browse" element={<BrowseProjects />} />
+          <Route path="projects" element={<BrowseProjects />} />
           <Route path="my-projects" element={<MyProjects />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="profile" element={<Profile />} />
@@ -127,8 +130,15 @@ const AppRoutes: React.FC = () => {
         >
           <Route path="dashboard" element={<MentorDashboard />} />
           <Route path="invitations" element={<ProjectInvitations />} />
+          <Route path="applications" element={<MentorApplications />} />
+          {/* Aliases for current UI navigation */}
+          <Route path="tasks" element={<TaskManagement />} />
+          <Route path="evaluation" element={<Evaluation />} />
+
+          {/* Backward/route-param versions */}
           <Route path="projects/:id/tasks" element={<TaskManagement />} />
           <Route path="projects/:id/team" element={<Evaluation />} />
+          <Route path="reports" element={<MentorReports />} />
           <Route path="reports/new" element={<ReportSubmission />} />
         </Route>
 

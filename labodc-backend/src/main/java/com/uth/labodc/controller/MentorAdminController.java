@@ -39,6 +39,21 @@ public class MentorAdminController {
         java.util.List<String> expertise = mentorAdminService.getAllDistinctExpertise();
         return ResponseEntity.ok(expertise);
     }
+
+    @GetMapping("/available")
+    public ResponseEntity<com.uth.labodc.dto.ApiResponse<java.util.Map<String, Object>>> getAvailableMentors(
+            @RequestParam(required = false) String technologies) {
+        java.util.List<String> techList = java.util.Collections.emptyList();
+        if (technologies != null && !technologies.trim().isEmpty()) {
+            techList = java.util.Arrays.stream(technologies.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+        }
+        java.util.List<MentorDTO> mentors = mentorAdminService.getAvailableMentors(techList);
+        java.util.Map<String, Object> data = java.util.Map.of("mentors", mentors);
+        return ResponseEntity.ok(com.uth.labodc.dto.ApiResponse.success(data));
+    }
     
     @PostMapping
     public ResponseEntity<MentorDTO> createMentor(

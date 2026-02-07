@@ -58,6 +58,9 @@ public class ProjectService {
         project.setValidated("approved");
         project.setValidatedAt(LocalDateTime.now());
         project.setValidatedBy(validatedBy);
+        if (project.getStatus() == null || project.getStatus() == com.uth.labodc.model.enums.ProjectStatus.PENDING_VALIDATION) {
+            project.setStatus(com.uth.labodc.model.enums.ProjectStatus.RECRUITING);
+        }
         
         Project saved = projectRepository.save(project);
         log.info("Project {} approved successfully", id);

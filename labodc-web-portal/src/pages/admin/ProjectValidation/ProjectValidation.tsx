@@ -496,6 +496,23 @@ export default function ProjectValidation() {
                 </Space>
               </Card>
             )}
+
+            {(selectedProject.validated === 'approved' &&
+              (selectedProject.status === 'RECRUITING' || selectedProject.status === 'VALIDATED' || selectedProject.status === 'PENDING_VALIDATION') &&
+              !selectedProject.mentorId) && (
+              <Card size="small" style={{ background: '#f0f2f5' }}>
+                <Space style={{ width: '100%', justifyContent: 'center' }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<UserAddOutlined />}
+                    onClick={handleShowMentorModal}
+                  >
+                    Gán Mentor
+                  </Button>
+                </Space>
+              </Card>
+            )}
             </Descriptions>
 
             {/* Attachments */}

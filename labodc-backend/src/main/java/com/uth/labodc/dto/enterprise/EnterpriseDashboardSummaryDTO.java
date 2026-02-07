@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,4 +16,5 @@ public class EnterpriseDashboardSummaryDTO {
     private long activeProjects;
     private long completedProjects;
     private double totalSpent;
+    private List<String> notifications;
 }

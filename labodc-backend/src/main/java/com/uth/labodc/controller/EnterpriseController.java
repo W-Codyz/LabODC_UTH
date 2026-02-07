@@ -4,7 +4,9 @@ import com.uth.labodc.dto.ApiResponse;
 import com.uth.labodc.dto.enterprise.EnterpriseListDTO;
 import com.uth.labodc.dto.enterprise.EnterpriseStatsDTO;
 import com.uth.labodc.model.entity.Enterprise;
+import com.uth.labodc.model.entity.User;
 import com.uth.labodc.model.enums.EnterpriseStatus;
+import com.uth.labodc.repository.UserRepository;
 import com.uth.labodc.service.EnterpriseService;
 import com.uth.labodc.service.EnterpriseManagementService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class EnterpriseController {
     
     private final EnterpriseService enterpriseService;
     private final EnterpriseManagementService enterpriseManagementService;
+    private final UserRepository userRepository;
     
     @GetMapping
     @PreAuthorize("hasAnyRole('LAB_ADMIN', 'SYSTEM_ADMIN')")
@@ -51,7 +54,7 @@ public class EnterpriseController {
         log.info("Admin {} verifying enterprise {}", authentication.getName(), id);
         
         // Get admin user ID from authentication (you may need to adjust this based on your auth implementation)
-        Long adminId = 1L; // TODO: Extract from authentication
+        Long adminId = currentUser(authentication).getId();
         
         Enterprise verified = enterpriseService.verifyEnterprise(id, adminId);
         return ResponseEntity.ok(ApiResponse.success("Enterprise verified successfully", verified));
@@ -66,7 +69,7 @@ public class EnterpriseController {
         log.info("Admin {} rejecting/deleting enterprise {}", authentication.getName(), id);
         
         // Get admin user ID from authentication
-        Long adminId = 1L; // TODO: Extract from authentication properly
+        Long adminId = currentUser(authentication).getId();
         
         String reason = body != null ? body.get("reason") : null;
         if (reason != null) {
@@ -75,6 +78,12 @@ public class EnterpriseController {
         
         enterpriseService.deleteEnterprise(id, adminId, reason);
         return ResponseEntity.ok(ApiResponse.success("Enterprise rejected and deleted", null));
+    }
+
+    private User currentUser(Authentication authentication) {
+        String email = authentication.getName();
+        return userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
     
     // Management endpoints

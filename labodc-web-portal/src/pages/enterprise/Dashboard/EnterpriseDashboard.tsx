@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Progress, Button, Table, Tag, Modal, Descriptions, message } from 'antd';
+import { Row, Col, Card, Statistic, Progress, Button, Table, Tag, Modal, Descriptions, message, List, Empty } from 'antd';
 import {
   ProjectOutlined,
   DollarOutlined,
@@ -45,6 +45,7 @@ const EnterpriseDashboard: React.FC = () => {
     activeProjects: 0,
     completedProjects: 0,
     totalSpent: 0,
+    notifications: [],
   });
 
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
@@ -67,6 +68,7 @@ const EnterpriseDashboard: React.FC = () => {
           activeProjects: 0,
           completedProjects: 0,
           totalSpent: 0,
+          notifications: [],
         });
         setRecentProjects(Array.isArray(projectsRes) ? projectsRes : []);
       } catch (error) {
@@ -183,6 +185,17 @@ const EnterpriseDashboard: React.FC = () => {
         </Col>
       </Row>
 
+      <Card title="Thông báo" className="table-card" loading={loading}>
+        {summary.notifications && summary.notifications.length > 0 ? (
+          <List
+            dataSource={summary.notifications}
+            renderItem={(item: string) => <List.Item>{item}</List.Item>}
+          />
+        ) : (
+          <Empty description="Chưa có thông báo" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+      </Card>
+
       {/* TABLE */}
       <Card
         title="Dự án gần đây"
@@ -216,13 +229,17 @@ const EnterpriseDashboard: React.FC = () => {
           size="small"
           column={1}
           labelStyle={{ width: 160 }}
-          loading={detailLoading}
         >
           <Descriptions.Item label="Tên dự án">
             {detailData?.name ?? '-'}
           </Descriptions.Item>
           <Descriptions.Item label="Trạng thái">
             {detailData?.status ?? '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Mentor">
+            {detailData?.mentorName
+              ? detailData.mentorName
+              : (detailData?.mentorId ? `ID: ${detailData.mentorId}` : 'Chưa có')}
           </Descriptions.Item>
           <Descriptions.Item label="Ngân sách">
             {typeof detailData?.budget === 'number'

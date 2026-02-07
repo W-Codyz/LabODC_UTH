@@ -16,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -219,5 +222,43 @@ public class MentorAdminService {
     public List<String> getAllDistinctExpertise() {
         log.info("Fetching all distinct expertise from mentor_expertise table");
         return mentorExpertiseRepository.findAllDistinctSkillNames();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MentorDTO> getAvailableMentors(List<String> technologies) {
+        List<String> techFilters = technologies == null
+                ? Collections.emptyList()
+                : technologies.stream()
+                    .filter(t -> t != null && !t.trim().isEmpty())
+                    .map(t -> t.toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toList());
+
+        List<MentorDTO> all = mentorRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        List<MentorDTO> available = new ArrayList<>();
+        for (MentorDTO m : all) {
+            if (m.getAvailable() != null && !m.getAvailable()) {
+                continue;
+            }
+            if (techFilters.isEmpty()) {
+                available.add(m);
+                continue;
+            }
+            List<String> expertise = m.getExpertise();
+            if (expertise == null || expertise.isEmpty()) {
+                continue;
+            }
+            boolean match = expertise.stream()
+                    .filter(e -> e != null)
+                    .map(e -> e.toLowerCase(Locale.ROOT))
+                    .anyMatch(e -> techFilters.stream().anyMatch(e::contains));
+            if (match) {
+                available.add(m);
+            }
+        }
+
+        return available;
     }
 }

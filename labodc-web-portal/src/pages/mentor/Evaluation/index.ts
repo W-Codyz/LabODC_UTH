@@ -1,1 +1,1 @@
-export { default } from './Evaluation';
+export { default } from './EvaluationPage';

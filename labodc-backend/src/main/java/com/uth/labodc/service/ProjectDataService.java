@@ -54,6 +54,7 @@ public class ProjectDataService {
                    p.status,
                    p.enterprise_id,
                    p.mentor_id,
+                   m.full_name AS mentor_name,
                    p.created_at,
                    p.updated_at,
                    p.validated,
@@ -61,6 +62,7 @@ public class ProjectDataService {
                    p.progress_percentage
             FROM projects p
             LEFT JOIN project_rejections pr ON p.id = pr.project_id
+            LEFT JOIN mentors m ON p.mentor_id = m.id
             WHERE p.deleted_at IS NULL
             """;
 
@@ -385,6 +387,7 @@ public class ProjectDataService {
                 .status(mapDbStatus(row.status()))
                 .enterpriseId(row.enterpriseId())
                 .mentorId(row.mentorId())
+                .mentorName(row.mentorName())
                 .createdAt(row.createdAt())
                 .updatedAt(row.updatedAt())
                 .validated(row.validated() != null ? row.validated() : "pending")
@@ -462,6 +465,7 @@ public class ProjectDataService {
                     rs.getString("status"),
                     rs.getLong("enterprise_id"),
                     rs.getObject("mentor_id") != null ? rs.getLong("mentor_id") : null,
+                    rs.getString("mentor_name"),
                     toLocalDateTime(rs.getTimestamp("created_at")),
                     toLocalDateTime(rs.getTimestamp("updated_at")),
                     rs.getString("validated"),
@@ -488,6 +492,7 @@ public class ProjectDataService {
             String status,
             Long enterpriseId,
             Long mentorId,
+            String mentorName,
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
             String validated,

@@ -18,10 +18,8 @@ const Feedback: React.FC = () => {
     const loadProjects = async () => {
       try {
         const list = await getProjects('ALL');
-        const filtered = Array.isArray(list)
-          ? list.filter((p: any) => Number(p?.progress) >= 100)
-          : [];
-        setProjects(filtered);
+        const allProjects = Array.isArray(list) ? list : [];
+        setProjects(allProjects);
       } catch {
         setProjects([]);
       }
@@ -106,13 +104,16 @@ const Feedback: React.FC = () => {
             name="projectId"
             rules={[{ required: true, message: 'Chọn dự án' }]}
           >
-            <Select
-              placeholder="Chọn dự án"
-              options={projects.map((p) => ({
-                label: p.name,
+          <Select
+            placeholder="Chọn dự án"
+            options={projects.map((p) => ({
+                label: String(p?.status || '').toUpperCase() === 'COMPLETED' || Number(p?.progress) >= 100
+                  ? p.name
+                  : `${p.name} (Chưa hoàn thành)`,
                 value: Number(p.key),
+                disabled: !(String(p?.status || '').toUpperCase() === 'COMPLETED' || Number(p?.progress) >= 100),
               }))}
-            />
+          />
           </Form.Item>
 
           <Form.Item

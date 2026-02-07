@@ -24,6 +24,14 @@ axiosInstance.interceptors.request.use(
     // Add timestamp to request
     config.metadata = { startTime: new Date().getTime() };
 
+    // If sending FormData, let the browser set the multipart boundary
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
+    }
+
     return config;
   },
   (error: AxiosError) => {

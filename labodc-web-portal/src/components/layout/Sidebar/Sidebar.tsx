@@ -126,10 +126,28 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           onClick: () => navigate('/mentor/invitations'),
         },
         {
+          key: 'applications',
+          icon: <TeamOutlined />,
+          label: 'Duyệt đơn',
+          onClick: () => navigate('/mentor/applications'),
+        },
+        {
+          key: 'mentor-tasks',
+          icon: <CheckSquareOutlined />,
+          label: 'Công việc',
+          onClick: () => navigate('/mentor/tasks'),
+        },
+        {
+          key: 'mentor-evaluation',
+          icon: <TeamOutlined />,
+          label: 'Đánh giá',
+          onClick: () => navigate('/mentor/evaluation'),
+        },
+        {
           key: 'reports',
           icon: <FileTextOutlined />,
           label: 'Báo cáo',
-          onClick: () => navigate('/mentor/reports'),
+          onClick: () => navigate('/mentor/reports/new'),
         },
       ];
     }
@@ -249,7 +267,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     
     // Mentor routes
     if (path.includes('/invitations')) return 'invitations';
-    
+    if (path.includes('/mentor/applications')) return 'applications';
+    if (path.includes('/mentor/tasks')) return 'mentor-tasks';
+    if (path.includes('/mentor/evaluation')) return 'mentor-evaluation';
+
     // Reports (multiple roles use this)
     if (path.includes('/reports')) return 'reports';
     
@@ -282,3 +303,5 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
 };
 
 export default Sidebar;
+
+

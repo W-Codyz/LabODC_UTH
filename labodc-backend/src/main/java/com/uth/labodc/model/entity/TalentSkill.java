@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class TalentSkill {
     
     @Id
@@ -30,14 +34,21 @@ public class TalentSkill {
     private String skillCategory;
     
     @Column(name = "proficiency_level")
-    private String proficiencyLevel;
+    @Enumerated(EnumType.STRING)
+    private SkillLevel proficiencyLevel;
     
     @Column(name = "years_of_experience")
     private Double yearsOfExperience;
     
-    @Column(name = "created_at")
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
     
+    @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    public enum SkillLevel {
+        BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+    }
 }

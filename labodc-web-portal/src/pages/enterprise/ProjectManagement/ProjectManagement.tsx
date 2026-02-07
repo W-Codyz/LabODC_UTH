@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -17,6 +17,8 @@ import {
   Space,
   Popconfirm,
   Descriptions,
+  List,
+  Empty,
 } from 'antd';
 import {
   ProjectOutlined,
@@ -32,8 +34,13 @@ import {
   getProjectById,
   updateProject,
   deleteProject,
+  getMentors,
+  assignMentor,
+  startProject,
+  MentorOption,
 } from '@/services/enterprise/project.service';
 import { getFeedbacks, EnterpriseFeedback } from '@/services/enterprise/feedback.service';
+import { getEnterpriseDashboardSummary } from '@/services/enterprise/dashboard.service';
 import { formatCurrencyVND } from '@/utils/formatters';
 import { useNavigate } from 'react-router-dom';
 import '../enterprise-modern.css';
@@ -55,6 +62,13 @@ const ProjectManagement: React.FC = () => {
   const [detailData, setDetailData] = useState<any>(null);
   const [detailProjectId, setDetailProjectId] = useState<string | null>(null);
   const [detailFeedback, setDetailFeedback] = useState<EnterpriseFeedback | null>(null);
+  const [mentorModalOpen, setMentorModalOpen] = useState(false);
+  const [mentors, setMentors] = useState<MentorOption[]>([]);
+  const [mentorLoading, setMentorLoading] = useState(false);
+  const [assigningMentor, setAssigningMentor] = useState(false);
+  const [selectedMentorId, setSelectedMentorId] = useState<number | undefined>();
+  const [mentorMessage, setMentorMessage] = useState('');
+  const [notifications, setNotifications] = useState<string[]>([]);
 
   const [summary, setSummary] = useState({
     total: 0,
@@ -65,46 +79,75 @@ const ProjectManagement: React.FC = () => {
 
   const [projects, setProjects] = useState<Project[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const summaryRes = await getProjectSummary();
-        const projectsRes = await getProjects(status);
+  const refreshProjects = useCallback(async () => {
+    setLoading(true);
+    try {
+      const summaryRes = await getProjectSummary();
+      const projectsRes = await getProjects(status);
+      const dashboardRes = await getEnterpriseDashboardSummary();
 
-        setSummary(summaryRes ?? {
+      setSummary(
+        summaryRes ?? {
           total: 0,
           inProgress: 0,
           completed: 0,
           totalBudget: 0,
-        });
-        setProjects(Array.isArray(projectsRes) ? projectsRes : []);
-      } catch (err) {
-        console.error('Load project data failed:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [status]);
-
-  const refreshProjects = async () => {
-    try {
-      setLoading(true);
-      const summaryRes = await getProjectSummary();
-      const projectsRes = await getProjects(status);
-      setSummary(summaryRes ?? {
-        total: 0,
-        inProgress: 0,
-        completed: 0,
-        totalBudget: 0,
-      });
+        }
+      );
       setProjects(Array.isArray(projectsRes) ? projectsRes : []);
+      setNotifications(
+        Array.isArray(dashboardRes?.notifications) ? dashboardRes.notifications : []
+      );
     } catch (err) {
-      console.error('Refresh project data failed:', err);
+      console.error('Load project data failed:', err);
     } finally {
       setLoading(false);
+    }
+  }, [status]);
+
+  useEffect(() => {
+    refreshProjects();
+  }, [refreshProjects]);
+
+  const openMentorModal = async () => {
+    try {
+      setMentorLoading(true);
+      const data = await getMentors();
+      setMentors(Array.isArray(data) ? data : []);
+      setMentorModalOpen(true);
+    } catch (err: any) {
+      message.error(err?.message || 'Không thể tải danh sách mentor');
+    } finally {
+      setMentorLoading(false);
+    }
+  };
+
+  const handleAssignMentor = async () => {
+    if (!detailData?.id || !selectedMentorId) return;
+    try {
+      setAssigningMentor(true);
+      await assignMentor(detailData.id, selectedMentorId, mentorMessage);
+      message.success('Da gui loi moi mentor');
+      setMentorModalOpen(false);
+      setSelectedMentorId(undefined);
+      setMentorMessage('');
+      await refreshProjects();
+      const detail = await getProjectById(detailData.id);
+      setDetailData(detail ?? detailData);
+    } catch (err: any) {
+      message.error(err?.message || 'Không thể gửi lời mời mentor');
+    } finally {
+      setAssigningMentor(false);
+    }
+  };
+
+  const handleStartProject = async (projectId: string) => {
+    try {
+      await startProject(projectId);
+      message.success('Đã chuyển dự án sang trạng thái đang thực hiện');
+      await refreshProjects();
+    } catch (err: any) {
+      message.error(err?.message || 'Không thể chuyển trạng thái dự án');
     }
   };
   const getStatusColor = (status: string) => {
@@ -127,13 +170,13 @@ const ProjectManagement: React.FC = () => {
       case 'PENDING_VALIDATION':
         return 'Chờ duyệt';
       case 'VALIDATED':
-        return 'Đã duyệt';
+        return 'đã duyệt';
       case 'RECRUITING':
-        return 'Đang tuyển';
+        return 'đang tuyển';
       case 'IN_PROGRESS':
-        return 'Đang thực hiện';
+        return 'đang thực hiện';
       case 'COMPLETED':
-        return 'Hoàn thành';
+        return 'Hoan thanh';
       case 'ON_HOLD':
         return 'Tạm dừng';
       case 'REJECTED':
@@ -147,12 +190,8 @@ const ProjectManagement: React.FC = () => {
     <div className="page-wrapper">
       {/* HEADER */}
       <div className="page-header">
-        <h1>Quản lý dự án</h1>
-        <Button
-          type="primary"
-          icon={<ProjectOutlined />}
-          onClick={() => setCreateOpen(true)}
-        >
+        <h1>Quan ly du an</h1>
+        <Button type="primary" icon={<ProjectOutlined />} onClick={() => setCreateOpen(true)}>
           Tạo dự án mới
         </Button>
       </div>
@@ -161,11 +200,7 @@ const ProjectManagement: React.FC = () => {
       <Row gutter={16} className="stat-row">
         <Col span={6}>
           <Card className="modern-card stat-card">
-            <Statistic
-              title="Tổng dự án"
-              value={summary.total}
-              prefix={<ProjectOutlined />}
-            />
+            <Statistic title="Tổng dự án" value={summary.total} prefix={<ProjectOutlined />} />
           </Card>
         </Col>
         <Col span={6}>
@@ -198,19 +233,26 @@ const ProjectManagement: React.FC = () => {
         </Col>
       </Row>
 
+      <Card title="Thông báo" className="table-card">
+        {notifications.length > 0 ? (
+          <List
+            dataSource={notifications}
+            renderItem={(item: string) => <List.Item>{item}</List.Item>}
+          />
+        ) : (
+          <Empty description="Chưa có thông báo" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+      </Card>
+
       {/* FILTER */}
       <div className="filter-bar">
-        <Select
-          value={status}
-          onChange={setStatus}
-          style={{ width: 220 }}
-        >
-          <Select.Option value="ALL">Tất cả</Select.Option>
-          <Select.Option value="PENDING_VALIDATION">Chờ duyệt</Select.Option>
-          <Select.Option value="RECRUITING">Đang tuyển</Select.Option>
-          <Select.Option value="IN_PROGRESS">Đang thực hiện</Select.Option>
-          <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
-          <Select.Option value="ON_HOLD">Tạm dừng</Select.Option>
+        <Select value={status} onChange={setStatus} style={{ width: 220 }}>
+          <Select.Option value="ALL">Tat ca</Select.Option>
+          <Select.Option value="PENDING_VALIDATION">Cho duyet</Select.Option>
+          <Select.Option value="RECRUITING">Dang tuyen</Select.Option>
+          <Select.Option value="IN_PROGRESS">Dang thuc hien</Select.Option>
+          <Select.Option value="COMPLETED">Hoan thanh</Select.Option>
+          <Select.Option value="ON_HOLD">Tam dung</Select.Option>
         </Select>
       </div>
 
@@ -222,25 +264,23 @@ const ProjectManagement: React.FC = () => {
               <div>
                 <div className="project-title">{record.name}</div>
                 <div className="project-subtitle">
-                  Thành viên: {(record as any)?.members ?? '-'}
+                  Thanh vien: {(record as any)?.members ?? '-'}
                 </div>
               </div>
-              <Tag color={getStatusColor(record.status)}>
-                {getStatusLabel(record.status)}
-              </Tag>
+              <Tag color={getStatusColor(record.status)}>{getStatusLabel(record.status)}</Tag>
             </div>
 
             <div className="project-metrics">
               <div>
-                <div className="metric-label">Ngân sách</div>
+                <div className="metric-label">Ngan sach</div>
                 <div className="metric-value">{formatCurrencyVND(record.budget)}</div>
               </div>
               <div>
-                <div className="metric-label">Đã chi</div>
+                <div className="metric-label">Da chi</div>
                 <div className="metric-value">{formatCurrencyVND(record.spent)}</div>
               </div>
               <div>
-                <div className="metric-label">Thời gian</div>
+                <div className="metric-label">Thoi gian</div>
                 <div className="metric-value">
                   <span className="date-start">{(record as any)?.startDate ?? '-'}</span>
                   <br />
@@ -250,7 +290,7 @@ const ProjectManagement: React.FC = () => {
             </div>
 
             <div className="project-progress">
-              <div className="metric-label">Tiến độ</div>
+              <div className="metric-label">Tien do</div>
               <Progress percent={record.progress} />
             </div>
 
@@ -258,26 +298,37 @@ const ProjectManagement: React.FC = () => {
               <Button
                 type="link"
                 onClick={async () => {
-              try {
-                setDetailLoading(true);
-                const detail = await getProjectById(record.key);
-                setDetailData(detail ?? null);
-                setDetailProjectId(String(record.key));
-                const feedbackList = await getFeedbacks();
-                const feedback = Array.isArray(feedbackList)
-                  ? feedbackList.find((f: any) => Number(f.projectId) === Number(record.key))
-                  : null;
-                setDetailFeedback(feedback ?? null);
-                setDetailOpen(true);
-              } catch (err: any) {
-                message.error(err?.message || 'Không thể tải chi tiết dự án');
-              } finally {
-                setDetailLoading(false);
-              }
+                  try {
+                    setDetailLoading(true);
+                    const detail = await getProjectById(record.key);
+                    setDetailData(detail ?? null);
+                    setDetailProjectId(String(record.key));
+                    const feedbackList = await getFeedbacks();
+                    const feedback = Array.isArray(feedbackList)
+                      ? feedbackList.find((f: any) => Number(f.projectId) === Number(record.key))
+                      : null;
+                    setDetailFeedback(feedback ?? null);
+                    setDetailOpen(true);
+                  } catch (err: any) {
+                    message.error(err?.message || 'Không thể tải chi tiết dự án');
+                  } finally {
+                    setDetailLoading(false);
+                  }
                 }}
               >
-                Chi tiết
+                Chi tiet
               </Button>
+              {record.status === 'RECRUITING' && Number((record as any)?.members ?? 0) > 0 && (
+                <Popconfirm
+                  title="Bắt đầu dự án"
+                  description="Dự án sẽ chuyển sang trạng thái đang thực hiện."
+                  okText="Bắt đầu"
+                  cancelText="Hủy"
+                  onConfirm={() => handleStartProject(String(record.key))}
+                >
+                  <Button type="link">Bắt đầu</Button>
+                </Popconfirm>
+              )}{' '}
               {record.status === 'PENDING_VALIDATION' && (
                 <>
                   <Button
@@ -291,7 +342,7 @@ const ProjectManagement: React.FC = () => {
                           description: detail?.description ?? '',
                           objectives: Array.isArray(detail?.objectives)
                             ? detail.objectives.join('\n')
-                            : detail?.objective ?? '',
+                            : (detail?.objective ?? ''),
                           requirements: detail?.requirements ?? '',
                           startDate: detail?.startDate ? dayjs(detail.startDate) : undefined,
                           endDate: detail?.endDate ? dayjs(detail.endDate) : undefined,
@@ -311,10 +362,10 @@ const ProjectManagement: React.FC = () => {
                       }
                     }}
                   >
-                    Sửa
+                    Sua
                   </Button>
                   <Popconfirm
-                    title="Xóa dự án?"
+                    title="Xóa dự án"
                     description="Chỉ dự án chờ duyệt mới được xóa."
                     okText="Xóa"
                     cancelText="Hủy"
@@ -339,8 +390,6 @@ const ProjectManagement: React.FC = () => {
         ))}
       </div>
 
-      
-
       <Modal
         title="Chi tiết dự án"
         open={detailOpen}
@@ -350,52 +399,43 @@ const ProjectManagement: React.FC = () => {
           setDetailProjectId(null);
           setDetailFeedback(null);
         }}
-        footer={null}
+        footer={
+          (detailData?.status === 'RECRUITING' || detailData?.status === 'approved') &&
+          !detailData?.mentorId ? (
+            <Button type="primary" onClick={openMentorModal}>
+              Chon mentor
+            </Button>
+          ) : null
+        }
       >
-        <Descriptions
-          bordered
-          size="small"
-          column={1}
-          labelStyle={{ width: 160 }}
-        >
-          <Descriptions.Item label="Tên dự án">
-            {detailData?.name ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">
-            {detailData?.status ?? '-'}
-          </Descriptions.Item>
+        <Descriptions bordered size="small" column={1} labelStyle={{ width: 160 }}>
+          <Descriptions.Item label="Tên dự án">{detailData?.name ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">{detailData?.status ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="Ngân sách">
-            {typeof detailData?.budget === 'number'
-              ? formatCurrencyVND(detailData.budget)
-              : '-'}
+            {typeof detailData?.budget === 'number' ? formatCurrencyVND(detailData.budget) : '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="Mô tả">
-            {detailData?.description ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Yêu cầu">
-            {detailData?.requirements ?? '-'}
-          </Descriptions.Item>
+          <Descriptions.Item label="Mô tả">{detailData?.description ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Yêu cầu">{detailData?.requirements ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="Mục tiêu">
             {Array.isArray(detailData?.objectives)
               ? detailData.objectives.join(', ')
-              : detailData?.objective ?? '-'}
+              : (detailData?.objective ?? '-')}
           </Descriptions.Item>
           <Descriptions.Item label="Công nghệ">
-            {Array.isArray(detailData?.technologies)
-              ? detailData.technologies.join(', ')
-              : '-'}
+            {Array.isArray(detailData?.technologies) ? detailData.technologies.join(', ') : '-'}
           </Descriptions.Item>
           <Descriptions.Item label="Kỹ năng yêu cầu">
-            {Array.isArray(detailData?.requiredSkills)
-              ? detailData.requiredSkills.join(', ')
-              : '-'}
+            {Array.isArray(detailData?.requiredSkills) ? detailData.requiredSkills.join(', ') : '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="Bắt đầu">
-            {detailData?.startDate ?? '-'}
+          <Descriptions.Item label="Mentor">
+            {detailData?.mentorName
+              ? detailData.mentorName
+              : detailData?.mentorId
+                ? `ID: ${detailData.mentorId}`
+                : 'Chua co'}
           </Descriptions.Item>
-          <Descriptions.Item label="Kết thúc">
-            {detailData?.endDate ?? '-'}
-          </Descriptions.Item>
+          <Descriptions.Item label="Bắt đầu">{detailData?.startDate ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Kết thúc">{detailData?.endDate ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="Đánh giá">
             {detailFeedback ? (
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -403,11 +443,10 @@ const ProjectManagement: React.FC = () => {
                 <Button
                   type="link"
                   onClick={() =>
-                    detailProjectId &&
-                    navigate(`/enterprise/feedback?projectId=${detailProjectId}`)
+                    detailProjectId && navigate(`/enterprise/feedback?projectId=${detailProjectId}`)
                   }
                 >
-                  Đã đánh giá
+                  Xem đánh giá
                 </Button>
               </div>
             ) : (
@@ -416,9 +455,45 @@ const ProjectManagement: React.FC = () => {
           </Descriptions.Item>
         </Descriptions>
       </Modal>
-<Modal
+      <Modal
+        title="Chon mentor"
+        open={mentorModalOpen}
+        onCancel={() => {
+          setMentorModalOpen(false);
+        }}
+        onOk={handleAssignMentor}
+        okText="Gửi lời mời"
+        cancelText="Hủy"
+        confirmLoading={assigningMentor}
+        destroyOnClose
+      >
+        <Form layout="vertical">
+          <Form.Item label="Mentor">
+            <Select
+              placeholder="Chon mentor"
+              loading={mentorLoading}
+              value={selectedMentorId}
+              onChange={(value) => setSelectedMentorId(value)}
+              options={mentors.map((mentor) => ({
+                label: `${mentor.fullName}${mentor.title ? ` (${mentor.title})` : mentor.currentCompany ? ` (${mentor.currentCompany})` : ''}`,
+                value: mentor.id,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item label="Ghi chú (tùy chọn)">
+            <Input.TextArea
+              rows={3}
+              value={mentorMessage}
+              onChange={(event) => setMentorMessage(event.target.value)}
+              placeholder="Nội dung lời mời..."
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
         title="Tạo dự án mới"
         open={createOpen}
+        maskClosable={false}
         onCancel={() => {
           setCreateOpen(false);
           form.resetFields();
@@ -471,8 +546,8 @@ const ProjectManagement: React.FC = () => {
           }
         }}
         confirmLoading={creating}
-        okText="Tạo"
-        cancelText="Hủy"
+        okText="Tao"
+        cancelText="Huy"
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -482,7 +557,6 @@ const ProjectManagement: React.FC = () => {
           >
             <Input placeholder="Ví dụ: Hệ thống quản lý kho" />
           </Form.Item>
-
           <Form.Item
             label="Mô tả"
             name="description"
@@ -490,35 +564,57 @@ const ProjectManagement: React.FC = () => {
           >
             <Input.TextArea rows={3} placeholder="Mô tả ngắn về dự án" />
           </Form.Item>
-
           <Form.Item label="Mục tiêu (mỗi dòng một mục)" name="objectives">
             <Input.TextArea rows={3} placeholder="Ví dụ: Xây API\nTạo giao diện\nTriển khai" />
           </Form.Item>
-
           <Form.Item label="Yêu cầu" name="requirements">
             <Input.TextArea rows={3} placeholder="Yêu cầu kỹ thuật / quy trình" />
           </Form.Item>
-
-          <Form.Item
-            label="Thời gian"
-            style={{ marginBottom: 0 }}
-          >
+          <Form.Item label="Thời gian" style={{ marginBottom: 0 }}>
             <Form.Item
               name="startDate"
               rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}
               style={{ display: 'inline-block', width: 'calc(50% - 8px)' }}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker
+                style={{ width: '100%' }}
+                getPopupContainer={(trigger) => trigger.parentElement as HTMLElement}
+              />
             </Form.Item>
             <Form.Item
               name="endDate"
-              rules={[{ required: true, message: 'Chọn ngày kết thúc' }]}
+              dependencies={['startDate']}
+              rules={[
+                { required: true, message: 'Chọn ngày kết thúc' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const start = getFieldValue('startDate');
+                    if (!start || !value) {
+                      return Promise.resolve();
+                    }
+                    if (dayjs(value).isAfter(start, 'day')) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Ngày kết thúc phải sau ngày bắt đầu'));
+                  },
+                }),
+              ]}
               style={{ display: 'inline-block', width: 'calc(50% - 8px)', marginLeft: 16 }}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker
+                style={{ width: '100%' }}
+                getPopupContainer={(trigger) => trigger.parentElement as HTMLElement}
+                disabledDate={(current) => {
+                  const start = form.getFieldValue('startDate');
+                  if (!start || !current) return false;
+                  return (
+                    dayjs(current).isBefore(dayjs(start), 'day') ||
+                    dayjs(current).isSame(dayjs(start), 'day')
+                  );
+                }}
+              />
             </Form.Item>
           </Form.Item>
-
           <Form.Item
             label="Ngân sách (VND)"
             name="budget"
@@ -526,7 +622,6 @@ const ProjectManagement: React.FC = () => {
           >
             <InputNumber style={{ width: '100%' }} min={0} />
           </Form.Item>
-
           <Form.Item
             label="Số lượng sinh viên"
             name="requiredTalents"
@@ -534,11 +629,9 @@ const ProjectManagement: React.FC = () => {
           >
             <InputNumber style={{ width: '100%' }} min={1} max={50} />
           </Form.Item>
-
           <Form.Item label="Công nghệ (cách nhau bằng dấu phẩy)" name="technologies">
             <Input placeholder="React, Node.js, PostgreSQL" />
           </Form.Item>
-
           <Form.Item label="Kỹ năng yêu cầu (cách nhau bằng dấu phẩy)" name="requiredSkills">
             <Input placeholder="React.js, SQL, Docker" />
           </Form.Item>
@@ -548,6 +641,7 @@ const ProjectManagement: React.FC = () => {
       <Modal
         title="Chỉnh sửa dự án"
         open={editOpen}
+        maskClosable={false}
         onCancel={() => {
           setEditOpen(false);
           setEditId(null);
@@ -603,7 +697,7 @@ const ProjectManagement: React.FC = () => {
           }
         }}
         confirmLoading={editing}
-        okText="Lưu"
+        okText="Luu"
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
@@ -614,7 +708,6 @@ const ProjectManagement: React.FC = () => {
           >
             <Input />
           </Form.Item>
-
           <Form.Item
             label="Mô tả"
             name="description"
@@ -622,32 +715,57 @@ const ProjectManagement: React.FC = () => {
           >
             <Input.TextArea rows={3} />
           </Form.Item>
-
           <Form.Item label="Mục tiêu (mỗi dòng một mục)" name="objectives">
             <Input.TextArea rows={3} />
           </Form.Item>
-
           <Form.Item label="Yêu cầu" name="requirements">
             <Input.TextArea rows={3} />
           </Form.Item>
-
-          <Form.Item label="Thời gian" style={{ marginBottom: 0 }}>
+          <Form.Item label="Thoi gian" style={{ marginBottom: 0 }}>
             <Form.Item
               name="startDate"
               rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}
               style={{ display: 'inline-block', width: 'calc(50% - 8px)' }}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker
+                style={{ width: '100%' }}
+                getPopupContainer={(trigger) => trigger.parentElement as HTMLElement}
+              />
             </Form.Item>
             <Form.Item
               name="endDate"
-              rules={[{ required: true, message: 'Chọn ngày kết thúc' }]}
+              dependencies={['startDate']}
+              rules={[
+                { required: true, message: 'Chọn ngày kết thúc' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const start = getFieldValue('startDate');
+                    if (!start || !value) {
+                      return Promise.resolve();
+                    }
+                    if (dayjs(value).isAfter(start, 'day')) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Ngày kết thúc phải sau ngày bắt đầu'));
+                  },
+                }),
+              ]}
               style={{ display: 'inline-block', width: 'calc(50% - 8px)', marginLeft: 16 }}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker
+                style={{ width: '100%' }}
+                getPopupContainer={(trigger) => trigger.parentElement as HTMLElement}
+                disabledDate={(current) => {
+                  const start = form.getFieldValue('startDate');
+                  if (!start || !current) return false;
+                  return (
+                    dayjs(current).isBefore(dayjs(start), 'day') ||
+                    dayjs(current).isSame(dayjs(start), 'day')
+                  );
+                }}
+              />
             </Form.Item>
           </Form.Item>
-
           <Form.Item
             label="Ngân sách (VND)"
             name="budget"
@@ -655,7 +773,6 @@ const ProjectManagement: React.FC = () => {
           >
             <InputNumber style={{ width: '100%' }} min={0} />
           </Form.Item>
-
           <Form.Item
             label="Số lượng sinh viên"
             name="requiredTalents"
@@ -663,11 +780,9 @@ const ProjectManagement: React.FC = () => {
           >
             <InputNumber style={{ width: '100%' }} min={1} max={50} />
           </Form.Item>
-
           <Form.Item label="Công nghệ (cách nhau bằng dấu phẩy)" name="technologies">
             <Input />
           </Form.Item>
-
           <Form.Item label="Kỹ năng yêu cầu (cách nhau bằng dấu phẩy)" name="requiredSkills">
             <Input />
           </Form.Item>

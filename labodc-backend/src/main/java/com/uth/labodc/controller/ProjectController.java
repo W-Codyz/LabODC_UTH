@@ -136,7 +136,7 @@ public class ProjectController {
         log.info("Admin {} approving project {}", authentication.getName(), id);
         
         // Get admin user ID from authentication
-        Long adminId = 1L; // TODO: Extract from authentication
+        Long adminId = currentUser(authentication).getId();
         
         projectService.validateProject(id, adminId);
         return ResponseEntity.ok(ApiResponse.success("Đã phê duyệt dự án", null));
@@ -151,7 +151,7 @@ public class ProjectController {
         log.info("Admin {} rejecting project {}", authentication.getName(), id);
         
         // Get admin user ID from authentication
-        Long adminId = 1L; // TODO: Extract from authentication properly
+        Long adminId = currentUser(authentication).getId();
         
         String reason = body != null ? body.get("reason") : null;
         if (reason == null || reason.trim().isEmpty()) {
@@ -182,7 +182,7 @@ public class ProjectController {
         log.info("Admin {} deleting project {}", authentication.getName(), id);
         
         // Get admin user ID from authentication
-        Long adminId = 1L; // TODO: Extract from authentication properly
+        Long adminId = currentUser(authentication).getId();
         
         // For now, reject with generic reason
         projectService.rejectProject(id, adminId, "Deleted by admin");
