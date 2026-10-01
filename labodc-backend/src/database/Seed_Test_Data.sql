@@ -113,10 +113,10 @@ INSERT INTO enterprises (
     representative_name, representative_position,
     contact_email, contact_phone, website,
     industry, company_size, year_established, description,
-    verified, verified_at, verified_by,
+    status, verified_at, verified_by,
     created_at, updated_at
 )
-VALUES 
+VALUES
     -- Enterprise 1: TechCorp Vietnam
     (
         4, 'TechCorp Vietnam Co., Ltd', '0123456789', 'BL-2020-001',
@@ -125,7 +125,7 @@ VALUES
         'contact@techcorp.vn', '+84901111111', 'https://techcorp.vn',
         'Information Technology', '50-200', 2018,
         'Leading software development company specializing in enterprise solutions, mobile apps, and cloud services.',
-        true, NOW() - INTERVAL '30 days', 2,
+        'APPROVED', NOW() - INTERVAL '30 days', 2,
         NOW() - INTERVAL '60 days', NOW()
     ),
     -- Enterprise 2: Innovate Solutions
@@ -136,7 +136,7 @@ VALUES
         'info@innovatesolutions.vn', '+84902222222', 'https://innovatesolutions.vn',
         'Digital Marketing & E-commerce', '10-50', 2019,
         'Digital transformation consulting firm helping businesses modernize their operations and customer engagement.',
-        true, NOW() - INTERVAL '20 days', 2,
+        'APPROVED', NOW() - INTERVAL '20 days', 2,
         NOW() - INTERVAL '45 days', NOW()
     ),
     -- Enterprise 3: Digital Startup Hub
@@ -147,7 +147,7 @@ VALUES
         'hello@digitalstartup.vn', '+84903333333', 'https://digitalstartup.vn',
         'Startup & Innovation', '1-10', 2021,
         'Young startup focused on AI/ML solutions for e-commerce and retail industries.',
-        true, NOW() - INTERVAL '10 days', 2,
+        'APPROVED', NOW() - INTERVAL '10 days', 2,
         NOW() - INTERVAL '20 days', NOW()
     ),
     -- Enterprise 4: Pending verification
@@ -158,7 +158,7 @@ VALUES
         'enterprise4@example.com', '+84904444444', 'https://futuretech.vn',
         'Software Development', '10-50', 2023,
         'Emerging tech company focusing on blockchain and fintech solutions.',
-        false, NULL, NULL,
+        'PENDING', NULL, NULL,
         NOW() - INTERVAL '5 days', NOW()
     );
 

@@ -83,14 +83,14 @@ public class EnterprisePortalService {
 
     private List<String> loadMentorNotifications(long enterpriseId) {
         String sql = """
-                SELECT mi.updated_at, mi.status, m.full_name, p.title
+                SELECT COALESCE(mi.responded_at, mi.created_at) AS event_time, mi.status, m.full_name, p.title
                 FROM mentor_invitations mi
                 JOIN projects p ON p.id = mi.project_id
                 JOIN mentors m ON m.id = mi.mentor_id
                 WHERE p.enterprise_id = :enterpriseId
                   AND p.deleted_at IS NULL
                   AND mi.status IN ('ACCEPTED', 'REJECTED')
-                ORDER BY mi.updated_at DESC
+                ORDER BY event_time DESC
                 LIMIT 5
                 """;
         return jdbcTemplate.query(sql, Map.of("enterpriseId", enterpriseId), (rs, rowNum) -> {

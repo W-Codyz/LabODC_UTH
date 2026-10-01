@@ -33,6 +33,11 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
     
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
+    }
+
     @GetMapping("/test")
     public ResponseEntity<ApiResponse<String>> test() {
         return ResponseEntity.ok(ApiResponse.success("API is working!"));
