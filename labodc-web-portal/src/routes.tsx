@@ -46,10 +46,6 @@ const Talents = lazy(() => import('@/pages/admin/Talents'));
 const Mentors = lazy(() => import('@/pages/admin/Mentors'));
 const Projects = lazy(() => import('@/pages/admin/Projects'));
 
-// System Admin pages
-const SystemAdminDashboard = lazy(() => import('@/pages/system-admin/Dashboard'));
-const UserManagement = lazy(() => import('@/pages/system-admin/UserManagement'));
-
 // Loading component
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
