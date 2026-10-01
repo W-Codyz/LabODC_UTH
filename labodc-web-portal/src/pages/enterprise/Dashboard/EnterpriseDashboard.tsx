@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Progress, Button, Table, Tag, Modal, Descriptions, message, List, Empty } from 'antd';
+﻿import React, { useEffect, useState } from 'react';
+import { Row, Col, Card, Statistic, Progress, Button, Table, Tag, Modal, Descriptions, message, List, Empty, Spin } from 'antd';
 import {
   ProjectOutlined,
   DollarOutlined,
@@ -50,6 +50,7 @@ const EnterpriseDashboard: React.FC = () => {
 
   const [recentProjects, setRecentProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [enterpriseNotFound, setEnterpriseNotFound] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState<any>(null);
@@ -71,8 +72,13 @@ const EnterpriseDashboard: React.FC = () => {
           notifications: [],
         });
         setRecentProjects(Array.isArray(projectsRes) ? projectsRes : []);
-      } catch (error) {
-        console.error('Load dashboard failed', error);
+      } catch (error: any) {
+        const status = error?.response?.status;
+        if (status === 404 || status === 400) {
+          setEnterpriseNotFound(true);
+        } else {
+          console.error('Load dashboard failed', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -133,6 +139,28 @@ const EnterpriseDashboard: React.FC = () => {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (enterpriseNotFound) {
+    return (
+      <div className="page-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Card style={{ maxWidth: 480, textAlign: 'center', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🏢</div>
+          <h2 style={{ color: '#262626', marginBottom: 8 }}>Hồ sơ doanh nghiệp chưa được thiết lập</h2>
+          <p style={{ color: '#8c8c8c', marginBottom: 0 }}>
+            Tài khoản của bạn chưa có hồ sơ doanh nghiệp. Vui lòng liên hệ quản trị viên để được hỗ trợ kích hoạt.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="page-wrapper">
       {/* HEADER */}
@@ -144,36 +172,36 @@ const EnterpriseDashboard: React.FC = () => {
       </div>
 
       {/* SUMMARY */}
-      <Row gutter={16} className="stat-row">
-        <Col span={6}>
+      <Row gutter={[16, 16]} className="stat-row">
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Tổng dự án" value={summary.totalProjects} prefix={<ProjectOutlined />} />
+            <Statistic title="Tổng dự án" value={summary.totalProjects} prefix={<ProjectOutlined />} valueStyle={{ color: '#17a2b8' }} />
           </Card>
         </Col>
 
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Đang thực hiện"
               value={summary.activeProjects}
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#f59e0b' }}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
 
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Hoàn thành"
               value={summary.completedProjects}
               prefix={<ProjectOutlined />}
-              valueStyle={{ color: '#22c55e' }}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
 
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Tổng chi phí"
