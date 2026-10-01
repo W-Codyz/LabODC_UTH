@@ -20,9 +20,10 @@ const { Sider } = Layout;
 
 interface SidebarProps {
   collapsed: boolean;
+  isMobile?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, isMobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -36,8 +37,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       switch (user.role) {
         case 'LAB_ADMIN':
           return '/admin/dashboard';
-        case 'SYSTEM_ADMIN':
-          return '/system/dashboard';
         case 'ENTERPRISE':
           return '/enterprise/dashboard';
         case 'TALENT':
@@ -210,31 +209,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       ];
     }
 
-    // System Admin menu
-    if (user.role === 'SYSTEM_ADMIN') {
-      return [
-        ...baseItems,
-        {
-          key: 'config',
-          icon: <SettingOutlined />,
-          label: 'Cấu hình',
-          onClick: () => navigate('/system/config'),
-        },
-        {
-          key: 'roles',
-          icon: <TeamOutlined />,
-          label: 'Vai trò',
-          onClick: () => navigate('/system/roles'),
-        },
-        {
-          key: 'users',
-          icon: <TeamOutlined />,
-          label: 'Người dùng',
-          onClick: () => navigate('/system/users'),
-        },
-      ];
-    }
-
     return baseItems;
   };
 
@@ -274,11 +248,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     // Reports (multiple roles use this)
     if (path.includes('/reports')) return 'reports';
     
-    // System Admin routes
-    if (path.includes('/config')) return 'config';
-    if (path.includes('/roles')) return 'roles';
-    if (path.includes('/users')) return 'users';
-    
     return 'dashboard';
   };
 
@@ -287,8 +256,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       trigger={null}
       collapsible
       collapsed={collapsed}
-      className={styles.sider}
-      breakpoint="lg"
+      collapsedWidth={isMobile ? 0 : 80}
+      className={`${styles.sider} ${isMobile ? styles.mobile : ''}`}
       width={250}
     >
       <Menu
