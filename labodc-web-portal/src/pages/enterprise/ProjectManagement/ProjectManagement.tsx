@@ -127,7 +127,7 @@ const ProjectManagement: React.FC = () => {
     try {
       setAssigningMentor(true);
       await assignMentor(detailData.id, selectedMentorId, mentorMessage);
-      message.success('Da gui loi moi mentor');
+      message.success('Đã gửi lời mời mentor');
       setMentorModalOpen(false);
       setSelectedMentorId(undefined);
       setMentorMessage('');
@@ -170,13 +170,13 @@ const ProjectManagement: React.FC = () => {
       case 'PENDING_VALIDATION':
         return 'Chờ duyệt';
       case 'VALIDATED':
-        return 'đã duyệt';
+        return 'Đã duyệt';
       case 'RECRUITING':
-        return 'đang tuyển';
+        return 'Đang tuyển';
       case 'IN_PROGRESS':
-        return 'đang thực hiện';
+        return 'Đang thực hiện';
       case 'COMPLETED':
-        return 'Hoan thanh';
+        return 'Hoàn thành';
       case 'ON_HOLD':
         return 'Tạm dừng';
       case 'REJECTED':
@@ -190,38 +190,40 @@ const ProjectManagement: React.FC = () => {
     <div className="page-wrapper">
       {/* HEADER */}
       <div className="page-header">
-        <h1>Quan ly du an</h1>
+        <h1>Quản lý dự án</h1>
         <Button type="primary" icon={<ProjectOutlined />} onClick={() => setCreateOpen(true)}>
           Tạo dự án mới
         </Button>
       </div>
 
       {/* SUMMARY */}
-      <Row gutter={16} className="stat-row">
-        <Col span={6}>
+      <Row gutter={[16, 16]} className="stat-row">
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
-            <Statistic title="Tổng dự án" value={summary.total} prefix={<ProjectOutlined />} />
+            <Statistic title="Tổng dự án" value={summary.total} prefix={<ProjectOutlined />} valueStyle={{ color: '#17a2b8' }} />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Đang thực hiện"
               value={summary.inProgress}
               prefix={<RiseOutlined />}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Hoàn thành"
               value={summary.completed}
               prefix={<CheckCircleOutlined />}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Tổng ngân sách"
@@ -247,12 +249,12 @@ const ProjectManagement: React.FC = () => {
       {/* FILTER */}
       <div className="filter-bar">
         <Select value={status} onChange={setStatus} style={{ width: 220 }}>
-          <Select.Option value="ALL">Tat ca</Select.Option>
-          <Select.Option value="PENDING_VALIDATION">Cho duyet</Select.Option>
-          <Select.Option value="RECRUITING">Dang tuyen</Select.Option>
-          <Select.Option value="IN_PROGRESS">Dang thuc hien</Select.Option>
-          <Select.Option value="COMPLETED">Hoan thanh</Select.Option>
-          <Select.Option value="ON_HOLD">Tam dung</Select.Option>
+          <Select.Option value="ALL">Tất cả</Select.Option>
+          <Select.Option value="PENDING_VALIDATION">Chờ duyệt</Select.Option>
+          <Select.Option value="RECRUITING">Đang tuyển</Select.Option>
+          <Select.Option value="IN_PROGRESS">Đang thực hiện</Select.Option>
+          <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
+          <Select.Option value="ON_HOLD">Tạm dừng</Select.Option>
         </Select>
       </div>
 
@@ -264,7 +266,7 @@ const ProjectManagement: React.FC = () => {
               <div>
                 <div className="project-title">{record.name}</div>
                 <div className="project-subtitle">
-                  Thanh vien: {(record as any)?.members ?? '-'}
+                  Thành viên: {(record as any)?.members ?? '-'}
                 </div>
               </div>
               <Tag color={getStatusColor(record.status)}>{getStatusLabel(record.status)}</Tag>
@@ -272,15 +274,15 @@ const ProjectManagement: React.FC = () => {
 
             <div className="project-metrics">
               <div>
-                <div className="metric-label">Ngan sach</div>
+                <div className="metric-label">Ngân sách</div>
                 <div className="metric-value">{formatCurrencyVND(record.budget)}</div>
               </div>
               <div>
-                <div className="metric-label">Da chi</div>
+                <div className="metric-label">Đã chi</div>
                 <div className="metric-value">{formatCurrencyVND(record.spent)}</div>
               </div>
               <div>
-                <div className="metric-label">Thoi gian</div>
+                <div className="metric-label">Thời gian</div>
                 <div className="metric-value">
                   <span className="date-start">{(record as any)?.startDate ?? '-'}</span>
                   <br />
@@ -290,7 +292,7 @@ const ProjectManagement: React.FC = () => {
             </div>
 
             <div className="project-progress">
-              <div className="metric-label">Tien do</div>
+              <div className="metric-label">Tiến độ</div>
               <Progress percent={record.progress} />
             </div>
 
@@ -316,7 +318,7 @@ const ProjectManagement: React.FC = () => {
                   }
                 }}
               >
-                Chi tiet
+                Chi tiết
               </Button>
               {record.status === 'RECRUITING' && Number((record as any)?.members ?? 0) > 0 && (
                 <Popconfirm
@@ -338,6 +340,7 @@ const ProjectManagement: React.FC = () => {
                         const detail = await getProjectById(record.key);
                         setEditId(String(record.key));
                         form.setFieldsValue({
+
                           name: detail?.name ?? record.name,
                           description: detail?.description ?? '',
                           objectives: Array.isArray(detail?.objectives)
@@ -362,7 +365,7 @@ const ProjectManagement: React.FC = () => {
                       }
                     }}
                   >
-                    Sua
+                    Sửa
                   </Button>
                   <Popconfirm
                     title="Xóa dự án"
@@ -403,7 +406,7 @@ const ProjectManagement: React.FC = () => {
           (detailData?.status === 'RECRUITING' || detailData?.status === 'approved') &&
           !detailData?.mentorId ? (
             <Button type="primary" onClick={openMentorModal}>
-              Chon mentor
+              Chọn mentor
             </Button>
           ) : null
         }
@@ -432,7 +435,7 @@ const ProjectManagement: React.FC = () => {
               ? detailData.mentorName
               : detailData?.mentorId
                 ? `ID: ${detailData.mentorId}`
-                : 'Chua co'}
+                : 'Chưa có'}
           </Descriptions.Item>
           <Descriptions.Item label="Bắt đầu">{detailData?.startDate ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="Kết thúc">{detailData?.endDate ?? '-'}</Descriptions.Item>
@@ -456,7 +459,7 @@ const ProjectManagement: React.FC = () => {
         </Descriptions>
       </Modal>
       <Modal
-        title="Chon mentor"
+        title="Chọn mentor"
         open={mentorModalOpen}
         onCancel={() => {
           setMentorModalOpen(false);
@@ -465,12 +468,12 @@ const ProjectManagement: React.FC = () => {
         okText="Gửi lời mời"
         cancelText="Hủy"
         confirmLoading={assigningMentor}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical">
           <Form.Item label="Mentor">
             <Select
-              placeholder="Chon mentor"
+              placeholder="Chọn mentor"
               loading={mentorLoading}
               value={selectedMentorId}
               onChange={(value) => setSelectedMentorId(value)}
@@ -546,8 +549,8 @@ const ProjectManagement: React.FC = () => {
           }
         }}
         confirmLoading={creating}
-        okText="Tao"
-        cancelText="Huy"
+        okText="Tạo"
+        cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -697,7 +700,7 @@ const ProjectManagement: React.FC = () => {
           }
         }}
         confirmLoading={editing}
-        okText="Luu"
+        okText="Lưu"
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
@@ -721,7 +724,7 @@ const ProjectManagement: React.FC = () => {
           <Form.Item label="Yêu cầu" name="requirements">
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item label="Thoi gian" style={{ marginBottom: 0 }}>
+          <Form.Item label="Thời gian" style={{ marginBottom: 0 }}>
             <Form.Item
               name="startDate"
               rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}

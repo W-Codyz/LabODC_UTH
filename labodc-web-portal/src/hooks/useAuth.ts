@@ -2,12 +2,13 @@
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
-import { message } from 'antd';
+import { App } from 'antd';
 import { TUserRole } from '@/types/user.types';
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { message } = App.useApp();
   
   const { user, isAuthenticated, loading, error } = useAppSelector((state) => state.auth);
 
