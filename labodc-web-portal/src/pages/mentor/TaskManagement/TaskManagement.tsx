@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -324,7 +324,7 @@ const TaskManagement: React.FC = () => {
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <Spin size="large" tip="Đang tải công việc..." />
+        <Spin size="large" />
       </div>
     );
   }

@@ -68,14 +68,6 @@ export const ROUTES = {
   ADMIN_REPORTS: '/admin/reports',
   ADMIN_REPORT_NEW: '/admin/reports/new',
   
-  // System Admin Routes
-  SYSTEM_DASHBOARD: '/system/dashboard',
-  SYSTEM_CONFIG: '/system/config',
-  SYSTEM_ROLES: '/system/roles',
-  SYSTEM_ROLE_PERMISSIONS: '/system/roles/:id/permissions',
-  SYSTEM_USERS: '/system/users',
-  SYSTEM_USER_DETAIL: '/system/users/:id',
-  SYSTEM_TEMPLATES: '/system/templates',
 } as const;
 
 // Breakpoints
@@ -159,7 +151,6 @@ export const FUND_DISTRIBUTION = {
 
 // Roles
 export const USER_ROLES = {
-  SYSTEM_ADMIN: 'SYSTEM_ADMIN',
   LAB_ADMIN: 'LAB_ADMIN',
   ENTERPRISE: 'ENTERPRISE',
   MENTOR: 'MENTOR',
@@ -169,7 +160,6 @@ export const USER_ROLES = {
 
 // Role Labels
 export const ROLE_LABELS = {
-  SYSTEM_ADMIN: 'Quản trị hệ thống',
   LAB_ADMIN: 'Quản trị Lab',
   ENTERPRISE: 'Doanh nghiệp',
   MENTOR: 'Mentor',

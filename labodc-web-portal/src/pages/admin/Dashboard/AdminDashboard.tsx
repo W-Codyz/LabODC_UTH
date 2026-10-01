@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Card,
   Row,
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <Spin size="large" tip="Đang tải dữ liệu dashboard..." />
+        <Spin size="large" />
       </div>
     );
   }

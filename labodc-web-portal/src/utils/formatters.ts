@@ -120,7 +120,6 @@ export const formatPriorityBadge = (priority: string): { color: string; text: st
  */
 export const formatRoleLabel = (role: string): string => {
   const roleMap: Record<string, string> = {
-    SYSTEM_ADMIN: 'Quản trị hệ thống',
     LAB_ADMIN: 'Quản trị Lab',
     ENTERPRISE: 'Doanh nghiệp',
     MENTOR: 'Mentor',

@@ -1,9 +1,8 @@
 // User Types
-export type TUserRole = 
-  | 'SYSTEM_ADMIN' 
-  | 'LAB_ADMIN' 
-  | 'ENTERPRISE' 
-  | 'MENTOR' 
+export type TUserRole =
+  | 'LAB_ADMIN'
+  | 'ENTERPRISE'
+  | 'MENTOR'
   | 'TALENT'
   | 'TALENT_LEADER';
 

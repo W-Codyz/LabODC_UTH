@@ -184,7 +184,7 @@ const Reports: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (!data.length) {
-      message.info('Khong co du lieu de xuat');
+      message.info('Không có dữ liệu để xuất');
       return;
     }
     if (!selectedProjectKeys.length) {
@@ -337,7 +337,7 @@ const Reports: React.FC = () => {
 
     const win = window.open('', '_blank');
     if (!win) {
-      message.error('Khong the mo cua so in PDF');
+      message.error('Không thể mở cửa sổ in PDF');
       return;
     }
     win.document.open();
@@ -402,7 +402,7 @@ const Reports: React.FC = () => {
           <Select
             allowClear
             mode="multiple"
-            placeholder="Chon du an"
+            placeholder="Chọn dự án"
             style={{ minWidth: 220 }}
             value={selectedProjectKeys}
             onChange={(value) => setSelectedProjectKeys(value)}
@@ -412,25 +412,26 @@ const Reports: React.FC = () => {
             }))}
           />
           <Button icon={<DownloadOutlined />} onClick={handleExport}>
-            Xuat bao cao
+            Xuất báo cáo
           </Button>
           <Button icon={<DownloadOutlined />} onClick={handleExportPdf}>
-            Xuat PDF
+            Xuất PDF
           </Button>
         </Space>
       </div>
 
       {/* SUMMARY */}
-      <Row gutter={16} className="stat-row">
-        <Col span={6}>
+      <Row gutter={[16, 16]} className="stat-row">
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Tổng dự án"
               value={summary.projects}
+              valueStyle={{ color: '#17a2b8' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Tổng chi phí"
@@ -440,21 +441,23 @@ const Reports: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Hiệu suất"
               value={summary.performance}
               suffix="%"
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Hoàn thành"
               value={summary.completedRate}
               suffix="%"
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
@@ -463,7 +466,7 @@ const Reports: React.FC = () => {
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={12}>
           <Card className="modern-card">
-            <div style={{ fontWeight: 600, marginBottom: 12 }}>Chi phi theo du an</div>
+            <div style={{ fontWeight: 600, marginBottom: 12 }}>Chi phí theo dự án</div>
             <div style={{ width: '100%', height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data}>
@@ -498,7 +501,7 @@ const Reports: React.FC = () => {
         </Col>
         <Col span={12}>
           <Card className="modern-card">
-            <div style={{ fontWeight: 600, marginBottom: 12 }}>Tien do theo du an</div>
+            <div style={{ fontWeight: 600, marginBottom: 12 }}>Tiến độ theo dự án</div>
             <div style={{ width: '100%', height: 320 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data}>

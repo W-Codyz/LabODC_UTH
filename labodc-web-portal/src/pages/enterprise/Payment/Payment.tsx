@@ -19,6 +19,7 @@ import {
   DollarOutlined,
   WarningOutlined,
   CheckCircleOutlined,
+  RiseOutlined,
 } from '@ant-design/icons';
 import {
   getPaymentSummary,
@@ -158,40 +159,45 @@ const Payment: React.FC = () => {
       </div>
 
       {/* SUMMARY */}
-      <Row gutter={16} className="stat-row">
-        <Col span={6}>
+      <Row gutter={[16, 16]} className="stat-row">
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Đã thanh toán"
               value={summary.paid}
               prefix={<CheckCircleOutlined />}
+              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Chờ thanh toán"
               value={summary.pending}
               prefix={<DollarOutlined />}
+              valueStyle={{ color: '#faad14' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Quá hạn"
               value={summary.overdue}
               prefix={<WarningOutlined />}
+              valueStyle={{ color: '#ff4d4f' }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card className="modern-card stat-card">
             <Statistic
               title="Ngân sách còn lại"
               value={summary.remaining}
+              prefix={<RiseOutlined />}
               formatter={(v) => formatCurrencyVND(Number(v))}
+              valueStyle={{ color: '#17a2b8' }}
             />
           </Card>
         </Col>

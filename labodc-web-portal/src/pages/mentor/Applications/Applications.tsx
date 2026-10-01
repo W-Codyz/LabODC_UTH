@@ -106,7 +106,7 @@ const Applications: React.FC = () => {
 
   const columns: ColumnsType<IMentorApplication> = [
     {
-      title: 'Talent',
+      title: 'Sinh viên',
       dataIndex: 'fullName',
       key: 'fullName',
       render: (_, record) => (
@@ -196,7 +196,7 @@ const Applications: React.FC = () => {
             ))}
           </Select>
           <Input
-            placeholder="Tim theo ten, email, ma SV..."
+            placeholder="Tìm theo tên, email, mã SV..."
             style={{ width: 260 }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -206,10 +206,10 @@ const Applications: React.FC = () => {
             value={statusFilter}
             onChange={(value) => setStatusFilter(value)}
           >
-            <Option value="ALL">Tat ca trang thai</Option>
-            <Option value="PENDING">Cho duyet</Option>
-            <Option value="ACTIVE">Da duyet</Option>
-            <Option value="REJECTED">Tu choi</Option>
+            <Option value="ALL">Tất cả trạng thái</Option>
+            <Option value="PENDING">Chờ duyệt</Option>
+            <Option value="ACTIVE">Đã duyệt</Option>
+            <Option value="REJECTED">Từ chối</Option>
           </Select>
           <Button onClick={handleCloseRecruiting} loading={closingRecruiting}>
             Kết thúc tuyển

@@ -27,7 +27,6 @@ export const hasAllRoles = (userRoles: TUserRole[], requiredRoles: TUserRole[]):
  * Role hierarchy levels (higher number = more privileges)
  */
 const ROLE_HIERARCHY: Record<TUserRole, number> = {
-  SYSTEM_ADMIN: 5,
   LAB_ADMIN: 4,
   MENTOR: 3,
   TALENT_LEADER: 2,
@@ -48,9 +47,9 @@ export const hasRoleLevel = (userRole: TUserRole, requiredRole: TUserRole): bool
 export const PERMISSIONS = {
   // Project permissions
   PROJECT_CREATE: [USER_ROLES.ENTERPRISE],
-  PROJECT_VIEW_ALL: [USER_ROLES.SYSTEM_ADMIN, USER_ROLES.LAB_ADMIN],
+  PROJECT_VIEW_ALL: [USER_ROLES.LAB_ADMIN],
   PROJECT_EDIT: [USER_ROLES.ENTERPRISE],
-  PROJECT_DELETE: [USER_ROLES.SYSTEM_ADMIN, USER_ROLES.ENTERPRISE],
+  PROJECT_DELETE: [USER_ROLES.ENTERPRISE],
   PROJECT_APPROVE: [USER_ROLES.LAB_ADMIN],
   PROJECT_JOIN: [USER_ROLES.TALENT],
   
@@ -62,7 +61,7 @@ export const PERMISSIONS = {
   
   // Payment permissions
   PAYMENT_CREATE: [USER_ROLES.ENTERPRISE],
-  PAYMENT_VIEW: [USER_ROLES.ENTERPRISE, USER_ROLES.LAB_ADMIN, USER_ROLES.SYSTEM_ADMIN],
+  PAYMENT_VIEW: [USER_ROLES.ENTERPRISE, USER_ROLES.LAB_ADMIN],
   
   // Report permissions
   REPORT_CREATE: [USER_ROLES.MENTOR, USER_ROLES.TALENT_LEADER],
@@ -74,22 +73,17 @@ export const PERMISSIONS = {
   EVALUATION_VIEW: [USER_ROLES.TALENT, USER_ROLES.MENTOR, USER_ROLES.ENTERPRISE],
   
   // User management permissions
-  USER_VIEW_ALL: [USER_ROLES.SYSTEM_ADMIN, USER_ROLES.LAB_ADMIN],
-  USER_CREATE: [USER_ROLES.SYSTEM_ADMIN],
-  USER_EDIT: [USER_ROLES.SYSTEM_ADMIN],
-  USER_DELETE: [USER_ROLES.SYSTEM_ADMIN],
+  USER_VIEW_ALL: [USER_ROLES.LAB_ADMIN],
+  USER_CREATE: [USER_ROLES.LAB_ADMIN],
+  USER_EDIT: [USER_ROLES.LAB_ADMIN],
+  USER_DELETE: [USER_ROLES.LAB_ADMIN],
   
   // Enterprise validation
   ENTERPRISE_VALIDATE: [USER_ROLES.LAB_ADMIN],
   
   // Fund management
   FUND_ALLOCATE: [USER_ROLES.LAB_ADMIN],
-  FUND_VIEW: [USER_ROLES.LAB_ADMIN, USER_ROLES.SYSTEM_ADMIN],
-  
-  // System configuration
-  SYSTEM_CONFIG: [USER_ROLES.SYSTEM_ADMIN],
-  ROLE_MANAGE: [USER_ROLES.SYSTEM_ADMIN],
-  TEMPLATE_MANAGE: [USER_ROLES.SYSTEM_ADMIN],
+  FUND_VIEW: [USER_ROLES.LAB_ADMIN],
 } as const;
 
 /**
@@ -119,7 +113,6 @@ export const canAccessRoute = (userRole: TUserRole, routePath: string): boolean 
     '/talent': [USER_ROLES.TALENT, USER_ROLES.TALENT_LEADER],
     '/mentor': [USER_ROLES.MENTOR],
     '/admin': [USER_ROLES.LAB_ADMIN],
-    '/system': [USER_ROLES.SYSTEM_ADMIN],
   };
   
   for (const [prefix, roles] of Object.entries(routeAccess)) {
@@ -136,7 +129,6 @@ export const canAccessRoute = (userRole: TUserRole, routePath: string): boolean 
  */
 export const getDefaultRoute = (userRole: TUserRole): string => {
   const roleRoutes: Record<TUserRole, string> = {
-    SYSTEM_ADMIN: '/system/dashboard',
     LAB_ADMIN: '/admin/dashboard',
     ENTERPRISE: '/enterprise/dashboard',
     MENTOR: '/mentor/dashboard',
@@ -152,7 +144,7 @@ export const getDefaultRoute = (userRole: TUserRole): string => {
  */
 export const canViewProject = (userRole: TUserRole, projectOwnerId: string, userId: string): boolean => {
   // Admins can view all projects
-  if (hasAnyRole(userRole, [USER_ROLES.SYSTEM_ADMIN, USER_ROLES.LAB_ADMIN])) {
+  if (hasAnyRole(userRole, [USER_ROLES.LAB_ADMIN])) {
     return true;
   }
   
@@ -178,8 +170,5 @@ export const canEditProject = (userRole: TUserRole, projectOwnerId: string, user
  */
 export const canDeleteProject = (userRole: TUserRole, projectOwnerId: string, userId: string): boolean => {
   // Only system admin or project owner can delete
-  return (
-    userRole === USER_ROLES.SYSTEM_ADMIN ||
-    (userRole === USER_ROLES.ENTERPRISE && projectOwnerId === userId)
-  );
+  return userRole === USER_ROLES.ENTERPRISE && projectOwnerId === userId;
 };

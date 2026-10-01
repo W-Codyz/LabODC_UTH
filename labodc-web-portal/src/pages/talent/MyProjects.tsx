@@ -1,10 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Card, List, Tag, Button, Progress, Typography, Space, Empty, Modal, Descriptions, message } from 'antd';
+﻿import React, { useState, useEffect } from 'react';
+import { Card, List, Tag, Button, Progress, Typography, Space, Empty, Modal, Descriptions, Spin, message } from 'antd';
 import { ProjectOutlined, CalendarOutlined, TeamOutlined, DollarOutlined } from '@ant-design/icons';
 import { talentService, TalentProject } from '../../services/talent/talentService';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
+
+const STATUS_COLOR: Record<string, string> = {
+  PENDING: 'orange',
+  ACTIVE: 'green',
+  INACTIVE: 'purple',
+  REJECTED: 'red',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: 'Chờ duyệt',
+  ACTIVE: 'Đang tham gia',
+  INACTIVE: 'Đã kết thúc',
+  REJECTED: 'Bị từ chối',
+};
+
+const STATUS_HELP: Record<string, string> = {
+  PENDING: 'Đơn tham gia đang chờ mentor/quản trị duyệt.',
+  ACTIVE: 'Bạn đã được duyệt và đang là thành viên của dự án.',
+  INACTIVE: 'Bạn đã rời dự án hoặc dự án kết thúc.',
+  REJECTED: 'Đơn tham gia đã bị từ chối.',
+};
 
 const MyProjects: React.FC = () => {
   const [projects, setProjects] = useState<TalentProject[]>([]);
@@ -23,76 +44,35 @@ const MyProjects: React.FC = () => {
       setLoading(true);
       const data = await talentService.getMyProjects();
       setProjects(data);
-    } catch (error) {
-      console.error('Failed to fetch my projects:', error);
+    } catch {
       message.error('Không thể tải dự án của bạn từ hệ thống.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string): string => {
-    const colors: { [key: string]: string } = {
-      PENDING: 'orange',
-      ACTIVE: 'green',
-      INACTIVE: 'purple',
-      REJECTED: 'red',
-    };
-    return colors[status] || 'default';
-  };
-
-  const getStatusLabel = (status?: string): string => {
-    const labels: { [key: string]: string } = {
-      PENDING: 'Chờ duyệt',
-      ACTIVE: 'Đang tham gia',
-      INACTIVE: 'Đã kết thúc',
-      REJECTED: 'Bị từ chối',
-    };
-    return (status && labels[status]) || 'Không rõ';
-  };
-
-  const getStatusHelp = (status?: string): string => {
-    const notes: { [key: string]: string } = {
-      PENDING: 'Đơn tham gia đang chờ mentor/lab-admin duyệt.',
-      ACTIVE: 'Bạn đã được duyệt và đang là thành viên của dự án.',
-      INACTIVE: 'Bạn đã rời dự án hoặc dự án kết thúc.',
-      REJECTED: 'Đơn tham gia đã bị từ chối.',
-    };
-    return (status && notes[status]) || '';
-  };
-
-  const getRoleColor = (role: string): string => {
-    return role === 'LEADER' ? 'gold' : 'blue';
-  };
-
   if (loading) {
-    return <div>Loading my projects...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (
     <div style={{ padding: '24px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'between',
-          alignItems: 'center',
-          marginBottom: '24px',
-        }}
-      >
-        <Title level={2}>My Projects</Title>
-        <Button type="primary" onClick={() => navigate('/talent/projects')}>
-          Browse More Projects
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <Title level={2} style={{ margin: 0 }}>Dự án của tôi</Title>
+        <Button type="primary" icon={<ProjectOutlined />} onClick={() => navigate('/talent/projects')}>
+          Tìm thêm dự án
         </Button>
       </div>
 
       {projects.length === 0 ? (
         <Card>
-          <Empty
-            description="You haven't joined any projects yet"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          >
+          <Empty description="Bạn chưa tham gia dự án nào" image={Empty.PRESENTED_IMAGE_SIMPLE}>
             <Button type="primary" onClick={() => navigate('/talent/projects')}>
-              Browse Available Projects
+              Tìm kiếm dự án
             </Button>
           </Empty>
         </Card>
@@ -108,11 +88,13 @@ const MyProjects: React.FC = () => {
                 extra={
                   <Space>
                     {project.memberRole && (
-                      <Tag color={getRoleColor(project.memberRole)}>{project.memberRole}</Tag>
+                      <Tag color={project.memberRole === 'LEADER' ? 'gold' : 'blue'}>
+                        {project.memberRole === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
+                      </Tag>
                     )}
                     {project.memberStatus && (
-                      <Tag color={getStatusColor(project.memberStatus)}>
-                        {getStatusLabel(project.memberStatus)}
+                      <Tag color={STATUS_COLOR[project.memberStatus] || 'default'}>
+                        {STATUS_LABEL[project.memberStatus] || project.memberStatus}
                       </Tag>
                     )}
                   </Space>
@@ -128,15 +110,14 @@ const MyProjects: React.FC = () => {
                         const detail = await talentService.getProjectDetail(project.id);
                         setDetailData(detail);
                         setDetailOpen(true);
-                      } catch (err) {
-                        console.error('Failed to load project detail', err);
+                      } catch {
                         message.error('Không thể tải chi tiết dự án');
                       } finally {
                         setDetailLoading(false);
                       }
                     }}
                   >
-                    View Details
+                    Xem chi tiết
                   </Button>,
                   project.memberStatus === 'ACTIVE' && (
                     <Button
@@ -145,57 +126,47 @@ const MyProjects: React.FC = () => {
                       size="small"
                       onClick={() => navigate(`/talent/tasks?projectId=${project.id}`)}
                     >
-                      View Tasks
+                      Nhiệm vụ
                     </Button>
                   ),
                 ].filter(Boolean)}
               >
-                <div style={{ marginBottom: '12px' }}>
+                <div style={{ marginBottom: '8px' }}>
                   <Text type="secondary">{project.description}</Text>
                 </div>
 
-                {project.memberStatus && (
+                {project.memberStatus && STATUS_HELP[project.memberStatus] && (
                   <div style={{ marginBottom: '8px' }}>
-                    <Text type="secondary">{getStatusHelp(project.memberStatus)}</Text>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {STATUS_HELP[project.memberStatus]}
+                    </Text>
                   </div>
                 )}
 
                 <Space direction="vertical" style={{ width: '100%' }}>
                   {project.company && (
                     <div>
-                      <Text strong>Company: </Text>
+                      <Text strong>Công ty: </Text>
                       <Text>{project.company.name}</Text>
                     </div>
                   )}
-
                   <div>
                     <CalendarOutlined style={{ marginRight: '8px' }} />
                     <Text>
-                      {new Date(project.startDate).toLocaleDateString()} -{' '}
-                      {new Date(project.endDate).toLocaleDateString()}
+                      {new Date(project.startDate).toLocaleDateString('vi-VN')} -{' '}
+                      {new Date(project.endDate).toLocaleDateString('vi-VN')}
                     </Text>
                   </div>
-
                   {project.technologies && project.technologies.length > 0 && (
                     <div>
-                      <div style={{ marginBottom: '4px' }}>
-                        <Text strong>Technologies:</Text>
-                      </div>
-                      <div>
-                        {project.technologies.map((tech, index) => (
-                          <Tag key={index}>
-                            {tech}
-                          </Tag>
-                        ))}
-                      </div>
+                      <Text strong style={{ display: 'block', marginBottom: '4px' }}>Công nghệ:</Text>
+                      {project.technologies.map((tech, i) => <Tag key={i}>{tech}</Tag>)}
                     </div>
                   )}
-
                   <div>
                     <TeamOutlined style={{ marginRight: '8px' }} />
-                    <Text>{project.numberOfStudents} members</Text>
+                    <Text>{project.numberOfStudents} thành viên</Text>
                   </div>
-
                   {project.budget && (
                     <div>
                       <DollarOutlined style={{ marginRight: '8px' }} />
@@ -205,11 +176,9 @@ const MyProjects: React.FC = () => {
                       )}
                     </div>
                   )}
-
-                  {/* Progress bar for active projects */}
                   {project.memberStatus === 'ACTIVE' && (
                     <div>
-                      <Text strong>Progress:</Text>
+                      <Text strong>Tiến độ:</Text>
                       <Progress percent={project.status === 'COMPLETED' ? 100 : 0} size="small" />
                     </div>
                   )}
@@ -223,25 +192,15 @@ const MyProjects: React.FC = () => {
       <Modal
         title="Chi tiết dự án"
         open={detailOpen}
-        onCancel={() => {
-          setDetailOpen(false);
-          setDetailData(null);
-        }}
+        onCancel={() => { setDetailOpen(false); setDetailData(null); }}
         footer={null}
+        confirmLoading={detailLoading}
       >
         <Descriptions bordered size="small" column={1} labelStyle={{ width: 160 }}>
-          <Descriptions.Item label="Tên dự án">
-            {detailData?.title ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">
-            {detailData?.status ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Mô tả">
-            {detailData?.description ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="Công ty">
-            {detailData?.company?.name ?? '-'}
-          </Descriptions.Item>
+          <Descriptions.Item label="Tên dự án">{detailData?.title ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">{detailData?.status ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Mô tả">{detailData?.description ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Công ty">{detailData?.company?.name ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="Ngân sách">
             {detailData?.budget ? `${detailData.budget.toLocaleString()} VND` : '-'}
           </Descriptions.Item>
@@ -253,11 +212,10 @@ const MyProjects: React.FC = () => {
           <Descriptions.Item label="Công nghệ">
             {detailData?.technologies?.length ? detailData.technologies.join(', ') : '-'}
           </Descriptions.Item>
-          <Descriptions.Item label="Kỹ năng yêu cầu">
+          <Descriptions.Item label="Yêu cầu kỹ năng">
             {detailData?.skillRequirements?.length ? detailData.skillRequirements.join(', ') : '-'}
           </Descriptions.Item>
         </Descriptions>
-        {detailLoading && <div style={{ marginTop: 12 }}>Đang tải...</div>}
       </Modal>
     </div>
   );

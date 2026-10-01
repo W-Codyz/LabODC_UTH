@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Card, List, Tag, Button, Input, Select, Typography, Space, message, Modal } from 'antd';
+﻿import React, { useState, useEffect } from 'react';
+import { Card, List, Tag, Button, Input, Select, Typography, Space, Spin, message, Modal } from 'antd';
 import {
   ProjectOutlined,
   CalendarOutlined,
@@ -13,6 +13,20 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
+const STATUS_COLOR: Record<string, string> = {
+  RECRUITING: 'green',
+  IN_PROGRESS: 'blue',
+  COMPLETED: 'purple',
+  CANCELLED: 'red',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  RECRUITING: 'Đang tuyển',
+  IN_PROGRESS: 'Đang thực hiện',
+  COMPLETED: 'Đã hoàn thành',
+  CANCELLED: 'Đã hủy',
+};
+
 const ProjectsBrowse: React.FC = () => {
   const [projects, setProjects] = useState<TalentProject[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<TalentProject[]>([]);
@@ -22,6 +36,7 @@ const ProjectsBrowse: React.FC = () => {
   const [techFilter, setTechFilter] = useState<string>('');
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState<TalentProject | null>(null);
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -36,9 +51,8 @@ const ProjectsBrowse: React.FC = () => {
       setLoading(true);
       const data = await talentService.browseProjects({ page: 0, size: 50 });
       setProjects(data.content || []);
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-      message.error('Failed to load projects');
+    } catch {
+      message.error('Không thể tải danh sách dự án');
     } finally {
       setLoading(false);
     }
@@ -46,120 +60,92 @@ const ProjectsBrowse: React.FC = () => {
 
   const filterProjects = () => {
     let filtered = projects;
-
     if (searchTerm) {
       filtered = filtered.filter(
-        (project) =>
-          project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (p) =>
+          p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    if (statusFilter) {
-      filtered = filtered.filter((project) => project.status === statusFilter);
-    }
-
+    if (statusFilter) filtered = filtered.filter((p) => p.status === statusFilter);
     if (techFilter) {
-      filtered = filtered.filter((project) =>
-        project.technologies?.some((tech) => tech.toLowerCase().includes(techFilter.toLowerCase()))
+      filtered = filtered.filter((p) =>
+        p.technologies?.some((t) => t.toLowerCase().includes(techFilter.toLowerCase()))
       );
     }
-
     setFilteredProjects(filtered);
-  };
-
-  const handleJoinProject = (project: TalentProject) => {
-    setSelectedProject(project);
-    setJoinModalVisible(true);
   };
 
   const confirmJoinProject = async () => {
     if (!selectedProject) return;
-
     try {
-      await talentService.joinProject(selectedProject.id, {
-        message: 'I would like to join this project.',
-      });
-      message.success('Join request submitted successfully!');
+      setJoining(true);
+      await talentService.joinProject(selectedProject.id, { message: 'Tôi muốn tham gia dự án này.' });
+      message.success('Đã gửi yêu cầu tham gia dự án!');
       setJoinModalVisible(false);
       setSelectedProject(null);
-      // Optionally refresh the projects list
       fetchProjects();
-    } catch (error) {
-      message.error('Failed to submit join request');
+    } catch {
+      message.error('Không thể gửi yêu cầu tham gia');
+    } finally {
+      setJoining(false);
     }
   };
 
-  const getStatusColor = (status: string): string => {
-    const colors: { [key: string]: string } = {
-      RECRUITING: 'green',
-      IN_PROGRESS: 'blue',
-      COMPLETED: 'purple',
-      CANCELLED: 'red',
-    };
-    return colors[status] || 'default';
-  };
-
-  // Get all unique technologies for filter
   const allTechnologies = Array.from(new Set(projects.flatMap((p) => p.technologies || []))).sort();
 
   if (loading) {
-    return <div>Loading projects...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (
     <div style={{ padding: '24px' }}>
-      <Title level={2}>Browse Projects</Title>
+      <Title level={2}>Tìm kiếm dự án</Title>
 
-      {/* Filters */}
       <Card style={{ marginBottom: '24px' }}>
         <Space direction="vertical" style={{ width: '100%' }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <Search
-              placeholder="Search projects..."
+              placeholder="Tìm kiếm dự án..."
               allowClear
               style={{ width: '300px' }}
               prefix={<SearchOutlined />}
               onSearch={setSearchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-
             <Select
-              placeholder="Filter by status"
+              placeholder="Lọc theo trạng thái"
               allowClear
-              style={{ width: '150px' }}
+              style={{ width: '180px' }}
               value={statusFilter || undefined}
               onChange={setStatusFilter}
             >
-              <Option value="RECRUITING">Recruiting</Option>
-              <Option value="IN_PROGRESS">In Progress</Option>
-              <Option value="COMPLETED">Completed</Option>
+              <Option value="RECRUITING">Đang tuyển</Option>
+              <Option value="IN_PROGRESS">Đang thực hiện</Option>
+              <Option value="COMPLETED">Đã hoàn thành</Option>
             </Select>
-
             <Select
-              placeholder="Filter by technology"
+              placeholder="Lọc theo công nghệ"
               allowClear
               style={{ width: '200px' }}
               value={techFilter || undefined}
               onChange={setTechFilter}
             >
               {allTechnologies.map((tech) => (
-                <Option key={tech} value={tech}>
-                  {tech}
-                </Option>
+                <Option key={tech} value={tech}>{tech}</Option>
               ))}
             </Select>
           </div>
-
-          <div>
-            <Text type="secondary">
-              Showing {filteredProjects.length} of {projects.length} projects
-            </Text>
-          </div>
+          <Text type="secondary">
+            Hiển thị {filteredProjects.length} / {projects.length} dự án
+          </Text>
         </Space>
       </Card>
 
-      {/* Projects List */}
       <List
         grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}
         dataSource={filteredProjects}
@@ -168,67 +154,57 @@ const ProjectsBrowse: React.FC = () => {
             <Card
               title={project.title}
               size="small"
-              extra={<Tag color={getStatusColor(project.status)}>{project.status}</Tag>}
+              extra={
+                <Tag color={STATUS_COLOR[project.status] || 'default'}>
+                  {STATUS_LABEL[project.status] || project.status}
+                </Tag>
+              }
               actions={[
                 project.status === 'RECRUITING' ? (
                   <Button
                     key="join"
                     type="primary"
                     size="small"
-                    onClick={() => handleJoinProject(project)}
+                    icon={<ProjectOutlined />}
+                    onClick={() => { setSelectedProject(project); setJoinModalVisible(true); }}
                   >
-                    Join Project
+                    Tham gia
                   </Button>
                 ) : (
-                  <Button key="view" type="link" size="small">
-                    View Details
-                  </Button>
+                  <Button key="view" type="link" size="small">Xem chi tiết</Button>
                 ),
               ]}
             >
               <div style={{ marginBottom: '12px' }}>
                 <Text type="secondary">{project.description}</Text>
               </div>
-
               <Space direction="vertical" style={{ width: '100%' }}>
                 {project.company && (
                   <div>
-                    <Text strong>Company: </Text>
+                    <Text strong>Công ty: </Text>
                     <Text>{project.company.name}</Text>
                   </div>
                 )}
-
                 <div>
                   <CalendarOutlined style={{ marginRight: '8px' }} />
                   <Text>
-                    {new Date(project.startDate).toLocaleDateString()} -{' '}
-                    {new Date(project.endDate).toLocaleDateString()}
+                    {new Date(project.startDate).toLocaleDateString('vi-VN')} -{' '}
+                    {new Date(project.endDate).toLocaleDateString('vi-VN')}
                   </Text>
                 </div>
-
                 {project.technologies && project.technologies.length > 0 && (
                   <div>
-                    <div style={{ marginBottom: '4px' }}>
-                      <Text strong>Technologies:</Text>
-                    </div>
-                    <div>
-                      {project.technologies.slice(0, 3).map((tech, index) => (
-                        <Tag key={index}>
-                          {tech}
-                        </Tag>
-                      ))}
-                      {project.technologies.length > 3 && (
-                        <Tag>+{project.technologies.length - 3} more</Tag>
-                      )}
-                    </div>
+                    <Text strong style={{ display: 'block', marginBottom: '4px' }}>Công nghệ:</Text>
+                    {project.technologies.slice(0, 3).map((tech, i) => <Tag key={i}>{tech}</Tag>)}
+                    {project.technologies.length > 3 && (
+                      <Tag>+{project.technologies.length - 3}</Tag>
+                    )}
                   </div>
                 )}
-
                 <div>
                   <TeamOutlined style={{ marginRight: '8px' }} />
-                  <Text>{project.numberOfStudents} members needed</Text>
+                  <Text>{project.numberOfStudents} thành viên cần tuyển</Text>
                 </div>
-
                 {project.budget && (
                   <div>
                     <DollarOutlined style={{ marginRight: '8px' }} />
@@ -238,10 +214,9 @@ const ProjectsBrowse: React.FC = () => {
                     )}
                   </div>
                 )}
-
                 {project.skillRequirements && project.skillRequirements.length > 0 && (
                   <div>
-                    <Text strong>Requirements: </Text>
+                    <Text strong>Yêu cầu: </Text>
                     <Text type="secondary">{project.skillRequirements.join(', ')}</Text>
                   </div>
                 )}
@@ -251,24 +226,24 @@ const ProjectsBrowse: React.FC = () => {
         )}
       />
 
-      {/* Join Project Modal */}
       <Modal
-        title="Join Project"
+        title="Xác nhận tham gia dự án"
         open={joinModalVisible}
         onOk={confirmJoinProject}
-        onCancel={() => setJoinModalVisible(false)}
-        okText="Submit Request"
-        cancelText="Cancel"
+        onCancel={() => { setJoinModalVisible(false); setSelectedProject(null); }}
+        okText="Gửi yêu cầu"
+        cancelText="Hủy"
+        confirmLoading={joining}
       >
         {selectedProject && (
           <div>
             <Title level={4}>{selectedProject.title}</Title>
             <Text>{selectedProject.description}</Text>
             <div style={{ marginTop: '16px' }}>
-              <Text strong>Are you sure you want to join this project?</Text>
+              <Text strong>Bạn có chắc muốn tham gia dự án này không?</Text>
             </div>
             <div style={{ marginTop: '8px', color: '#999' }}>
-              Your request will be reviewed by the project mentor.
+              Yêu cầu của bạn sẽ được mentor của dự án xét duyệt.
             </div>
           </div>
         )}

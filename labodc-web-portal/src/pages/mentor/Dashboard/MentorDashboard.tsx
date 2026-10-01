@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Col, Divider, Progress, Row, Spin, Statistic } from 'antd';
 import {
@@ -65,7 +65,7 @@ const MentorDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <Spin size="large" tip="Đang tải dashboard..." />
+        <Spin size="large" />
       </div>
     );
   }

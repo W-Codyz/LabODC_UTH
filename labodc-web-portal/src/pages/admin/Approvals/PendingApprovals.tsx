@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -268,7 +268,7 @@ export default function PendingApprovals() {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            <Spin size="large" tip="Đang tải dữ liệu..." />
+            <Spin size="large" />
           </div>
         ) : approvals.length === 0 ? (
           <Alert

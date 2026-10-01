@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -100,7 +100,7 @@ const ProjectInvitations: React.FC = () => {
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <Spin size="large" tip="Đang tải lời mời..." />
+        <Spin size="large" />
       </div>
     );
   }
